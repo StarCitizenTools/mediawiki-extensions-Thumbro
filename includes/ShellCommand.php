@@ -145,7 +145,7 @@ class ShellCommand {
 
 		wfDebug( sprintf( '[Extension:Thumbro] Executing %s: "%s"',
 			$this->name,
-			implode('" "', $cmd )
+			implode( '" "', $cmd )
 		) );
 
 		$result = Shell::command( $cmd )

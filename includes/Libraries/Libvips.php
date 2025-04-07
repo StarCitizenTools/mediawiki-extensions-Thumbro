@@ -87,12 +87,12 @@ class Libvips {
 	/**
 	 * Converts the given array of arguments into a string in the format
 	 * [key=value,key=value,...]. If the array is empty, returns an empty string.
-	 * 
+	 *
 	 * @see https://www.libvips.org/API/current/Using-vipsthumbnail.html#output-format-and-options
 	 */
 	private static function makeOptions( array $args ): string {
 		$arg = '';
-		if ( count( $args ) > 0  ) {
+		if ( count( $args ) > 0 ) {
 			// Format output options into [key=value,key=value] format
 			$arg = '[';
 			foreach ( $args as $key => $value ) {

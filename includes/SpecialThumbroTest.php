@@ -24,12 +24,11 @@ namespace MediaWiki\Extension\Thumbro;
 
 use Imagick;
 use MediaTransformOutput;
-use MediaWiki\Extension\Thumbro\MediaHandlers;
 use MediaWiki\Extension\Thumbro\Libraries\Libvips;
 use MediaWiki\Html\Html;
-use MediaWiki\HTMLForm\HTMLForm;
 use MediaWiki\HTMLForm\Field\HTMLIntField;
 use MediaWiki\HTMLForm\Field\HTMLTextField;
+use MediaWiki\HTMLForm\HTMLForm;
 use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Output\StreamFile;
@@ -166,7 +165,7 @@ class SpecialThumbroTest extends SpecialPage {
 		$thumbHeight = $thumb->getHeight();
 
 		$imgs = [];
-		foreach( $imageUrls as $type => $url ) {
+		foreach ( $imageUrls as $type => $url ) {
 			$imgs[$type] = Html::element( 'img', [
 				'src' => $url,
 				'alt' => $this->msg( "thumbro-$type-image" )->text(),
@@ -201,16 +200,16 @@ class SpecialThumbroTest extends SpecialPage {
 		// Need Imagick to output comparison data
 		if ( extension_loaded( 'imagick' ) ) {
 			// Debug stuff to work around Docker localhost HTTP request issue
-			foreach( $imageUrls as $type => $url ) {
+			foreach ( $imageUrls as $type => $url ) {
 				$imageUrls[$type] = str_replace( 'localhost', '172.18.0.4', $url );
 			}
 
 			$imagesInfo = $this->getImagesInfo( $imageUrls );
 
 			$infoHtml = '';
-			foreach( $imagesInfo as $type => $info ) {
+			foreach ( $imagesInfo as $type => $info ) {
 				$infoHtml .= "<div><div>$type</div><ul>";
-				foreach( $info as $key => $value ) {
+				foreach ( $info as $key => $value ) {
 					$infoHtml .= "<li>$key: $value</li>";
 				}
 				$infoHtml .= '</ul></div>';
@@ -232,7 +231,7 @@ class SpecialThumbroTest extends SpecialPage {
 				'expanded' => false,
 				'padded' => true,
 				'framed' => true,
-				'content' => [ $fieldset , $thumbs, $thumbsOrigCurr, $thumbsOrigThumbro ],
+				'content' => [ $fieldset, $thumbs, $thumbsOrigCurr, $thumbsOrigThumbro ],
 			] )
 		);
 
@@ -259,7 +258,7 @@ class SpecialThumbroTest extends SpecialPage {
 		);
 
 		$info = [];
-		foreach( $images as $type => $image ) {
+		foreach ( $images as $type => $image ) {
 			if ( $type === 'original' ) {
 				continue;
 			}
@@ -473,8 +472,8 @@ class SpecialThumbroTest extends SpecialPage {
 
 		$inputMimeType = $file->getMimeType();
 		$handlerClass = MediaHandlers::HANDLERS[$inputMimeType] ?? null;
-		$handler =  $handlerClass !== null && class_exists( $handlerClass )
-			?  new $handlerClass()
+		$handler = $handlerClass !== null && class_exists( $handlerClass )
+			? new $handlerClass()
 			: $file->getHandler();
 
 		// Validate param string

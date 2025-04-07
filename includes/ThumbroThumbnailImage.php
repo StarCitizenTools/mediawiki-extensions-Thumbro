@@ -5,9 +5,9 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\Thumbro;
 
 use InvalidArgumentException;
+use MediaWiki\Extension\Thumbro\Hooks\HookRunner as ThumbroHookRunner;
 use MediaWiki\HookContainer\HookRunner;
 use MediaWiki\Html\Html;
-use MediaWiki\Extension\Thumbro\Hooks\HookRunner as ThumbroHookRunner;
 use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Title\Title;
@@ -128,18 +128,18 @@ class ThumbroThumbnailImage extends ThumbnailImage {
 		( new HookRunner( $hookContainer ) )->onThumbnailBeforeProduceHTML( $this, $attribs, $linkAttribs );
 
 		$sources = [];
-		if ( isset ($attribs[ 'srcset' ] ) ) {
+		if ( isset( $attribs[ 'srcset' ] ) ) {
 			// Move srcset from img to source element
 			$sources[] = [ 'srcset' => $this->url . ', ' . $attribs['srcset'] ];
 			unset( $attribs['srcset'] );
 		}
 		( new ThumbroHookRunner( $hookContainer ) )->onThumbroBeforeProduceHtml( $this, $sources );
 
-		$p = Html::openElement('picture');
+		$p = Html::openElement( 'picture' );
 
 		foreach ( $sources as $source ) {
 			// <source> should always have a valid srcset when inside <picture>
-			if (!$source['srcset'] ) {
+			if ( !$source['srcset'] ) {
 				continue;
 			}
 
@@ -156,10 +156,10 @@ class ThumbroThumbnailImage extends ThumbnailImage {
 			if ( !empty( $source['media'] ) ) {
 				$sourceAttribs['media'] = $source['media'];
 			}
-			if ( !empty($source['width'] ) && !empty( $attribs['width'] ) && $source['width'] !== $attribs['width'] ) {
+			if ( !empty( $source['width'] ) && !empty( $attribs['width'] ) && $source['width'] !== $attribs['width'] ) {
 				$sourceAttribs['width'] = $source['width'];
 			}
-			if ( !empty($source['height'] ) && !empty( $attribs['height'] ) && $source['height'] !== $attribs['height'] ) {
+			if ( !empty( $source['height'] ) && !empty( $attribs['height'] ) && $source['height'] !== $attribs['height'] ) {
 				$sourceAttribs['height'] = $source['height'];
 			}
 

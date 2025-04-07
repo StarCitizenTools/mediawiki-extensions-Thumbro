@@ -2,12 +2,12 @@
 
 namespace MediaWiki\Extension\Thumbro\Hooks;
 
-use MediaWiki\Config\Config;
-use MediaWiki\Config\ConfigFactory;
 use File;
 use MediaTransformOutput;
-use MediaWiki\Extension\Thumbro\MediaHandlers;
+use MediaWiki\Config\Config;
+use MediaWiki\Config\ConfigFactory;
 use MediaWiki\Extension\Thumbro\Libraries\Libvips;
+use MediaWiki\Extension\Thumbro\MediaHandlers;
 use MediaWiki\Extension\Thumbro\Utils;
 use MediaWiki\Hook\BitmapHandlerCheckImageAreaHook;
 use MediaWiki\Hook\BitmapHandlerTransformHook;
@@ -28,14 +28,14 @@ class MediaWikiHooks implements
 	}
 
 	public static function initThumbro(): void {
-		global $wgThumbroEnabled, $wgMediaHandlers; 
+		global $wgThumbroEnabled, $wgMediaHandlers;
 		// Thumbro is not enabled, do not add any MediaHandlers
 		if ( $wgThumbroEnabled !== true ) {
 			return;
 		}
 
 		// Attach WebP handlers
-		foreach( MediaHandlers::HANDLERS as $mimeType => $class ) {
+		foreach ( MediaHandlers::HANDLERS as $mimeType => $class ) {
 			$wgMediaHandlers[$mimeType] = $class;
 		}
 	}

@@ -14,7 +14,7 @@ use MediaWiki\Extension\Thumbro\ThumbroThumbnailImage;
 interface ThumbroBeforeProduceHtmlHook {
 	/**
 	 * @param ThumbroThumbnailImage $context
-	 * @param array $sources
+	 * @param array &$sources
 	 * @return bool|void True or no return value to continue or false to abort
 	 */
 	public function onThumbroBeforeProduceHtml( ThumbroThumbnailImage $thumbnail, array &$sources );
