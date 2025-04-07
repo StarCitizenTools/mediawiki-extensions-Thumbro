@@ -10,7 +10,7 @@
 	"license-name": "GPL-2.0-or-later",
 	"type": "media",
 	"requires": {
-		"MediaWiki": ">= 1.39.4"
+		"MediaWiki": ">= 1.43.0"
 	},
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\Thumbro\\": "includes/"

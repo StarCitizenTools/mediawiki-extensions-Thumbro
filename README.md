@@ -122,6 +122,6 @@ $wgThumbroEnabled = false;
 Or disable the output file format you wanted to test under `$wgThumbroOptions`.
 
 ## Requirements
-* [MediaWiki](https://www.mediawiki.org) 1.39.4 or later
+* [MediaWiki](https://www.mediawiki.org) 1.43.0 or later
 * [libvips](https://www.libvips.org) 8.14 or later (older versions might work but they are untested)
 * [Imagick](https://github.com/Imagick/imagick) - Optional, used to generate detailed comparison statistics on Special:ThumbroTest
