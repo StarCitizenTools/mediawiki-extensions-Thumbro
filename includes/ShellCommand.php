@@ -27,7 +27,7 @@ namespace MediaWiki\Extension\Thumbro;
 
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Shell\Shell;
-use TempFSFile;
+use Wikimedia\FileBackend\FSFile\TempFSFile;
 
 /**
  * Wrapper class around the shell command, useful to chain multiple commands

@@ -31,7 +31,6 @@ use MediaWiki\Extension\Thumbro\ShellCommand;
 use MediaWiki\Extension\Thumbro\ThumbroThumbnailImage;
 use MediaWiki\Extension\Thumbro\Utils;
 use MediaWiki\Shell\Shell;
-use ThumbnailImage;
 use TransformationalImageHandler;
 
 /**

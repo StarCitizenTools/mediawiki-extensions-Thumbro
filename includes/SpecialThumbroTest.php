@@ -22,27 +22,27 @@
 
 namespace MediaWiki\Extension\Thumbro;
 
-use Html;
-use HTMLForm;
-use HTMLIntField;
-use HTMLTextField;
 use Imagick;
 use MediaTransformOutput;
 use MediaWiki\Extension\Thumbro\MediaHandlers;
 use MediaWiki\Extension\Thumbro\Libraries\Libvips;
+use MediaWiki\Html\Html;
+use MediaWiki\HTMLForm\HTMLForm;
+use MediaWiki\HTMLForm\Field\HTMLIntField;
+use MediaWiki\HTMLForm\Field\HTMLTextField;
 use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\Output\StreamFile;
+use MediaWiki\SpecialPage\SpecialPage;
+use MediaWiki\Status\Status;
+use MediaWiki\Title\Title;
+use MediaWiki\User\User;
 use MWHttpRequest;
 use OOUI\FieldsetLayout;
 use OOUI\HtmlSnippet;
 use OOUI\LabelWidget;
 use OOUI\PanelLayout;
 use PermissionsError;
-use SpecialPage;
-use Status;
-use StreamFile;
-use MediaWiki\Title\Title;
-use User;
 
 /**
  * A Special page intended to test Thumbro.
@@ -50,13 +50,8 @@ use User;
  */
 class SpecialThumbroTest extends SpecialPage {
 
-	private $secret;
-
 	public function __construct() {
 		parent::__construct( 'ThumbroTest', 'thumbro-test' );
-		$this->config = $this->getConfig();
-		$this->secret = $this->config->get( MainConfigNames::SecretKey );
-		$this->services = MediaWikiServices::getInstance();
 	}
 
 	/**
@@ -70,14 +65,14 @@ class SpecialThumbroTest extends SpecialPage {
 	 * @inheritDoc
 	 */
 	public function userCanExecute( User $user ): bool {
-		return $this->config->get( 'ThumbroExposeTestPage' ) && parent::userCanExecute( $user );
+		return $this->getConfig()->get( 'ThumbroExposeTestPage' ) && parent::userCanExecute( $user );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function displayRestrictionError(): void {
-		if ( !$this->config->get( 'ThumbroExposeTestPage' ) ) {
+		if ( !$this->getConfig()->get( 'ThumbroExposeTestPage' ) ) {
 			throw new PermissionsError(
 				null,
 				[ 'querypage-disabled' ]
@@ -94,7 +89,7 @@ class SpecialThumbroTest extends SpecialPage {
 		$request = $this->getRequest();
 		$this->setHeaders();
 
-		$isInternalRequest = $request->getHeader( 'X-Thumbro-Secret' ) === $this->secret;
+		$isInternalRequest = $request->getHeader( 'X-Thumbro-Secret' ) === $this->getConfig()->get( MainConfigNames::SecretKey );
 		$isUserAllowed = $this->userCanExecute( $this->getUser() );
 
 		if ( !$isUserAllowed && !$isInternalRequest ) {
@@ -125,7 +120,7 @@ class SpecialThumbroTest extends SpecialPage {
 			$this->getOutput()->addWikiMsg( 'thumbro-invalid-file' );
 			return;
 		}
-		$services = $this->services;
+		$services = MediaWikiServices::getInstance();
 		$file = $services->getRepoGroup()->findFile( $title );
 		if ( !$file || !$file->exists() ) {
 			$this->getOutput()->addWikiMsg( 'thumbro-invalid-file' );
@@ -303,9 +298,9 @@ class SpecialThumbroTest extends SpecialPage {
 	 * Return the MWHttpRequest object if the request is successful
 	 */
 	private function getImageRequest( string $url ): ?MWHttpRequest {
-		$httpRequestFactory = $this->services->getHttpRequestFactory();
+		$httpRequestFactory = MediaWikiServices::getInstance()->getHttpRequestFactory();
 		$req = $httpRequestFactory->create( $url, [], __METHOD__ );
-		$req->setHeader( 'X-Thumbro-Secret', $this->secret );
+		$req->setHeader( 'X-Thumbro-Secret', $this->getConfig()->get( MainConfigNames::SecretKey ) );
 		$result = $req->execute();
 		if ( !$result->isGood() ) {
 			return null;
@@ -469,7 +464,7 @@ class SpecialThumbroTest extends SpecialPage {
 			$this->streamError( 404, "Thumbro: invalid title" );
 			return;
 		}
-		$services = $this->services;
+		$services = MediaWikiServices::getInstance();
 		$file = $services->getRepoGroup()->findFile( $title );
 		if ( !$file || !$file->exists() ) {
 			$this->streamError( 404, "Thumbro: file not found" );
@@ -489,7 +484,7 @@ class SpecialThumbroTest extends SpecialPage {
 			return;
 		}
 
-		$config = $this->config;
+		$config = $this->getConfig();
 		$thumbroTestExpiry = $config->get( 'ThumbroTestExpiry' );
 		$thumbroOptions = $config->get( 'ThumbroOptions' );
 		$thumbroLibraries = $config->get( 'ThumbroLibraries' );

@@ -4,8 +4,8 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\Thumbro;
 
-use Config;
 use File;
+use MediaWiki\Config\Config;
 use MediaWiki\Shell\Shell;
 use TransformationalImageHandler;
 

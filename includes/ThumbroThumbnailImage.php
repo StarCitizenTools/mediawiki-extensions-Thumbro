@@ -4,8 +4,9 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\Thumbro;
 
-use Html;
+use InvalidArgumentException;
 use MediaWiki\HookContainer\HookRunner;
+use MediaWiki\Html\Html;
 use MediaWiki\Extension\Thumbro\Hooks\HookRunner as ThumbroHookRunner;
 use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
@@ -25,7 +26,7 @@ class ThumbroThumbnailImage extends ThumbnailImage {
 		$services = MediaWikiServices::getInstance();
 		$mainConfig = $services->getMainConfig();
 		$nativeImageLazyLoading = $mainConfig->get( MainConfigNames::NativeImageLazyLoading );
-		$enableLegacyMediaDOM = $mainConfig->get( MainConfigNames::ParserEnableLegacyMediaDOM );
+		$useLegacyMediaStyles = $mainConfig->get( MainConfigNames::UseLegacyMediaStyles );
 
 		if ( func_num_args() === 2 ) {
 			throw new InvalidArgumentException( __METHOD__ . ' called in the old style' );
@@ -45,7 +46,7 @@ class ThumbroThumbnailImage extends ThumbnailImage {
 		// Description links get the mw-file-description class and link
 		// to the file description page, making the resource redundant
 		if (
-			!$enableLegacyMediaDOM &&
+			!$useLegacyMediaStyles &&
 			isset( $options['magnify-resource'] ) &&
 			!( $options['desc-link'] ?? false )
 		) {
@@ -91,7 +92,7 @@ class ThumbroThumbnailImage extends ThumbnailImage {
 		} else {
 			$linkAttribs = false;
 			if ( !empty( $options['title'] ) ) {
-				if ( $enableLegacyMediaDOM ) {
+				if ( $useLegacyMediaStyles ) {
 					$attribs['title'] = $options['title'];
 				} else {
 					$linkAttribs = [ 'title' => $options['title'] ];

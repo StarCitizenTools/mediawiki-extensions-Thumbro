@@ -2,8 +2,8 @@
 
 namespace MediaWiki\Extension\Thumbro\Hooks;
 
-use Config;
-use ConfigFactory;
+use MediaWiki\Config\Config;
+use MediaWiki\Config\ConfigFactory;
 use File;
 use MediaTransformOutput;
 use MediaWiki\Extension\Thumbro\MediaHandlers;
