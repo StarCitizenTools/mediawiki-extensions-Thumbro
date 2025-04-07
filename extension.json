@@ -1,6 +1,6 @@
 {
 	"name": "Thumbro",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"author": [
 		"[https://www.mediawiki.org/wiki/User:Alistair3149 Alistair3149]",
 		"Bryan Tong Minh"
@@ -73,7 +73,7 @@
 		"ThumbroEnabled": {
 			"value": true
 		},
-		"ThumbroLibraries" : {
+		"ThumbroLibraries": {
 			"value": {
 				"libvips": {
 					"command": "/usr/bin/vipsthumbnail"
