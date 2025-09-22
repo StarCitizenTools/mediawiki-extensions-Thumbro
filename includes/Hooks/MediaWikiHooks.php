@@ -21,7 +21,7 @@ class MediaWikiHooks implements
 	BitmapHandlerCheckImageAreaHook,
 	SoftwareInfoHook
 {
-	private Config $config;
+	private readonly Config $config;
 
 	public function __construct( ConfigFactory $configFactory ) {
 		$this->config = $configFactory->makeConfig( 'thumbro' );

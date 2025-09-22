@@ -38,25 +38,19 @@ class ShellCommand {
 	/** Flag to indicate that the output file should be a temporary file */
 	public const TEMP_OUTPUT = true;
 
-	/** @var string */
-	protected $err;
+	protected string $err;
 
-	/** @var string */
-	protected $output;
+	protected string $output;
 
-	/** @var string */
-	protected $input;
+	protected string $input;
 
-	/** @var bool */
-	protected $removeInput;
+	protected bool $removeInput;
 
-	/** @var string */
-	protected $command;
+	protected string $command;
 
-	/** @var array */
-	protected $args;
+	protected array $args;
 
-	protected $name;
+	protected string $name;
 
 	/**
 	 * Constructor
