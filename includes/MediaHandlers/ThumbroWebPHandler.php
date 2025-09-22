@@ -3,6 +3,8 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\Thumbro\MediaHandlers;
 
+use MediaWiki\MediaWikiServices;
+use MediaWiki\MainConfigNames;
 use WebPHandler;
 
 class ThumbroWebPHandler extends WebPHandler {
@@ -11,6 +13,26 @@ class ThumbroWebPHandler extends WebPHandler {
 	 */
 	public function getThumbType( $ext, $mime, $params = null ) {
 		return [ 'webp', 'image/webp' ];
+	}
+
+	/**
+	 * We cannot animate thumbnails that are bigger than a particular size
+	 * Use the same value as GIF handler for now
+	 *
+	 * @inheritDoc
+	 */
+	public function canAnimateThumbnail( $file ) {
+		$maxAnimatedWebPArea = MediaWikiServices::getInstance()->getMainConfig()
+			->get( MainConfigNames::MaxAnimatedGifArea );
+
+		return $this->getImageArea( $file ) <= $maxAnimatedWebPArea;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function canRender( $file ) {
+		return true;
 	}
 
 	/**
