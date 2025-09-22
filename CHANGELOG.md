@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v1.0.0...v1.1.0) (2025-09-22)
+
+
+### Features
+
+* add thumbnail support for animated WebP ([5f97f3d](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/5f97f3d43aaccba447494741b36343032c4d033d))
+
 ## [1.0.0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v0.1.0...v1.0.0) (2025-04-07)
 
 
