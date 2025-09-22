@@ -3,8 +3,8 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\Thumbro\MediaHandlers;
 
-use MediaWiki\MediaWikiServices;
 use MediaWiki\MainConfigNames;
+use MediaWiki\MediaWikiServices;
 use WebPHandler;
 
 class ThumbroWebPHandler extends WebPHandler {
