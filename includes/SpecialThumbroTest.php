@@ -393,7 +393,7 @@ class SpecialThumbroTest extends SpecialPage {
 	 * @return bool|string
 	 */
 	public static function validateFileInput( ?string $input, array $alldata ) {
-		if ( !trim( $input ) ) {
+		if ( $input === null || !trim( $input ) ) {
 			// Don't show an error if the file is not yet specified,
 			// because it is annoying
 			return true;
@@ -416,8 +416,10 @@ class SpecialThumbroTest extends SpecialPage {
 	 * @return bool|string
 	 */
 	public static function validateWidth( int $input, array $allData ) {
-		if ( self::validateFileInput( $allData['File'], $allData ) !== true
-			|| !trim( $allData['File'] )
+		if (
+			$allData['File'] === null ||
+			self::validateFileInput( $allData['File'], $allData ) !== true ||
+			!trim( $allData['File'] )
 		) {
 			// Invalid file, error will already be shown at file field
 			return true;
