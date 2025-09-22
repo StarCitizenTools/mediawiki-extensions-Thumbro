@@ -12,7 +12,8 @@ Thumbor at home:
 ## Features
 - Use libvips to render thumbnails instead of ImageMagick and GD
 - Allow custom output options for libvips
-- Render WebP thumbnails by default for gif (animated too!), jpeg, png, webp
+- Render WebP thumbnails by default for gif, jpeg, png, and webp (including animated)
+- Extend thumbnail support for more file formats, such as animated WebP
 - Allow adding `<source>` element to the image using the `ThumbroBeforeProduceHtml` hook
 - Add a hidden anchor element to allow web crawler to crawl the original resolution image ([T54647](https://phabricator.wikimedia.org/T54647))
 
