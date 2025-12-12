@@ -245,6 +245,11 @@ class SpecialThumbroTest extends SpecialPage {
 		$images = [];
 		foreach ( $imageUrls as $type => $url ) {
 			$req = $this->getImageRequest( $url );
+
+			if ( !$req ) {
+				throw new \RuntimeException( "Failed to fetch image from $url" );
+			}
+
 			$image = new Imagick();
 			$image->readImageBlob( $req->getContent() );
 			$images[$type] = $image;
