@@ -1,0 +1,30 @@
+{
+	"@metadata": {
+		"authors": [
+			"Zorua_Fox"
+		]
+	},
+	"thumbrotest": "Thumbro 测试页面",
+	"thumbro-desc": "改进并扩展 MediaWiki 中的缩略图功能",
+	"thumbro-invalid-file": "无法处理请求的文件。请检查该文件是否存在于此 wiki 上。",
+	"thumbro-invalid-width": "缩略图宽度应大于零且不大于文件宽度。",
+	"thumbro-invalid-sharpen": "锐化量应为大于零且小于五的数字。",
+	"thumbro-thumb-error": "libvips 无法使用给定参数生成缩略图。",
+	"thumbro-thumb-notscaled": "libvips 未缩放缩略图。",
+	"thumbro-form-legend": "参数",
+	"thumbro-form-width": "缩略图宽度：",
+	"thumbro-form-file": "此 wiki 上的文件：",
+	"thumbro-form-sharpen-radius": "锐化量：",
+	"thumbro-form-bilinear": "双线性缩放",
+	"thumbro-form-submit": "生成缩略图",
+	"thumbro-thumbs-legend": "生成的缩略图",
+	"thumbro-thumbs-help": "将鼠标悬停在缩略图上以比较缩略图。",
+	"thumbro-original-image": "原始",
+	"thumbro-normal-image": "当前",
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "显示两个缩略图",
+	"thumbro-show-default": "仅显示默认缩略图",
+	"thumbro-show-vips": "仅显示 libvips 缩略图",
+	"action-thumbro-test": "使用 libvips 缩放测试界面 [[Special:ThumbroTest]]",
+	"right-thumbro-test": "使用 libvips 缩放测试界面 [[Special:ThumbroTest]]"
+}
