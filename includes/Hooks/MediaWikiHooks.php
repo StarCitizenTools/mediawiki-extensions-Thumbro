@@ -85,7 +85,7 @@ class MediaWikiHooks implements
 		$maxImageArea = $config->get( MainConfigNames::MaxImageArea );
 
 		/** @phan-suppress-next-line PhanTypeMismatchArgumentSuperType ImageHandler vs. MediaHandler */
-		if ( Utils::getOptions( $file->getHandler(), $file, $config ) !== false ) {
+		if ( Utils::getOptions( $file->getHandler(), $file, $config ) !== null ) {
 			wfDebug( "[Extension:Thumbro] Overriding wgMaxImageArea: $maxImageArea" );
 			$result = true;
 			return false;

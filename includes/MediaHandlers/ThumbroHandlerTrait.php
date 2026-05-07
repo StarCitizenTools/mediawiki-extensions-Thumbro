@@ -6,6 +6,9 @@ namespace MediaWiki\Extension\Thumbro\MediaHandlers;
 use MediaWiki\Extension\Thumbro\ThumbroThumbnailImage;
 use TransformParameterError;
 
+/**
+ * @require-extends \TransformationalImageHandler
+ */
 trait ThumbroHandlerTrait {
 	/**
 	 * @inheritDoc
@@ -30,10 +33,13 @@ trait ThumbroHandlerTrait {
 	 * @inheritDoc
 	 */
 	public function doTransform( $image, $dstPath, $dstUrl, $params, $flags = 0 ) {
+		// @phan-suppress-next-line PhanTraitParentReference parent provided by @require-extends
 		if ( !( $flags & parent::TRANSFORM_LATER ) ) {
+			// @phan-suppress-next-line PhanTraitParentReference parent provided by @require-extends
 			return parent::doTransform( $image, $dstPath, $dstUrl, $params, $flags );
 		}
 
+		// @phan-suppress-next-line PhanUndeclaredMethod normaliseParams provided by @require-extends parent
 		if ( !$this->normaliseParams( $image, $params ) ) {
 			return new TransformParameterError( $params );
 		}

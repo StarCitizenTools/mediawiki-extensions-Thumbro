@@ -162,7 +162,11 @@ class ThumbroThumbnailImage extends ThumbnailImage {
 			if ( !empty( $source['width'] ) && !empty( $attribs['width'] ) && $source['width'] !== $attribs['width'] ) {
 				$sourceAttribs['width'] = $source['width'];
 			}
-			if ( !empty( $source['height'] ) && !empty( $attribs['height'] ) && $source['height'] !== $attribs['height'] ) {
+			if (
+				!empty( $source['height'] ) &&
+				!empty( $attribs['height'] ) &&
+				$source['height'] !== $attribs['height']
+			) {
 				$sourceAttribs['height'] = $source['height'];
 			}
 
