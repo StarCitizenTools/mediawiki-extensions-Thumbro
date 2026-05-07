@@ -26,7 +26,11 @@ class ThumbroThumbnailImage extends ThumbnailImage {
 		$services = MediaWikiServices::getInstance();
 		$mainConfig = $services->getMainConfig();
 		$nativeImageLazyLoading = $mainConfig->get( MainConfigNames::NativeImageLazyLoading );
-		$enableLegacyMediaDOM = $mainConfig->get( MainConfigNames::ParserEnableLegacyMediaDOM );
+		// MainConfigNames::ParserEnableLegacyMediaDOM was removed in MW 1.45. Reference the config
+		// name as a string and guard with has() so 1.43/1.44 still honor the setting and 1.45+
+		// falls back to the (now hardcoded) non-legacy behavior.
+		$enableLegacyMediaDOM = $mainConfig->has( 'ParserEnableLegacyMediaDOM' )
+			&& $mainConfig->get( 'ParserEnableLegacyMediaDOM' );
 
 		if ( func_num_args() === 2 ) {
 			throw new InvalidArgumentException( __METHOD__ . ' called in the old style' );
