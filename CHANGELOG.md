@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v1.1.1...v1.2.0) (2026-05-07)
+
+
+### Features
+
+* add chinese i18n files ([bb2bd1c](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/bb2bd1ccbeda933b1929caf9a2c64694d78360b9))
+
+
+### Bug Fixes
+
+* add error handling for failed image requests in SpecialThumbroTest ([7773f65](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/7773f659582b1fec424409ac2e4fa3f4ceed7131))
+* avoid removed ParserEnableLegacyMediaDOM constant on MW 1.45+ ([cf29624](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/cf29624806325b8868de4b55dacf08bd6d26d61e)), closes [#38](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/38)
+* resolve phpcs and phan failures ([09a4677](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/09a46770919430e89793e602f35db7a867e4733b))
+* use constant() lookup for version-gated Imagick metric ([a0b57a0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/a0b57a08fac3f7be15564ac5b64c3104b4cce51e))
+
 ## [1.1.1](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v1.1.0...v1.1.1) (2025-10-16)
 
 
