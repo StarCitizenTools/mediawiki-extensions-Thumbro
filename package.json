@@ -2,13 +2,16 @@
 	"name": "Thumbro",
 	"private": true,
 	"scripts": {
-		"test": "eslint . && grunt test"
+		"lint": "npm -s run lint:js && npm -s run lint:styles && npm -s run lint:i18n",
+		"lint:fix:js": "npm -s run lint:js -- --fix",
+		"lint:fix:styles": "npm -s run lint:styles -- --fix",
+		"lint:i18n": "banana-checker --requireLowerCase=0 i18n/",
+		"lint:js": "eslint --cache --max-warnings 0 .",
+		"lint:styles": "stylelint \"**/*.{less,css}\""
 	},
 	"devDependencies": {
 		"eslint-config-wikimedia": "0.32.3",
-		"grunt": "1.6.2",
 		"grunt-banana-checker": "0.13.0",
-		"grunt-stylelint": "0.20.1",
 		"stylelint-config-wikimedia": "0.18.0"
 	}
 }
