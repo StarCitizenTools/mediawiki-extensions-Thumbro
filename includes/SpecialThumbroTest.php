@@ -20,6 +20,8 @@
  * @file
  */
 
+declare( strict_types=1 );
+
 namespace MediaWiki\Extension\Thumbro;
 
 use Imagick;
@@ -337,7 +339,7 @@ class SpecialThumbroTest extends SpecialPage {
 		$form = HTMLForm::factory( 'ooui', $this->getFormFields(), $this->getContext() );
 		$form->setWrapperLegend( $this->msg( 'thumbro-form-legend' )->text() );
 		$form->setSubmitText( $this->msg( 'thumbro-form-submit' )->text() );
-		$form->setSubmitCallback( [ __CLASS__, 'processForm' ] );
+		$form->setSubmitCallback( self::processForm( ... ) );
 		$form->setMethod( 'get' );
 
 		// Looks like HTMLForm does not actually show the form if submission
@@ -361,7 +363,7 @@ class SpecialThumbroTest extends SpecialPage {
 				'required'      => true,
 				'size' 			=> '80',
 				'label-message' => 'thumbro-form-file',
-				'validation-callback' => [ __CLASS__, 'validateFileInput' ],
+				'validation-callback' => self::validateFileInput( ... ),
 			],
 			'Width' => [
 				'name'          => 'width',
@@ -370,7 +372,7 @@ class SpecialThumbroTest extends SpecialPage {
 				'size'          => '5',
 				'required'      => true,
 				'label-message' => 'thumbro-form-width',
-				'validation-callback' => [ __CLASS__, 'validateWidth' ],
+				'validation-callback' => self::validateWidth( ... ),
 			],
 			/*
 			'SharpenRadius' => [
@@ -400,10 +402,7 @@ class SpecialThumbroTest extends SpecialPage {
 		return $fields;
 	}
 
-	/**
-	 * @return bool|string
-	 */
-	public static function validateFileInput( ?string $input, array $alldata ) {
+	public static function validateFileInput( ?string $input, array $alldata ): bool|string {
 		if ( $input === null || !trim( $input ) ) {
 			// Don't show an error if the file is not yet specified,
 			// because it is annoying
@@ -423,10 +422,7 @@ class SpecialThumbroTest extends SpecialPage {
 		return true;
 	}
 
-	/**
-	 * @return bool|string
-	 */
-	public static function validateWidth( int $input, array $allData ) {
+	public static function validateWidth( int $input, array $allData ): bool|string {
 		if (
 			$allData['File'] === null ||
 			self::validateFileInput( $allData['File'], $allData ) !== true ||
@@ -467,7 +463,7 @@ class SpecialThumbroTest extends SpecialPage {
 	/**
 	 * Stream thumbnail from Special:ThumbroTest&thumb=
 	 */
-	protected function streamThumbnail() {
+	protected function streamThumbnail(): void {
 		$request = $this->getRequest();
 
 		// Validate title and file existance

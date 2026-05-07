@@ -46,19 +46,11 @@ class ShellCommand {
 
 	protected bool $removeInput;
 
-	protected string $command;
-
-	protected array $args;
-
-	protected string $name;
-
-	/**
-	 * Constructor
-	 */
-	public function __construct( string $name, string $command, array $args ) {
-		$this->name = $name;
-		$this->command = $command;
-		$this->args = $args;
+	public function __construct(
+		private readonly string $name,
+		private readonly string $command,
+		private readonly array $args,
+	) {
 	}
 
 	/**
@@ -110,7 +102,7 @@ class ShellCommand {
 			if ( $value ) {
 				$cmdArg .= "=$value";
 			}
-			array_push( $cmdArgs, $cmdArg );
+			$cmdArgs[] = $cmdArg;
 		}
 		return $cmdArgs;
 	}
