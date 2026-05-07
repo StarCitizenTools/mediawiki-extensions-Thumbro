@@ -1,0 +1,82 @@
+# AGENTS.md
+
+## Overview
+
+Thumbro is a MediaWiki extension (requires MW 1.43+) that improves and expands thumbnail generation. It registers media handlers (currently libvips via `vipsthumbnail`) that hook into MediaWiki's `BitmapHandlerTransform` pipeline to produce higher-quality thumbnails per MIME type. PHP drives transform shell-out and hook integration; a `Special:ThumbroTest` page (with a small jQuery + CSS comparison module) lets sysops compare default vs Thumbro output.
+
+## Verification
+
+Run only what's relevant to the files you changed.
+
+| Files changed | Command |
+| --- | --- |
+| `*.php` | `composer preflight` (lint, style, and Phan) |
+| `*.js` | `npm run lint:js` |
+| `*.less`, `*.css` | `npm run lint:styles` |
+| `i18n/` | `npm run lint:i18n` |
+
+Auto-fix commands: `composer fix` (PHP), `npm run lint:fix:js` (JS), `npm run lint:fix:styles` (styles).
+
+**Preflight**: Run `npm run preflight` to execute all Node-based lints in one command. Run `composer preflight` from within a MediaWiki installation to execute all PHP lints, style checks, and Phan static analysis.
+
+**Always run the relevant checks before committing.** Read the full output — PHPCS warnings must be fixed, not just errors. The command exits 0 even with warnings, so do not treat exit code alone as a pass.
+
+### Dev environment
+
+This project's standard dev environment is the MediaWiki Docker setup defined in the parent `mediawiki/` directory. The user may be using a different environment. Ask the user for their dev environment URL and how to run commands if not already known.
+
+To run composer commands in the standard Docker environment:
+
+```sh
+docker compose exec mediawiki bash -c "cd /var/www/html/w/extensions/Thumbro && composer preflight"
+```
+
+Note: the `vipsthumbnail` binary (libvips) must be available in the environment for runtime thumbnail generation, but is not required for lint/test/Phan.
+
+### Phan
+
+Phan requires a full MediaWiki installation at `../../` for type resolution.
+
+```sh
+docker compose exec mediawiki bash -c "cd /var/www/html/w/extensions/Thumbro && composer phan"
+```
+
+## Coding conventions
+
+### PHP
+
+- All files start with `declare( strict_types=1 );`
+- Use native PHP types (properties, parameters, return values); use PHPDoc only for collection types like `string[]`
+- Always use MediaWiki-namespaced imports (`use MediaWiki\Title\Title;`), never legacy shims (`use Title;`)
+
+### JavaScript
+
+- Vanilla JS / jQuery via MediaWiki's ResourceLoader
+- The `jquery.ucompare` module is a jQuery plugin — keep it self-contained and namespaced under `$.fn.ucompare`
+
+### LESS/CSS
+
+- Styles live alongside their module under `modules/<module>/`
+
+### extension.json
+
+`extension.json` is the source of truth for how the extension is wired — ResourceLoader modules, hooks, config variables, and dependencies are all declared here.
+
+- When adding or removing files under `modules/`, update the corresponding `scripts` or `styles` list in `extension.json`
+- Config variables are declared under `config` in `extension.json` (prefixed `wgThumbro`); the `thumbro` config registry resolves them
+- Hook handlers are wired through `HookHandlers` → `Hooks`; new hook subscriptions go through the `main` handler unless there's a reason to split
+
+### Media handlers
+
+- New thumbnail backends go under `includes/Libraries/` and are dispatched from `includes/MediaHandlers/`
+- Per-MIME backend selection and CLI flags are configured under `wgThumbroOptions` in `extension.json`
+
+### Commits
+
+- Use [Conventional Commits](https://www.conventionalcommits.org/) (e.g. `fix:`, `feat:`, `refactor:`)
+- Use `ci:` or `chore:` for non-user-facing changes (tooling, config, dependencies)
+
+### i18n
+
+- Any user-facing string needs a message key in `i18n/en.json`
+- Every key in `en.json` must also have a documentation entry in `i18n/qqq.json`
