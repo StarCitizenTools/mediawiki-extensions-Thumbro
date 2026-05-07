@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * Phan stub for the optional Imagick PECL extension.
+ * Loaded via autoload_internal_extension_signatures in .phan/config.php so Phan can
+ * type-check Imagick code paths gated on extension_loaded( 'imagick' ).
+ *
+ * Only declares the surface used by this extension — extend as new Imagick calls are added.
+ */
+
+class Imagick {
+	public const FILTER_LANCZOS = 22;
+	public const METRIC_PEAKSIGNALTONOISERATIO = 8;
+	public const METRIC_PERCEPTUALHASH_ERROR = 9;
+	public const METRIC_STRUCTURAL_SIMILARITY_ERROR = 13;
+
+	public function __construct( $files = null ) {
+	}
+
+	public function readImageBlob( string $image, ?string $filename = null ): bool {
+	}
+
+	public function resizeImage(
+		int $columns,
+		int $rows,
+		int $filter,
+		float $blur,
+		bool $bestfit = false,
+		bool $legacy = false
+	): bool {
+	}
+
+	public function getImageWidth(): int {
+	}
+
+	public function getImageHeight(): int {
+	}
+
+	public function getImageMimeType(): string {
+	}
+
+	public function getImageLength(): int {
+	}
+
+	public function compareImages( Imagick $compare, int $metric ): array {
+	}
+
+	public static function getVersion(): array {
+	}
+}

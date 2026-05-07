@@ -13,7 +13,7 @@ use MediaWiki\Extension\Thumbro\ThumbroThumbnailImage;
  */
 interface ThumbroBeforeProduceHtmlHook {
 	/**
-	 * @param ThumbroThumbnailImage $context
+	 * @param ThumbroThumbnailImage $thumbnail
 	 * @param array &$sources
 	 * @return bool|void True or no return value to continue or false to abort
 	 */

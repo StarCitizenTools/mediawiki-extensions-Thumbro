@@ -88,7 +88,8 @@ class SpecialThumbroTest extends SpecialPage {
 		$request = $this->getRequest();
 		$this->setHeaders();
 
-		$isInternalRequest = $request->getHeader( 'X-Thumbro-Secret' ) === $this->getConfig()->get( MainConfigNames::SecretKey );
+		$secretKey = $this->getConfig()->get( MainConfigNames::SecretKey );
+		$isInternalRequest = $request->getHeader( 'X-Thumbro-Secret' ) === $secretKey;
 		$isUserAllowed = $this->userCanExecute( $this->getUser() );
 
 		if ( !$isUserAllowed && !$isInternalRequest ) {
@@ -215,25 +216,23 @@ class SpecialThumbroTest extends SpecialPage {
 				$infoHtml .= '</ul></div>';
 			}
 
-			$infoHtml = new HtmlSnippet( "<div style='display: grid; grid-template-columns:1fr 1fr 1fr; gap: 8px;'>$infoHtml</div>" );
-			$this->getOutput()->addHTML(
-				new PanelLayout( [
-					'expanded' => false,
-					'padded' => true,
-					'framed' => true,
-					'content' => [ $infoHtml ],
-				] )
+			$infoHtml = new HtmlSnippet(
+				"<div style='display: grid; grid-template-columns:1fr 1fr 1fr; gap: 8px;'>$infoHtml</div>"
 			);
-		}
-
-		$this->getOutput()->addHTML(
-			new PanelLayout( [
+			$this->getOutput()->addHTML( (string)( new PanelLayout( [
 				'expanded' => false,
 				'padded' => true,
 				'framed' => true,
-				'content' => [ $fieldset, $thumbs, $thumbsOrigCurr, $thumbsOrigThumbro ],
-			] )
-		);
+				'content' => [ $infoHtml ],
+			] ) ) );
+		}
+
+		$this->getOutput()->addHTML( (string)( new PanelLayout( [
+			'expanded' => false,
+			'padded' => true,
+			'framed' => true,
+			'content' => [ $fieldset, $thumbs, $thumbsOrigCurr, $thumbsOrigThumbro ],
+		] ) ) );
 
 		$this->getOutput()->addModules( [ 'ext.thumbro' ] );
 	}
@@ -278,12 +277,18 @@ class SpecialThumbroTest extends SpecialPage {
 
 			// ImageMagick 6.9.0+
 			if ( defined( 'Imagick::METRIC_PERCEPTUALHASH_ERROR' ) ) {
-				$info[$type]['Perceptual Hash'] = $image->compareImages( $images['original'], Imagick::METRIC_PERCEPTUALHASH_ERROR )[1];
+				$info[$type]['Perceptual Hash'] = $image->compareImages(
+					$images['original'],
+					Imagick::METRIC_PERCEPTUALHASH_ERROR
+				)[1];
 			}
 
 			// ImageMagick 7.0.7
 			if ( defined( 'Imagick::METRIC_STRUCTURAL_SIMILARITY_ERROR' ) ) {
-				$info[$type]['SSIM'] = $image->compareImages( $images['original'], Imagick::METRIC_STRUCTURAL_SIMILARITY_ERROR )[1];
+				$info[$type]['SSIM'] = $image->compareImages(
+					$images['original'],
+					Imagick::METRIC_STRUCTURAL_SIMILARITY_ERROR
+				)[1];
 			}
 		}
 		return $info;
@@ -294,8 +299,9 @@ class SpecialThumbroTest extends SpecialPage {
 	 */
 	private function getImageMetric( Imagick $image, string $metric ): ?string {
 		if ( defined( $metric ) ) {
-			return $image->compareImages( $image, $metric )[1];
+			return $image->compareImages( $image, constant( $metric ) )[1];
 		}
+		return null;
 	}
 
 	/**
@@ -317,7 +323,7 @@ class SpecialThumbroTest extends SpecialPage {
 	 */
 	private function humanFileSize( int $bytes, ?int $decimals = 2 ): string {
 		$size = [ 'B', 'KB', 'MB', 'GB', 'TB', 'PB' ];
-		$factor = floor( ( strlen( $bytes ) - 1 ) / 3 );
+		$factor = (int)floor( ( strlen( (string)$bytes ) - 1 ) / 3 );
 		return sprintf( "%.{$decimals}f %s",
 			$bytes / ( 1000 ** $factor ),
 			$size[$factor]
@@ -559,7 +565,7 @@ class SpecialThumbroTest extends SpecialPage {
 				'Expires: ' . gmdate( 'r ', time() + $thumbroTestExpiry )
 			] );
 		} else {
-			'@phan-var MediaTransformError $mto';
+			'@phan-var \MediaTransformError $mto';
 			$this->streamError( 500, $mto->getHtmlMsg() );
 		}
 

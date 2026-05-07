@@ -34,7 +34,7 @@ class Utils {
 			}
 
 			$library = $option['library'];
-			if ( !isset( $library ) || !isset( $libraries[$library] ) || !isset( $libraries[$library]['command'] ) ) {
+			if ( !isset( $libraries[$library] ) || !isset( $libraries[$library]['command'] ) ) {
 				continue;
 			}
 			$option['command'] = $libraries[$library]['command'];
