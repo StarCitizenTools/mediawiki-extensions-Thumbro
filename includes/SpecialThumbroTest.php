@@ -287,7 +287,7 @@ class SpecialThumbroTest extends SpecialPage {
 			if ( defined( 'Imagick::METRIC_STRUCTURAL_SIMILARITY_ERROR' ) ) {
 				$info[$type]['SSIM'] = $image->compareImages(
 					$images['original'],
-					Imagick::METRIC_STRUCTURAL_SIMILARITY_ERROR
+					constant( 'Imagick::METRIC_STRUCTURAL_SIMILARITY_ERROR' )
 				)[1];
 			}
 		}
