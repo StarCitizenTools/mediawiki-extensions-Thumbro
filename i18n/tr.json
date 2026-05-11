@@ -1,0 +1,30 @@
+{
+	"@metadata": {
+		"authors": [
+			"Hedda"
+		]
+	},
+	"thumbrotest": "Thumbro test sayfası",
+	"thumbro-desc": "MediaWiki'de küçük resim özelliğini iyileştir ve genişlet",
+	"thumbro-invalid-file": "İstenen dosya işlenemedi. Dosyanın bu vikide mevcut olup olmadığını kontrol edin.",
+	"thumbro-invalid-width": "Küçük resim genişliği sıfırdan büyük olmalı, ayrıca dosya genişliğini aşmamalıdır.",
+	"thumbro-invalid-sharpen": "Keskinleştirme değeri sıfırdan büyük, beşten küçük bir sayı olmalıdır.",
+	"thumbro-thumb-error": "libvips, verilen ayarlarla küçük resim oluşturmayı başaramadı.",
+	"thumbro-thumb-notscaled": "libvips, küçük resmi ölçeklendirmedi.",
+	"thumbro-form-legend": "Parametreler",
+	"thumbro-form-width": "Küçük resim genişliği:",
+	"thumbro-form-file": "Bu viki üzerindeki dosya:",
+	"thumbro-form-sharpen-radius": "Keskinleştirme oranı:",
+	"thumbro-form-bilinear": "İki çizgili ölçekleme",
+	"thumbro-form-submit": "Küçük resim oluştur",
+	"thumbro-thumbs-legend": "Oluşturulan küçük resimler",
+	"thumbro-thumbs-help": "Küçük resimler arasında karşılaştırma yapmak için fareyi küçük resmin üzerine getirin.",
+	"thumbro-original-image": "Özgün",
+	"thumbro-normal-image": "Güncel",
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "Her iki küçük resmi de göster",
+	"thumbro-show-default": "Sadece varsayılan küçük resim gösterilsin",
+	"thumbro-show-vips": "Sadece libvips tarafından oluşturulan küçük resmi göster",
+	"action-thumbro-test": "libvips ölçeklendirme test arayüzünü, [[Special:ThumbroTest]], kullanın",
+	"right-thumbro-test": "libvips ölçeklendirme test arayüzünü, [[Special:ThumbroTest]], kullanın"
+}

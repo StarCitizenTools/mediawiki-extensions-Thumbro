@@ -1,0 +1,30 @@
+{
+	"@metadata": {
+		"authors": [
+			"Siebrand"
+		]
+	},
+	"thumbrotest": "Thumbro testpagina",
+	"thumbro-desc": "Miniatuurweergave in MediaWiki uitbreiden en verbeteren",
+	"thumbro-invalid-file": "Het was niet mogelijk het gevraagde bestand te verwerken. Controleer of het binnen deze wiki aanwezig is.",
+	"thumbro-invalid-width": "De breedte van de miniatuur moet groter zijn dan 0 en niet groter dan de breedte van het bestand.",
+	"thumbro-invalid-sharpen": "De hoeveelheid verscherping moet een getal zijn dat groter is dan nul en kleiner is dan vijf.",
+	"thumbro-thumb-error": "libvips kon geen miniatuur genereren met de opgegeven parameters.",
+	"thumbro-thumb-notscaled": "libvips heeft de miniatuurafbeelding niet geschaald.",
+	"thumbro-form-legend": "Parameters",
+	"thumbro-form-width": "Breedte miniatuur:",
+	"thumbro-form-file": "Bestand op deze wiki:",
+	"thumbro-form-sharpen-radius": "Hoeveelheid verscherping:",
+	"thumbro-form-bilinear": "Bilineair schalen",
+	"thumbro-form-submit": "Miniatuur aanmaken",
+	"thumbro-thumbs-legend": "Aangemaakte miniaturen",
+	"thumbro-thumbs-help": "Beweeg uw muis over de miniatuur om de miniaturen te vergelijken.",
+	"thumbro-original-image": "Origineel",
+	"thumbro-normal-image": "Huidig",
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "Beide miniatuurafbeeldingen weergeven",
+	"thumbro-show-default": "Alleen de standaard miniatuurafbeelding weergeven",
+	"thumbro-show-vips": "Alleen de miniatuurafbeelding van libvips weergeven",
+	"action-thumbro-test": "de libvips schaaltestinterface [[Special:ThumbroTest]] te gebruiken",
+	"right-thumbro-test": "De libvips schaalbaarheidstestinterface [[Special:ThumbroTest]] gebruiken"
+}

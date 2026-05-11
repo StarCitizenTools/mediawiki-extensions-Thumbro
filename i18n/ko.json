@@ -1,0 +1,15 @@
+{
+	"@metadata": {
+		"authors": [
+			"Bisang"
+		]
+	},
+	"thumbro-form-legend": "변수",
+	"thumbro-form-width": "섬네일 너비:",
+	"thumbro-form-file": "이 위키에 있는 파일:",
+	"thumbro-form-submit": "섬네일 만들기",
+	"thumbro-thumbs-legend": "만들어진 섬네일",
+	"thumbro-original-image": "원본",
+	"thumbro-normal-image": "현재",
+	"thumbro-show-both": "모든 섬네일 보기"
+}

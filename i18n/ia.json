@@ -1,0 +1,30 @@
+{
+	"@metadata": {
+		"authors": [
+			"McDutchie"
+		]
+	},
+	"thumbrotest": "Pagina de test Thumbro",
+	"thumbro-desc": "Meliorar e expander le generation de miniaturas in MediaWiki",
+	"thumbro-invalid-file": "Non poteva processar le file requestate. Verifica que illo existe in iste wiki.",
+	"thumbro-invalid-width": "Le latitude del miniatura debe esser superior a zero e non superior al latitude del file.",
+	"thumbro-invalid-sharpen": "Le quantitate de acutiamento debe esser un numero superior a zero e inferior a cinque.",
+	"thumbro-thumb-error": "libvips non poteva generar un miniatura con le parametros specificate.",
+	"thumbro-thumb-notscaled": "libvips non ha redimensionate le miniatura.",
+	"thumbro-form-legend": "Parametros",
+	"thumbro-form-width": "Latitude del miniatura:",
+	"thumbro-form-file": "File sur iste wiki:",
+	"thumbro-form-sharpen-radius": "Quantitate de acutiamento:",
+	"thumbro-form-bilinear": "Redimensionamento bilinear",
+	"thumbro-form-submit": "Generar miniaturas",
+	"thumbro-thumbs-legend": "Miniaturas generate",
+	"thumbro-thumbs-help": "Passa tu mouse supra le miniatura pro comparar le miniaturas.",
+	"thumbro-original-image": "Original",
+	"thumbro-normal-image": "Actual",
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "Monstrar ambe miniaturas",
+	"thumbro-show-default": "Monstrar miniatura predefinite solmente",
+	"thumbro-show-vips": "Monstrar miniatura libvips solmente",
+	"action-thumbro-test": "usar le interfacie de test pro redimensionamento libvips [[Special:ThumbroTest]]",
+	"right-thumbro-test": "Usar le interfacie de test pro redimensionamento libvips [[Special:ThumbroTest]]"
+}

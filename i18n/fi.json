@@ -1,0 +1,25 @@
+{
+	"@metadata": {
+		"authors": [
+			"Wikipeedikko"
+		]
+	},
+	"thumbro-invalid-file": "Pyydettyä tiedostoa ei voitu käsitellä. Varmista, että se löytyy tästä wikistä.",
+	"thumbro-invalid-width": "Esikatselukuvan leveyden tulisi olla suurempi kuin nolla ja tiedoston leveyttä pienempi.",
+	"thumbro-invalid-sharpen": "Terävöityksen määrän tulisi olla luku, joka on suurempi kuin nolla ja pienempi kuin viisi.",
+	"thumbro-thumb-notscaled": "libvips ei skaalannut esikatselukuvaa.",
+	"thumbro-form-legend": "Parametrit",
+	"thumbro-form-width": "Esikatselukuvan leveys:",
+	"thumbro-form-file": "Tiedosto tässä wikissä:",
+	"thumbro-form-sharpen-radius": "Terävöityksen määrä:",
+	"thumbro-form-bilinear": "Bilineaarinen skaalaus",
+	"thumbro-form-submit": "Luo esikatselukuvat",
+	"thumbro-thumbs-legend": "Luodut esikatselukuvat",
+	"thumbro-thumbs-help": "Vertaile esikatselukuvia siirtämällä hiiren osoitin esikatselukuvan päälle.",
+	"thumbro-original-image": "Alkuperäinen",
+	"thumbro-normal-image": "Nykyinen",
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "Näytä molemmat esikatselukuvat",
+	"thumbro-show-default": "Näytä vain oletusesikatselukuva",
+	"right-thumbro-test": "Käytä libvips-skaalauksen testiliittymää [[Special:ThumbroTest]]"
+}

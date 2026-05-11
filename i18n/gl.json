@@ -1,0 +1,30 @@
+{
+	"@metadata": {
+		"authors": [
+			"Toliño"
+		]
+	},
+	"thumbrotest": "Páxina de proba de Thumbro",
+	"thumbro-desc": "Mellorar e ampliar as miniaturas en MediaWiki",
+	"thumbro-invalid-file": "Non se puido procesar o ficheiro solicitado. Comproba que existe neste wiki.",
+	"thumbro-invalid-width": "O largo da miniatura debe ser maior que cero e non pode superar o largo do ficheiro.",
+	"thumbro-invalid-sharpen": "A cantidade de agudización debe ser un número maior que cero e menor que cinco.",
+	"thumbro-thumb-error": "libvips non pode xerar unha miniatura cos parámetros proporcionados.",
+	"thumbro-thumb-notscaled": "libvips non escalou a miniatura.",
+	"thumbro-form-legend": "Parámetros",
+	"thumbro-form-width": "Largo da miniatura:",
+	"thumbro-form-file": "Ficheiro neste wiki:",
+	"thumbro-form-sharpen-radius": "Cantidade de agudización:",
+	"thumbro-form-bilinear": "Escala bilinear",
+	"thumbro-form-submit": "Xerar as miniaturas",
+	"thumbro-thumbs-legend": "Miniaturas xeradas",
+	"thumbro-thumbs-help": "Pasa o rato por riba da miniatura para comparalas.",
+	"thumbro-original-image": "Orixinal",
+	"thumbro-normal-image": "Actual",
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "Amosar ambas as miniaturas",
+	"thumbro-show-default": "Amosar só a miniatura por defecto",
+	"thumbro-show-vips": "Amosar só a miniatura de libvips",
+	"action-thumbro-test": "utilizar a interface de probas de escala de libvips, «[[Special:ThumbroTest]]»",
+	"right-thumbro-test": "Utilizar a interface de probas de escala de libvips, «[[Special:ThumbroTest]]»"
+}
