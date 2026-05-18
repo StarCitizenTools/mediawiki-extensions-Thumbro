@@ -1,0 +1,20 @@
+{
+	"@metadata": {
+		"authors": [
+			"شاه زمان پټان"
+		]
+	},
+	"thumbrotest": "Thumbro ازمېښتي مخ",
+	"thumbro-desc": "په مېډياويکي کې د بټنوکولو ښه‌کول او غځول",
+	"thumbro-invalid-file": "غوښتل شوې دوتنه نشي پروسس کېدی. وگورئ چې دا په دې ويکي کې شتون لري.",
+	"thumbro-invalid-width": "د بټنوک پلنوالی بايد له صفر زيات وي او د روانې له پلنوالي بايد زيات نه وي.",
+	"thumbro-invalid-sharpen": "د تېزولو اندازه بايد له صفر څخه لويه او د پینځو څخه کوچنۍ شمېره وي.",
+	"thumbro-thumb-error": "د ورکړل شويو ارزښتونو سره libvips يو بټنوک نشي پنځولی.",
+	"thumbro-thumb-notscaled": "libvips بټنوک نه دی اندازه کړی.",
+	"thumbro-form-legend": "ارزښتونه",
+	"thumbro-form-width": "بټنوک پلنوالی:",
+	"thumbro-form-file": "دوتنه په دې ويکي کې:",
+	"thumbro-form-sharpen-radius": "د تېزولو اندازه:",
+	"thumbro-form-submit": "بټنوکونه پنځول",
+	"thumbro-thumbs-legend": "پنځول شوي بټنوکونه"
+}

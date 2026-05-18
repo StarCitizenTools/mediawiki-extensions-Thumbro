@@ -2,15 +2,31 @@
 	"@metadata": {
 		"authors": [
 			"Bisang",
+			"Tensama0415",
 			"解浪"
 		]
 	},
-	"thumbro-form-legend": "변수",
+	"thumbrotest": "Thumbro 테스트 문서",
+	"thumbro-desc": "미디어위키의 섬네일 기능을 개선하고 확장합니다",
+	"thumbro-invalid-file": "요청한 파일을 처리할 수 없습니다. 이 위키에 있는지 확인하세요.",
+	"thumbro-invalid-width": "섬네일 너비는 0보다 크고 파일 너비보다 크지 않아야 합니다.",
+	"thumbro-invalid-sharpen": "선명한 양은 0보다 크고 5보다 작아야 합니다.",
+	"thumbro-thumb-error": "libvips가 매개변수가 주어진 섬네일을 만들 수 없었습니다.",
+	"thumbro-thumb-notscaled": "libvips가 섬네일 크기를 조정하지 않았습니다.",
+	"thumbro-form-legend": "매개변수",
 	"thumbro-form-width": "섬네일 너비:",
 	"thumbro-form-file": "이 위키에 있는 파일:",
+	"thumbro-form-sharpen-radius": "선명한 양:",
+	"thumbro-form-bilinear": "이중 선형 스케일링",
 	"thumbro-form-submit": "섬네일 만들기",
 	"thumbro-thumbs-legend": "만들어진 섬네일",
+	"thumbro-thumbs-help": "마우스 커서를 섬네일 위에 올려놓으면 섬네일 이미지를 비교할 수 있습니다.",
 	"thumbro-original-image": "원본",
 	"thumbro-normal-image": "현재",
-	"thumbro-show-both": "모든 섬네일 보기"
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "모든 섬네일 보기",
+	"thumbro-show-default": "기본 섬네일만 보기",
+	"thumbro-show-vips": "libvips 섬네일만 보기",
+	"action-thumbro-test": "libvips 스케일링 테스트 인터페이스 [[Special:ThumbroTest]]를 사용",
+	"right-thumbro-test": "libvips 스케일링 테스트 인터페이스 [[Special:ThumbroTest]]를 사용"
 }
