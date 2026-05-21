@@ -1,0 +1,30 @@
+{
+	"@metadata": {
+		"authors": [
+			"Bjankuloski06"
+		]
+	},
+	"thumbrotest": "Пробна страница на Thumbro",
+	"thumbro-desc": "Подобрување и проширување на создавањето минијатури на МедијаВики",
+	"thumbro-invalid-file": "Не можев да ја обработам бараната податотека. Проверете дали воопшто постои на ова вики.",
+	"thumbro-invalid-width": "Минијатурата мора да е поширока од нула, а потесна од изворната ширина на податотеката.",
+	"thumbro-invalid-sharpen": "Изострувањето треба да е поголемо од нула а помало од пет.",
+	"thumbro-thumb-error": "libvips не можеше да создаде минијатура со зададените параметри.",
+	"thumbro-thumb-notscaled": "libvips не ја размери минијатурата.",
+	"thumbro-form-legend": "Параметри",
+	"thumbro-form-width": "Ширина на минијатурата:",
+	"thumbro-form-file": "Податотека на ова вики:",
+	"thumbro-form-sharpen-radius": "Изострување:",
+	"thumbro-form-bilinear": "Билинеарно размерување",
+	"thumbro-form-submit": "Создај минијатури",
+	"thumbro-thumbs-legend": "Создадени минијатури",
+	"thumbro-thumbs-help": "Одете со глушецот врз минијатурата за да ги споредите минијатурите.",
+	"thumbro-original-image": "Изворно",
+	"thumbro-normal-image": "Тековно",
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "Прикажи ги двете минијатури",
+	"thumbro-show-default": "Прикажи ја само основната минијатура",
+	"thumbro-show-vips": "Прикажи само минијатура од libvips",
+	"action-thumbro-test": "употреба на посредникот [[Special:ThumbroTest]] за испробување на менување големина со libvips",
+	"right-thumbro-test": "Употреба на посредникот [[Special:ThumbroTest]] за испробување на менување големина со libvips"
+}
