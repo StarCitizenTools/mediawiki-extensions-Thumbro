@@ -16,5 +16,9 @@
 	"thumbro-form-file": "دوتنه په دې ويکي کې:",
 	"thumbro-form-sharpen-radius": "د تېزولو اندازه:",
 	"thumbro-form-submit": "بټنوکونه پنځول",
-	"thumbro-thumbs-legend": "پنځول شوي بټنوکونه"
+	"thumbro-thumbs-legend": "پنځول شوي بټنوکونه",
+	"thumbro-original-image": "آرنی",
+	"thumbro-normal-image": "اوسنی",
+	"thumbro-show-both": "دواړه بټنوکونه ښودل",
+	"thumbro-show-default": "يوازې تلواله بټنوکونه ښودل"
 }
