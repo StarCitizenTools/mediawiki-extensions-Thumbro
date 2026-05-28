@@ -1,0 +1,30 @@
+{
+	"@metadata": {
+		"authors": [
+			"Daisy40"
+		]
+	},
+	"thumbrotest": "Тестовая страница Thumbro",
+	"thumbro-desc": "Улучшает и расширяет возможности создания миниатюр в MediaWiki",
+	"thumbro-invalid-file": "Не удалось обработать запрошенный файл. Убедитесь, что он существует в этой вики.",
+	"thumbro-invalid-width": "Ширина миниатюры должна быть больше нуля и не больше ширины файла.",
+	"thumbro-invalid-sharpen": "Степень резкости должна быть числом больше нуля и меньше пяти.",
+	"thumbro-thumb-error": "libvips не смог создать миниатюру с заданными параметрами.",
+	"thumbro-thumb-notscaled": "libvips не выполнил масштабирование миниатюры.",
+	"thumbro-form-legend": "Параметры",
+	"thumbro-form-width": "Ширина миниатюры:",
+	"thumbro-form-file": "Файл в этой вики:",
+	"thumbro-form-sharpen-radius": "Степень резкости:",
+	"thumbro-form-bilinear": "Билинейное масштабирование",
+	"thumbro-form-submit": "Создать миниатюры",
+	"thumbro-thumbs-legend": "Созданные миниатюры",
+	"thumbro-thumbs-help": "Наведите курсор мыши на миниатюру, чтобы сравнить миниатюры.",
+	"thumbro-original-image": "Оригинал",
+	"thumbro-normal-image": "Текущая",
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "Показать обе миниатюры",
+	"thumbro-show-default": "Показать только миниатюру по умолчанию",
+	"thumbro-show-vips": "Показать только миниатюру libvips",
+	"action-thumbro-test": "использования интерфейса тестирования масштабирования libvips [[Special:ThumbroTest]]",
+	"right-thumbro-test": "Использование интерфейса тестирования масштабирования libvips [[Special:ThumbroTest]]"
+}
