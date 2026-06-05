@@ -81,6 +81,22 @@ docker compose exec mediawiki bash -c "cd /var/www/html/w/extensions/Thumbro && 
 - New thumbnail backends go under `includes/Libraries/` and are dispatched from `includes/MediaHandlers/`
 - Per-MIME backend selection and CLI flags are configured under `wgThumbroOptions` in `extension.json`
 
+### Benchmarking handlers (required)
+
+Every handler must demonstrably beat the MediaWiki baseline (ImageMagick primary;
+GD where it is a real core path) on the three axes Thumbro optimises: **file size**,
+**perceptual quality** (SSIMULACRA2), and **performance** (wall time + peak RSS).
+
+- Harness: `php tests/bench/benchmark.php` (see `tests/bench/README.md` for dev deps + setup).
+- Quality metric: **SSIMULACRA2** (bands: ≥90 visually lossless, ≥70 high, ≥50 medium).
+- Acceptance rule (full detail in `docs/superpowers/specs/2026-06-05-benchmark-harness-design.md` §6):
+  production-to-production **dominance** vs each applicable baseline — smaller at
+  ≥ quality, or better at ≤ size — with hard safety constraints (quality ≥ 50,
+  wall-time ≤ 3 s static / 10 s animated, peak RSS ≤ 512 MB) and soft budgets.
+  A genuine trade-off is **INCOMPARABLE** and needs a recorded decision.
+- **PR requirement:** any new or changed handler/option set must include harness
+  results and pass the gate; INCOMPARABLE results need an explicit recorded decision.
+
 ### Commits
 
 - Use [Conventional Commits](https://www.conventionalcommits.org/) (e.g. `fix:`, `feat:`, `refactor:`)

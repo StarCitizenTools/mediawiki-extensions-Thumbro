@@ -1,0 +1,34 @@
+# Files and directories excluded from the distributed package.
+# `git archive` (used to build Composer/Packagist release tarballs) honours
+# `export-ignore`, so none of the development-only files below ship to users.
+#
+# Kept in the archive (production): includes/, modules/, i18n/, extension.json,
+# Thumbro.alias.php, composer.json, README.md, CHANGELOG.md, COPYING.
+
+# Tests and benchmarks (incl. the tests/bench/ harness + corpus fixtures)
+/tests                          export-ignore
+
+# CI / repo automation
+/.github                        export-ignore
+/release-please-config.json     export-ignore
+/.release-please-manifest.json  export-ignore
+
+# Static analysis, lint and style configs
+/.phan                          export-ignore
+/.phpcs.xml                     export-ignore
+/.eslintrc.json                 export-ignore
+/.eslintignore                  export-ignore
+/.stylelintrc.json              export-ignore
+/.stylelintignore               export-ignore
+
+# JS dev tooling (the shipped JS lives committed under modules/)
+/package.json                   export-ignore
+/package-lock.json              export-ignore
+
+# Git + agent/contributor meta
+/.gitignore                     export-ignore
+/.gitattributes                 export-ignore
+/AGENTS.md                      export-ignore
+/CLAUDE.md                      export-ignore
+/CODE_OF_CONDUCT.md             export-ignore
+/SECURITY.md                    export-ignore
