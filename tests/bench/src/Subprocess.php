@@ -22,6 +22,9 @@ class Subprocess {
 			);
 		}
 		$statFile = tempnam( sys_get_temp_dir(), 'thumbro_time_' );
+		if ( $statFile === false ) {
+			throw new RuntimeException( 'tempnam failed: cannot create temp stat file' );
+		}
 		$full = array_merge( [ self::$timeBin, '-v', '-o', $statFile ], $cmd );
 
 		$descriptors = [ 1 => [ 'pipe', 'w' ], 2 => [ 'pipe', 'w' ] ];
@@ -34,13 +37,50 @@ class Subprocess {
 			@unlink( $statFile );
 			throw new RuntimeException( 'proc_open failed for: ' . implode( ' ', $cmd ) );
 		}
-		$stdout = stream_get_contents( $pipes[1] );
-		$stderr = stream_get_contents( $pipes[2] );
-		fclose( $pipes[1] );
-		fclose( $pipes[2] );
+
+		stream_set_blocking( $pipes[1], false );
+		stream_set_blocking( $pipes[2], false );
+		$stdout = '';
+		$stderr = '';
+		while ( $pipes[1] !== null || $pipes[2] !== null ) {
+			$read = array_values( array_filter( [ $pipes[1], $pipes[2] ] ) );
+			if ( $read === [] ) {
+				break;
+			}
+			$write = [];
+			$except = [];
+			// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- @ suppresses signal-interrupted EINTR warnings
+			if ( @stream_select( $read, $write, $except, 5 ) === false ) {
+				break;
+			}
+			if ( $pipes[1] !== null ) {
+				$chunk = fread( $pipes[1], 8192 );
+				$stdout .= ( $chunk !== false ) ? $chunk : '';
+				if ( feof( $pipes[1] ) ) {
+					fclose( $pipes[1] );
+					$pipes[1] = null;
+				}
+			}
+			if ( $pipes[2] !== null ) {
+				$chunk = fread( $pipes[2], 8192 );
+				$stderr .= ( $chunk !== false ) ? $chunk : '';
+				if ( feof( $pipes[2] ) ) {
+					fclose( $pipes[2] );
+					$pipes[2] = null;
+				}
+			}
+		}
+		// Close any pipe still open (e.g. stream_select aborted).
+		foreach ( [ 1, 2 ] as $i ) {
+			// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.is_resource
+			if ( isset( $pipes[$i] ) && is_resource( $pipes[$i] ) ) {
+				fclose( $pipes[$i] );
+			}
+		}
 		$exit = proc_close( $proc );
 		$wallMs = ( microtime( true ) - $t0 ) * 1000;
 
+		// Cast guards false from file_get_contents on an unreadable file; parseTimeStat then returns null.
 		$peak = is_file( $statFile ) ? self::parseTimeStat( (string)file_get_contents( $statFile ) ) : null;
 		// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 		@unlink( $statFile );
