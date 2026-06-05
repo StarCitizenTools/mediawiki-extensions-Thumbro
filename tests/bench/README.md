@@ -42,6 +42,16 @@ Animation runs are slow (metric is per-frame ~0.6 s).
 - **Very small thumbnails (≤120px) give unstable, low SSIMULACRA2** regardless of real
   quality (the metric has too few scales). Treat ≤120px quality as advisory and
   corroborate via the `--visual` contact sheet.
+- **Transparent content** is flattened over a fixed grey background before scoring
+  (SSIMULACRA2 is RGB-only; raw alpha yields garbage/negative scores). Both candidate
+  and reference are flattened identically, so visible content is compared fairly — but
+  alpha-channel fidelity itself is *not* scored. Corroborate transparent fixtures via
+  the `--visual` contact sheet.
+- **Animated fixtures are scored at 84px only.** The pure-Python SSIMULACRA2 costs
+  ~0.6 s/frame at 84px but ~6 s/frame at 320px, so a many-frame fixture at 320px makes
+  the run intractable. File **size** at larger sizes is the size axis (no metric needed)
+  and can be checked directly with `vipsthumbnail`/`gif2webp`. A compiled SSIMULACRA2
+  binary would lift this limit (see `Ssimulacra2::$bin`).
 
 ## Acceptance gate (summary)
 
