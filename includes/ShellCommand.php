@@ -50,6 +50,7 @@ class ShellCommand {
 		private readonly string $name,
 		private readonly string $command,
 		private readonly array $args,
+		private readonly string $style = 'vips',
 	) {
 	}
 
@@ -92,11 +93,20 @@ class ShellCommand {
 		return $this->err;
 	}
 
-	/**
-	 * Flatten arguments into "--key=name" array
-	 */
+	/** Flatten arguments according to the command's argument style. */
 	private function makeArguments( array $args ): array {
 		$cmdArgs = [];
+		if ( $this->style === 'gif2webp' ) {
+			// Single-dash flags; valued flags render as two tokens "-flag value".
+			foreach ( $args as $key => $value ) {
+				$cmdArgs[] = "-$key";
+				if ( $value !== '' && $value !== null && $value !== true ) {
+					$cmdArgs[] = (string)$value;
+				}
+			}
+			return $cmdArgs;
+		}
+		// vips style: "--key" or "--key=value".
 		foreach ( $args as $key => $value ) {
 			$cmdArg = "--$key";
 			if ( $value ) {
@@ -107,20 +117,27 @@ class ShellCommand {
 		return $cmdArgs;
 	}
 
-	/**
-	 * Constructs the command line array for executing the command.
-	 */
+	/** Constructs the command line array for executing the command. */
 	private function buildCommand(): array {
-		$cmd = [
-			$this->command,
-			$this->input,
-		];
-		# Input arguments
+		if ( $this->style === 'gif2webp' ) {
+			// gif2webp: <command> <flags...> <input> -o <output>
+			$cmd = array_merge( [ $this->command ], $this->makeArguments( $this->args ) );
+			$cmd[] = $this->input;
+			$cmd[] = '-o';
+			$cmd[] = $this->output;
+			return $cmd;
+		}
+		// vips: <command> <input> <--flags...> -o <output>
+		$cmd = [ $this->command, $this->input ];
 		$cmd = array_merge( $cmd, $this->makeArguments( $this->args ) );
-		# Output arguments
 		$cmd[] = '-o';
 		$cmd[] = $this->output;
 		return $cmd;
+	}
+
+	/** @internal test-only accessor for buildCommand(). */
+	public function buildCommandForTest(): array {
+		return $this->buildCommand();
 	}
 
 	/**
