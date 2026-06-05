@@ -18,7 +18,9 @@ class Reference {
 		if ( !$proc->ok() || !is_file( $tmp ) ) {
 			throw new RuntimeException( 'vips reference failed: ' . $proc->stderr );
 		}
-		rename( $tmp, $dst );
+		if ( !rename( $tmp, $dst ) ) {
+			throw new RuntimeException( 'Failed to move reference temp file to ' . $dst );
+		}
 		return $dst;
 	}
 
@@ -39,6 +41,9 @@ class Reference {
 		}
 		$frames = glob( $destDir . '/refframe_*.png' ) ?: [];
 		sort( $frames );
+		if ( $frames === [] ) {
+			throw new RuntimeException( 'convert produced no reference frames for ' . $src );
+		}
 		return $frames;
 	}
 }
