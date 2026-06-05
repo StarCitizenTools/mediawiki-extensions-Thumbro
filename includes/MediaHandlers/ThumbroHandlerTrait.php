@@ -44,6 +44,26 @@ trait ThumbroHandlerTrait {
 			return new TransformParameterError( $params );
 		}
 
+		// Mirror TransformationalImageHandler::doTransform()'s "return unscaled image" guard.
+		// normaliseParams() clamps physicalWidth/Height down to the source size when the
+		// requested size is larger (e.g. the responsive 1.5x/2x variants of an image that is
+		// smaller than the requested density). In that case core serves the original file
+		// rather than a thumbnail. Without this, the TRANSFORM_LATER path emits a thumb URL
+		// (e.g. 144px-Foo.webp) that thumb_handler.php rejects with HTTP 400 when
+		// $wgGenerateThumbnailOnParse = false. See issue #51.
+		if (
+			!$image->mustRender() &&
+			$params['physicalWidth'] == $image->getWidth() &&
+			$params['physicalHeight'] == $image->getHeight() &&
+			( $params['quality'] ?? null ) !== 'low'
+		) {
+			return $this->getClientScalingThumbnailImage( $image, [
+				'clientWidth' => $params['width'],
+				'clientHeight' => $params['height'],
+				'isFilePageThumb' => $params['isFilePageThumb'] ?? false,
+			] );
+		}
+
 		wfDebug( __METHOD__ . ": Transforming later per flags." );
 		$newParams = [
 			'width' => $params['width'],
