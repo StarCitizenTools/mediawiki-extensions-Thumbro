@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v1.2.0...v1.2.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* correct the thumbnails container selector from ID to class ([bdd59c7](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/bdd59c7c57c77a4f8198e851100a6886475640a0))
+* serve original file for non-upscalable deferred transforms ([470522a](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/470522a29d89b83c8a27419e8e663e2234d46967)), closes [#51](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/51)
+
 ## [1.2.0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v1.1.1...v1.2.0) (2026-05-07)
 
 
