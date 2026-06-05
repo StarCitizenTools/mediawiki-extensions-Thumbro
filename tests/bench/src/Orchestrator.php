@@ -72,8 +72,8 @@ class Orchestrator {
 					}
 					$baseQ = $this->scoreQuality( $base, $entry, $dir );
 					$verdicts[$name] = $gate->evaluate(
-						$res->bytes ?? 0, $quality->mean, $res->wallMs, $res->peakRssKb ?? 0,
-						$base->bytes ?? 0, $baseQ->mean, $base->wallMs, $base->peakRssKb ?? 0
+						$res->bytes ?? 0, $quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0,
+						$base->bytes ?? 0, $baseQ->mean, $base->wallMs ?? 0.0, $base->peakRssKb ?? 0
 					);
 				}
 			}
