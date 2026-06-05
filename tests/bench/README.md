@@ -38,6 +38,7 @@ Animation runs are slow (metric is per-frame ~0.6 s).
 - SSIMULACRA2 bands: ≥90 visually lossless, ≥70 high, ≥50 medium, <50 low.
 - **Corpus must be structured content, never noise** — pure noise (e.g. plasma) scores
   terribly under a reference metric and is meaningless.
+  (Exception: `tiny.png` is a perf/size-extreme fixture at near-zero downscale, where content doesn't affect the score.)
 - **Very small thumbnails (≤120px) give unstable, low SSIMULACRA2** regardless of real
   quality (the metric has too few scales). Treat ≤120px quality as advisory and
   corroborate via the `--visual` contact sheet. See spec §5.2.
@@ -53,5 +54,5 @@ INCOMPARABLE (record a decision). Full detail: spec §6.
 Edit `bin/make_corpus.php`, run it, add an entry to `corpus/manifest.json`.
 
 ## Add a contender
-Implement `src/Contender.php` under `src/contenders/`, register it in
+Implement `src/Contender.php` under `src/Contenders/`, register it in
 `Orchestrator::__construct()` (as a baseline or candidate).

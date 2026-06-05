@@ -72,8 +72,8 @@ class Orchestrator {
 					}
 					$baseQ = $this->scoreQuality( $base, $entry, $dir );
 					$verdicts[$name] = $gate->evaluate(
-						$res->bytes, $quality->mean, $res->wallMs, $res->peakRssKb,
-						$base->bytes, $baseQ->mean, $base->wallMs, $base->peakRssKb
+						$res->bytes ?? 0, $quality->mean, $res->wallMs, $res->peakRssKb ?? 0,
+						$base->bytes ?? 0, $baseQ->mean, $base->wallMs, $base->peakRssKb ?? 0
 					);
 				}
 			}
@@ -100,7 +100,7 @@ class Orchestrator {
 				mkdir( $d, 0777, true );
 			}
 		}
-		$candFrames = Ssimulacra2::extractFrames( $res->thumbPath, $entry['mime'], $entry['frames'], $candDir );
+		$candFrames = Ssimulacra2::extractFrames( $res->thumbPath, $entry['frames'], $candDir );
 		if ( $entry['animated'] ) {
 			$refFrames = Reference::forFrames( $entry['path'], $w, $h, count( $candFrames ), $refDir );
 		} else {

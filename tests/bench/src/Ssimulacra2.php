@@ -69,12 +69,11 @@ class Ssimulacra2 {
 	 * animated GIF both via convert -coalesce (no anim_dump dependency).
 	 *
 	 * @param string $candidate Path to candidate image
-	 * @param string $mime MIME type of candidate
 	 * @param int $frameCount Expected number of frames (1 = static)
 	 * @param string $destDir Directory to write extracted PNGs into
 	 * @return string[] frame PNG paths
 	 */
-	public static function extractFrames( string $candidate, string $mime, int $frameCount, string $destDir ): array {
+	public static function extractFrames( string $candidate, int $frameCount, string $destDir ): array {
 		$convert = ToolLocator::require( 'convert', 'imagemagick' );
 		if ( $frameCount <= 1 ) {
 			$dst = $destDir . '/cand_000.png';

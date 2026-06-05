@@ -9,9 +9,9 @@ spl_autoload_register( static function ( string $class ): void {
 		return;
 	}
 	$parts = explode( '\\', substr( $class, strlen( $prefix ) ) );
-	// Subdirectory names are lowercase; only the final segment (class name) is mixed-case.
+	// PSR-4: directory names match namespace segments exactly (no lowercasing).
 	$last = array_pop( $parts );
-	$rel = ( $parts ? strtolower( implode( '/', $parts ) ) . '/' : '' ) . $last;
+	$rel = ( $parts ? implode( '/', $parts ) . '/' : '' ) . $last;
 	$file = __DIR__ . '/src/' . $rel . '.php';
 	if ( is_file( $file ) ) {
 		require $file;

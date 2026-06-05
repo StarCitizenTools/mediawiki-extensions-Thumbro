@@ -7,7 +7,7 @@ namespace MediaWiki\Extension\Thumbro\Bench;
 class GateResult {
 	/**
 	 * @param Verdict $verdict
-	 * @param string[] $reasons hard-constraint FAIL reasons
+	 * @param string[] $reasons FAIL reasons (hard-constraint breaches or baseline dominance)
 	 * @param string[] $flags soft-budget breach flags (recorded, not failing)
 	 */
 	public function __construct(
