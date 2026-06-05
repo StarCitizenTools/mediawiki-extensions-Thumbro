@@ -21,7 +21,7 @@ if command -v ssimulacra2_rs &>/dev/null; then
 fi
 
 echo "Installing ssimulacra2 Python package..."
-python3 -m pip install --break-system-packages ssimulacra2
+python3 -m pip install --break-system-packages ssimulacra2==0.3.0
 
 echo "Creating /usr/local/bin/ssimulacra2_rs wrapper..."
 cat > /usr/local/bin/ssimulacra2_rs << 'WRAPPER'
@@ -32,6 +32,6 @@ WRAPPER
 chmod 0755 /usr/local/bin/ssimulacra2_rs
 
 echo "Verifying installation..."
-ssimulacra2_rs --help | head -3
+ssimulacra2_rs --help >/dev/null 2>&1 && echo "ssimulacra2_rs installed OK" || echo "warning: ssimulacra2_rs verification did not exit 0"
 
 echo "ssimulacra2_rs installed successfully."
