@@ -84,7 +84,9 @@ class VisualReporter {
 
 	private function cell( string $thumbPath, string $caption, string $visDir ): string {
 		$name = basename( dirname( $thumbPath ) ) . '_' . basename( $thumbPath );
-		copy( $thumbPath, $visDir . '/' . $name );
+		if ( !copy( $thumbPath, $visDir . '/' . $name ) ) {
+			throw new \RuntimeException( 'Failed to copy thumbnail into visual dir: ' . $thumbPath );
+		}
 		return '<figure><img src="' . htmlspecialchars( $name ) . '">'
 			. '<figcaption>' . htmlspecialchars( $caption ) . '</figcaption></figure>';
 	}
