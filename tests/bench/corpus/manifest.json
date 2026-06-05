@@ -1,0 +1,12 @@
+{
+	"files": [
+		{ "file": "photographic.jpg", "mime": "image/jpeg", "animated": false, "frames": 1, "targets": [ 120, 320 ] },
+		{ "file": "flat-graphic.png", "mime": "image/png", "animated": false, "frames": 1, "targets": [ 120, 320 ] },
+		{ "file": "sprite.gif", "mime": "image/gif", "animated": false, "frames": 1, "targets": [ 64, 120 ] },
+		{ "file": "alpha.png", "mime": "image/png", "animated": false, "frames": 1, "targets": [ 120, 320 ] },
+		{ "file": "anim-small.gif", "mime": "image/gif", "animated": true, "frames": 21, "targets": [ 84, 120 ] },
+		{ "file": "anim-large.gif", "mime": "image/gif", "animated": true, "frames": 31, "targets": [ 84, 320 ] },
+		{ "file": "tiny.png", "mime": "image/png", "animated": false, "frames": 1, "targets": [ 16 ] },
+		{ "file": "huge.jpg", "mime": "image/jpeg", "animated": false, "frames": 1, "targets": [ 320, 1280 ] }
+	]
+}
