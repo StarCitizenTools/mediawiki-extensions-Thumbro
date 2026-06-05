@@ -17,8 +17,14 @@ $run = static function ( string $cmd ): void {
 // phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.escapeshellarg
 $q = static fn ( string $s ) => escapeshellarg( $s );
 
-// photographic — plasma fractal mimics noisy natural-image texture
-$run( 'convert -size 800x600 plasma:fractal ' . $q( "$dir/photographic.jpg" ) );
+// photographic — structured synthetic: smooth gradient base + solid-colour shapes (circles,
+// rounded rectangles). No plasma/noise so perceptual metrics (SSIMULACRA2) score sensibly.
+$run( 'convert -size 800x600 gradient:skyblue-navy '
+	. '\( -size 800x600 xc:none '
+	. '-fill gold -draw "circle 220,200 220,90" '
+	. '-fill crimson -draw "roundrectangle 480,120 740,360 30,30" '
+	. '-fill white -draw "circle 600,460 600,400" \) '
+	. '-composite ' . $q( "$dir/photographic.jpg" ) );
 
 // flat graphic (hard edges, few colours)
 $run( 'convert -size 800x600 xc:white -fill "#3366cc" -draw "roundrectangle 80,80 720,520 40,40" '
@@ -72,7 +78,15 @@ $run( 'convert -size 700x700 xc:white -delay 5 '
 	. ' -loop 0 ' . $q( "$dir/anim-large.gif" ) );
 
 // size extremes
+// tiny.png is a perf/size-extreme fixture (16x16), not a quality-representativeness one;
+// near-no-downscale means its perceptual score is always ~100 regardless of content.
 $run( 'convert -size 16x16 plasma:fractal ' . $q( "$dir/tiny.png" ) );
-$run( 'convert -size 4000x3000 plasma:fractal ' . $q( "$dir/huge.jpg" ) );
+// huge.jpg — same structured approach as photographic.jpg scaled to 4000x3000
+$run( 'convert -size 4000x3000 gradient:skyblue-navy '
+	. '\( -size 4000x3000 xc:none '
+	. '-fill gold -draw "circle 1100,1000 1100,450" '
+	. '-fill crimson -draw "roundrectangle 2400,600 3700,1800 150,150" '
+	. '-fill white -draw "circle 3000,2300 3000,2000" \) '
+	. '-composite ' . $q( "$dir/huge.jpg" ) );
 
 echo "corpus regenerated in $dir\n";
