@@ -9,6 +9,7 @@ use MediaTransformOutput;
 use MediaWiki\Config\Config;
 use MediaWiki\Config\ConfigFactory;
 use MediaWiki\Extension\Thumbro\Libraries\Libvips;
+use MediaWiki\Extension\Thumbro\Libraries\Libwebp;
 use MediaWiki\Extension\Thumbro\MediaHandlers;
 use MediaWiki\Extension\Thumbro\Utils;
 use MediaWiki\Hook\BitmapHandlerCheckImageAreaHook;
@@ -69,7 +70,25 @@ class MediaWikiHooks implements
 			return true;
 		}
 
-		/** @todo Add logic to use other libaries */
+		$library = $options['library'] ?? 'libvips';
+
+		if ( $library === 'libwebp' ) {
+			$libraries = $config->get( 'ThumbroLibraries' );
+			$gifOptions = $config->get( 'ThumbroOptions' )['image/gif'] ?? [];
+			$webpOptions = [
+				// vips for the resize step and the libvips delegation.
+				'command' => $libraries['libvips']['command'] ?? $options['command'],
+				// gif2webp for the encode step.
+				'webpCommand' => $libraries['libwebp']['command'] ?? '',
+				'webpOptions' => $gifOptions['outputOptions'] ?? [],
+				// libvips WebP-save flags for the opaque/static delegation.
+				'outputOptions' => $options['outputOptions'] ?? [],
+				'inputOptions' => $options['inputOptions'] ?? [],
+				'maxAnimatedArea' => (int)$config->get( 'ThumbroMaxAnimatedArea' ),
+			];
+			return Libwebp::doTransform( $handler, $file, $params, $webpOptions, $mto );
+		}
+
 		return Libvips::doTransform( $handler, $file, $params, $options, $mto );
 	}
 
@@ -111,6 +130,11 @@ class MediaWikiHooks implements
 			$software[ '[https://www.libvips.org libvips]' ] = $vipsVersion;
 		}
 
+		$libwebpVersion = $this->getLibwebpVersion();
+		if ( $libwebpVersion !== null ) {
+			$software[ '[https://developers.google.com/speed/webp libwebp]' ] = $libwebpVersion;
+		}
+
 		// TODO: Move this to a class for ImageMagick
 		if ( extension_loaded( 'imagick' ) ) {
 			$imVersion = \Imagick::getVersion()['versionString'];
@@ -129,5 +153,29 @@ class MediaWikiHooks implements
 				$software[ '[https://www.php.net/manual/en/book.image.php GD]' ] = gd_info()['GD Version'];
 			}
 		}
+	}
+
+	/**
+	 * Return the libwebp version (e.g. "1.2.4"), or null if unavailable.
+	 *
+	 * gif2webp ships as part of libwebp and has no independent version; `gif2webp -version`
+	 * reports the libwebp library version, so this is surfaced as "libwebp" on Special:Version.
+	 */
+	private function getLibwebpVersion(): ?string {
+		$libraries = $this->config->get( 'ThumbroLibraries' );
+		$command = $libraries['libwebp']['command'] ?? '';
+		if ( $command === '' || !is_executable( $command ) ) {
+			return null;
+		}
+		$result = Shell::command( [ $command, '-version' ] )->execute();
+		if ( $result->getExitCode() !== 0 ) {
+			return null;
+		}
+		// gif2webp -version prints e.g. "WebP Encoder version: 1.2.4" (the libwebp version) on line 1.
+		$line = trim( strtok( $result->getStdout(), "\n" ) ?: '' );
+		if ( preg_match( '/(\d+\.\d+\.\d+)/', $line, $matches ) ) {
+			return $matches[1];
+		}
+		return null;
 	}
 }

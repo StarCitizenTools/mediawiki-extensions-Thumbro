@@ -81,35 +81,38 @@
 			"value": {
 				"libvips": {
 					"command": "/usr/bin/vipsthumbnail"
+				},
+				"libwebp": {
+					"command": "/usr/bin/gif2webp"
 				}
 			}
+		},
+		"ThumbroMaxAnimatedArea": {
+			"value": 25000000
 		},
 		"ThumbroOptions": {
 			"value": {
 				"image/gif": {
 					"enabled": true,
-					"library": "libvips",
+					"library": "libwebp",
 					"inputOptions": {
 						"n": "-1"
+					},
+					"outputOptions": {
+						"mixed": "",
+						"q": "80",
+						"m": "4"
 					}
 				},
 				"image/jpeg": {
 					"enabled": true,
 					"library": "libvips",
-					"inputOptions": {},
-					"outputOptions": {
-						"strip": "true",
-						"Q": "80"
-					}
+					"inputOptions": {}
 				},
 				"image/png": {
 					"enabled": true,
 					"library": "libvips",
-					"inputOptions": {},
-					"outputOptions": {
-						"strip": "true",
-						"filter": "VIPS_FOREIGN_PNG_FILTER_ALL"
-					}
+					"inputOptions": {}
 				},
 				"image/webp": {
 					"enabled": true,

@@ -33,11 +33,15 @@ class Utils {
 				continue;
 			}
 
-			$library = $option['library'];
+			// Backend selection is per INPUT MIME type. getThumbType() always reports
+			// image/webp, so $option here is the webp block; take `library` from the
+			// input-MIME block instead so e.g. image/gif can select libwebp.
+			$library = $options[$inputMimeType]['library'] ?? $option['library'];
 			if ( !isset( $libraries[$library] ) || !isset( $libraries[$library]['command'] ) ) {
 				continue;
 			}
 			$option['command'] = $libraries[$library]['command'];
+			$option['library'] = $library;
 
 			// Multi-page files are not supported
 			if ( $file->isMultipage() ) {
