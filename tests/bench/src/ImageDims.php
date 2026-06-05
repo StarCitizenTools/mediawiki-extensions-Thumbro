@@ -15,6 +15,9 @@ class ImageDims {
 			}
 		}
 		$info = getimagesize( $path );
+		if ( $info === false || (int)$info[0] < 1 || (int)$info[1] < 1 ) {
+			throw new \RuntimeException( 'Cannot determine image dimensions for ' . $path );
+		}
 		return [ (int)$info[0], (int)$info[1] ];
 	}
 }
