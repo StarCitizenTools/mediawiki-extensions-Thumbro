@@ -1,27 +1,29 @@
 ( function () {
 	'use strict';
 
-	function switchThumbs() {
-		var e = $( '.mw-thumbrotest-thumbnails' ),
-			mask = e.children( '.uc-mask' ),
-			caption = e.children( '.uc-caption' ),
-			width = e.width(),
-			maskWidth = mask.width();
+	function switchThumbs( $thumbnails ) {
+		const $mask = $thumbnails.children( '.uc-mask' ),
+			$caption = $thumbnails.children( '.uc-caption' ),
+			width = $thumbnails.width(),
+			maskWidth = $mask.width();
 
 		if ( maskWidth < width / 2 ) {
 			// Bar is 3 pixels width. We want to show it on the right.
-			mask.width( width - 3 );
-			caption.html( e.children( 'img:eq(0)' ).attr( 'alt' ) );
+			$mask.width( width - 3 );
+			$caption.html( $thumbnails.children( 'img' ).eq( 0 ).attr( 'alt' ) );
 		} else {
-			mask.width( 0 );
-			caption.html( e.children( 'img:eq(1)' ).attr( 'alt' ) );
+			$mask.width( 0 );
+			$caption.html( $thumbnails.children( 'img' ).eq( 1 ).attr( 'alt' ) );
 		}
 	}
 
-	$( function () {
-		if ( !document.querySelector( '.mw-thumbrotest-thumbnails' ) ) {
+	$( () => {
+		const nodes = document.querySelectorAll( '.mw-thumbrotest-thumbnails' );
+		if ( !nodes.length ) {
 			return;
 		}
+		const $thumbnails = $( nodes );
+
 		// options are detailed in upstream documentation available at
 		// http://www.userdot.net/files/jquery/jquery.ucompare/demo/
 		//
@@ -30,7 +32,7 @@
 		// - leftgap: the gap to the left of the image
 		// - rightgap: the gap to the right of the image
 		// - defaultgap: the default gap shown before any interactions
-		$( '.mw-thumbrotest-thumbnails' ).ucompare( {
+		$thumbnails.ucompare( {
 			defaultgap: 50,
 			leftgap: 0,
 			rightgap: 0,
@@ -38,11 +40,8 @@
 			reveal: 0.5
 		} );
 
-		// Also add a click handler to instantly switch beetween pics
-		$( '.mw-thumbrotest-thumbnails' ).on(
-			'click',
-			function () { switchThumbs(); }
-		);
+		// Also add a click handler to instantly switch between pics
+		$thumbnails.on( 'click', () => switchThumbs( $thumbnails ) );
 	} );
 
 }() );
