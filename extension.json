@@ -16,7 +16,8 @@
 		"MediaWiki\\Extension\\Thumbro\\": "includes/"
 	},
 	"TestAutoloadNamespaces": {
-		"MediaWiki\\Extension\\Thumbro\\Tests\\": "tests/phpunit/"
+		"MediaWiki\\Extension\\Thumbro\\Tests\\": "tests/phpunit/",
+		"MediaWiki\\Extension\\Thumbro\\Bench\\": "tests/bench/src/"
 	},
 	"SpecialPages": {
 		"ThumbroTest": "MediaWiki\\Extension\\Thumbro\\SpecialThumbroTest"
