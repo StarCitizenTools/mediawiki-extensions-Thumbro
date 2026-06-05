@@ -89,7 +89,7 @@ GD where it is a real core path) on the three axes Thumbro optimises: **file siz
 
 - Harness: `php tests/bench/benchmark.php` (see `tests/bench/README.md` for dev deps + setup).
 - Quality metric: **SSIMULACRA2** (bands: ≥90 visually lossless, ≥70 high, ≥50 medium).
-- Acceptance rule (full detail in `docs/superpowers/specs/2026-06-05-benchmark-harness-design.md` §6):
+- Acceptance rule (full detail in `tests/bench/README.md`):
   production-to-production **dominance** vs each applicable baseline — smaller at
   ≥ quality, or better at ≤ size — with hard safety constraints (quality ≥ 50,
   wall-time ≤ 3 s static / 10 s animated, peak RSS ≤ 512 MB) and soft budgets.

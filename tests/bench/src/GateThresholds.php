@@ -3,7 +3,7 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\Thumbro\Bench;
 
-/** Named, overridable thresholds for the acceptance gate (spec §6.1). */
+/** Named, overridable thresholds for the acceptance gate (see tests/bench/README.md). */
 class GateThresholds {
 	public function __construct(
 		// Hard constraints (breach => FAIL)

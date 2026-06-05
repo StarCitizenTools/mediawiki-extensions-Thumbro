@@ -3,7 +3,7 @@
 Measures **file size**, **perceptual quality** (SSIMULACRA2), and **performance**
 (wall time + peak RSS) for Thumbro's handlers against the MediaWiki baselines
 (ImageMagick primary; GD where it is a real core path), and applies the acceptance
-gate from `docs/superpowers/specs/2026-06-05-benchmark-harness-design.md` (§6).
+gate described under **Acceptance gate** below.
 
 ## Dev dependencies (Debian 12 dev image)
 
@@ -41,14 +41,14 @@ Animation runs are slow (metric is per-frame ~0.6 s).
   (Exception: `tiny.png` is a perf/size-extreme fixture at near-zero downscale, where content doesn't affect the score.)
 - **Very small thumbnails (≤120px) give unstable, low SSIMULACRA2** regardless of real
   quality (the metric has too few scales). Treat ≤120px quality as advisory and
-  corroborate via the `--visual` contact sheet. See spec §5.2.
+  corroborate via the `--visual` contact sheet.
 
 ## Acceptance gate (summary)
 
 Production-to-production dominance vs each applicable baseline (smaller at ≥ quality, or
 better at ≤ size) → PASS; baseline dominates or a hard constraint breached (quality < 50,
 time > 3 s static / 10 s animated, RSS > 512 MB) → FAIL; a genuine trade-off →
-INCOMPARABLE (record a decision). Full detail: spec §6.
+INCOMPARABLE (record a decision in the PR).
 
 ## Add a fixture
 Edit `bin/make_corpus.php`, run it, add an entry to `corpus/manifest.json`.
