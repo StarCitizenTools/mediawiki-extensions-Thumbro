@@ -7,122 +7,120 @@ Thumbor at home:
 </i></p></blockquote>
 </div>
 
-**Thumbro** is a MediaWiki extension used to improve and expand thumbnailing in MediaWiki. It is forked from [Extension:VipsScaler](https://www.mediawiki.org/wiki/Extension:VipsScaler). Currently, it only supports [libvips](https://www.libvips.org).
+**Thumbro** improves and expands thumbnail generation in MediaWiki. Instead of relying on a single tool, it automatically picks the most suitable image library for each file format — so every thumbnail comes out at the best quality and smallest size, with no manual tuning and room to add better libraries over time. Forked from [Extension:VipsScaler](https://www.mediawiki.org/wiki/Extension:VipsScaler).
 
 ## Features
-- Use libvips to render thumbnails instead of ImageMagick and GD
-- Allow custom output options for libvips
-- Render WebP thumbnails by default for gif, jpeg, png, and webp (including animated)
-- Extend thumbnail support for more file formats, such as animated WebP
-- Allow adding `<source>` element to the image using the `ThumbroBeforeProduceHtml` hook
-- Add a hidden anchor element to allow web crawler to crawl the original resolution image ([T54647](https://phabricator.wikimedia.org/T54647))
+- Routes each format to the best-suited image library automatically (currently [libvips](https://www.libvips.org) and [libwebp](https://developers.google.com/speed/webp/docs/gif2webp)), instead of MediaWiki's default ImageMagick and GD
+- Produces higher-quality, smaller thumbnails — including for animated images
+- Renders WebP thumbnails by default for GIF, JPEG, PNG, and WebP (including animated)
+- Lets you fine-tune encoding per format with custom load and save options
+- Extends thumbnail support to more formats, such as animated WebP
+- Adds a `<source>` element to images via the `ThumbroBeforeProduceHtml` hook
+- Adds a hidden anchor so web crawlers can reach the original-resolution image ([T54647](https://phabricator.wikimedia.org/T54647))
 
 ## Installation
-1. Install [libvips](https://www.libvips.org/install.html). For Debian-based systems:
+1. Install the image libraries Thumbro uses. [libvips](https://www.libvips.org/install.html) is required; [libwebp](https://developers.google.com/speed/webp/docs/gif2webp) is recommended for crisp, compact animated-GIF thumbnails. On Debian-based systems:
 ```console
-apt-get install libvips-tools
+apt-get install libvips-tools webp
 ```
-2. [Download](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/archive/main.zip) and place the file(s) in a directory called `Thumbro` in your `extensions/` folder.
-3. Add the following code at the bottom of your LocalSettings.php and **after all other extensions**:
+2. [Download](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/archive/main.zip) the extension and place the files in a directory called `Thumbro` in your `extensions/` folder.
+3. Add the following to the bottom of your `LocalSettings.php`, **after all other extensions**:
 ```php
 wfLoadExtension( 'Thumbro' );
 ```
-3. **✔️Done** - Navigate to Special:Version on your wiki to verify that the extension is successfully installed.
+4. **✔️ Done** — visit Special:Version on your wiki to confirm the extension is installed.
 
-## Configurations
-> ℹ️ **Thumbro works out of the box without any configurations.**
+## Configuration
+> ℹ️ **Thumbro works out of the box — no configuration required.**
 
-`$wgThumbroLibraries` is used to define the libraries used in Thumbro.
+### `$wgThumbroLibraries`
+Lists the image libraries Thumbro can use and the command that runs each one.
 
-Key | Description 
-:--- | :--- 
-`command` | Executable used by Thumbro to do image transformation
+Key | Description
+:--- | :---
+`command` | Path to the executable Thumbro runs for image transformation
 
 Default:
 ```php
-$wgThumbroLibraries => [
-	"value" => [
-		"libvips" => [
-			"command": "/usr/bin/vipsthumbnail"
-		]
-	]
+$wgThumbroLibraries = [
+	'libvips' => [ 'command' => '/usr/bin/vipsthumbnail' ],
+	'libwebp' => [ 'command' => '/usr/bin/gif2webp' ],
 ];
 ```
-`$wgThumbroOptions` is used to define the parameters of the thumbnail generation.
 
-Key | Description 
-:--- | :--- 
-`enabled` | Enable or disable Thumbro for the selected file type
-`library` | Corresponds to `$wgThumbroLibraries`, currently only `libvips` is supported
-`inputOptions` | Corresponds to the input/load options in [`VipsForeignSave`](https://www.libvips.org/API/current/VipsForeignSave.html)
-`outputOptions` | Corresponds to the output/save options in [`VipsForeignSave`](https://www.libvips.org/API/current/VipsForeignSave.html)
+### `$wgThumbroOptions`
+Controls how each file type is thumbnailed: which library handles it, and the options passed to that library. The defaults are tuned per format, so most wikis never need to change this.
+
+Key | Description
+:--- | :---
+`enabled` | Turn Thumbro on or off for this file type
+`library` | Which library handles this type (a key from `$wgThumbroLibraries`)
+`inputOptions` | Options applied when loading and resizing the source image
+`outputOptions` | Options applied when saving the thumbnail. Valid keys depend on the chosen library — e.g. [`VipsForeignSave`](https://www.libvips.org/API/current/VipsForeignSave.html) options for `libvips`, or [`gif2webp`](https://developers.google.com/speed/webp/docs/gif2webp) flags (such as `mixed`, `q`, `m`) for `libwebp`
 
 Default:
 ```php
 $wgThumbroOptions = [
-	'value' => [
-		'image/gif' => [
-			'enabled' => true,
-			'library' => 'libvips',
-			'inputOptions' => [
-				'n' => '-1'
-			]
+	'image/gif' => [
+		'enabled' => true,
+		'library' => 'libwebp',
+		'inputOptions' => [
+			'n' => '-1'
 		],
-		'image/jpeg' => [
-			'enabled' => true,
-			'library' => 'libvips',
-			'inputOptions' => [],
-			'outputOptions' => [
-				'strip': 'true',
-				'Q': '80'
-			]
-		],
-		'image/png': => [
-			'enabled' => true,
-			'library' => 'libvips',
-			'inputOptions' => [],
-			'outputOptions' => [
-				'strip' => 'true',
-				'filter' => 'VIPS_FOREIGN_PNG_FILTER_ALL'
-			]
-		],
-		'image/webp' => [
-			'enabled' => true,
-			'library' => 'libvips',
-			'inputOptions' => [],
-			'outputOptions' => [
-				'strip' => 'true',
-				'Q' => '90',
-				'smart_subsample' => 'true'
-			]
+		'outputOptions' => [
+			'mixed' => '',
+			'q' => '80',
+			'm' => '4'
+		]
+	],
+	'image/jpeg' => [
+		'enabled' => true,
+		'library' => 'libvips',
+		'inputOptions' => []
+	],
+	'image/png' => [
+		'enabled' => true,
+		'library' => 'libvips',
+		'inputOptions' => []
+	],
+	'image/webp' => [
+		'enabled' => true,
+		'library' => 'libvips',
+		'inputOptions' => [],
+		'outputOptions' => [
+			'strip' => 'true',
+			'Q' => '90',
+			'smart_subsample' => 'true'
 		]
 	]
 ];
 ```
-### Testing options
+
+### Other options
 Name | Description | Values | Default
 :--- | :--- | :--- | :---
-`$wgThumbroEnabled` | Set to `false` to disable Thumbro throughout the wiki excluding the Special:ThumbroTest page | `true` - enable; `false` - disable | `true`
-`$wgThumbroExposeTestPage` | Enable Special:ThumbroTest on the wiki | `true` - enable; `false` - disable | `false`
-`$wgThumbroTestExpiry` | Control the cache age for the test image streamed to Special:ThumbroTest | integer | `3600`
+`$wgThumbroMaxAnimatedArea` | Largest animation Thumbro will fully re-encode, measured as width × height × frames. Bigger animations are rendered as a single static frame to keep thumbnailing fast. | integer | `25000000`
+`$wgThumbroEnabled` | Disable Thumbro across the wiki (the Special:ThumbroTest page still works) | `true` / `false` | `true`
+`$wgThumbroExposeTestPage` | Enable the Special:ThumbroTest comparison page | `true` / `false` | `false`
+`$wgThumbroTestExpiry` | Cache lifetime, in seconds, for images streamed to Special:ThumbroTest | integer | `3600`
 
-## Testing Thumbro thumbnails
-Thumbro comes with a special page that can be used to compare thumbnails before and after Thumbro.
-First you have to enable the page with this config:
+## Comparing thumbnails
+Thumbro ships a special page for comparing thumbnails before and after Thumbro. Enable it with:
 ```php
 // Enable the Special:ThumbroTest page
 $wgThumbroExposeTestPage = true;
 ```
 
-To make sure the before thumbnail is untouched by Thumbro, you can either disable Thumbro site-wide:
+To keep the "before" thumbnail untouched by Thumbro, either disable Thumbro site-wide:
 ```php
 // Disable Thumbro site-wide
 $wgThumbroEnabled = false;
 ```
 
-Or disable the output file format you wanted to test under `$wgThumbroOptions`.
+…or disable the specific file format you want to test under `$wgThumbroOptions`.
 
 ## Requirements
 * [MediaWiki](https://www.mediawiki.org) 1.43.0 or later
-* [libvips](https://www.libvips.org) 8.14 or later (older versions might work but they are untested)
-* [Imagick](https://github.com/Imagick/imagick) - Optional, used to generate detailed comparison statistics on Special:ThumbroTest
+* **[libvips](https://www.libvips.org)** (8.14 or later; older versions may work but are untested) — required. Drives core thumbnail generation via the `vipsthumbnail` command.
+* **[libwebp](https://developers.google.com/speed/webp/docs/gif2webp)** (the `gif2webp` tool; Debian/Ubuntu `webp` package) — recommended. Encodes animated GIFs to compact animated WebP, far smaller than libvips for transparent animations. Without it, animated GIFs fall back to libvips automatically.
+* [Imagick](https://github.com/Imagick/imagick) — optional. Powers the detailed comparison statistics on Special:ThumbroTest.

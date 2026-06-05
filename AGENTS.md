@@ -78,8 +78,18 @@ docker compose exec mediawiki bash -c "cd /var/www/html/w/extensions/Thumbro && 
 
 ### Media handlers
 
-- New thumbnail backends go under `includes/Libraries/` and are dispatched from `includes/MediaHandlers/`
-- Per-MIME backend selection and CLI flags are configured under `wgThumbroOptions` in `extension.json`
+- New thumbnail backends go under `includes/Libraries/` (e.g. `Libvips`, `Libwebp`).
+- The backend for each MIME type is chosen by the `library` field in its
+  `wgThumbroOptions["<mime>"]` block and dispatched in
+  `MediaWikiHooks::onBitmapHandlerTransform` (`library` → backend class).
+- Backend binaries are configured under `wgThumbroLibraries` (`libvips` →
+  `vipsthumbnail`, `libwebp` → `gif2webp`).
+- **GIF strategy:** `image/gif` selects `libwebp`. The `Libwebp` backend owns the
+  runtime policy. Transparent animated GIFs under `$wgThumbroMaxAnimatedArea` (with
+  gif2webp present) are encoded with gif2webp. Opaque animated GIFs — and the
+  gif2webp-unavailable fallback — delegate to `Libvips` as animated WebP (all frames
+  preserved). Static GIFs and animations over the threshold delegate to `Libvips` as a
+  static first frame.
 
 ### Benchmarking handlers (required)
 
