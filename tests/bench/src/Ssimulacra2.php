@@ -15,6 +15,14 @@ class Ssimulacra2 {
 	 */
 	public static string $bin = 'ssimulacra2_rs';
 
+	/**
+	 * Fixed opaque background used to flatten transparent frames before scoring.
+	 * SSIMULACRA2 compares RGB only, so alpha must be composited away; both the
+	 * candidate and its reference are flattened over THIS SAME colour so the
+	 * comparison stays fair. Alpha-channel fidelity itself is not scored.
+	 */
+	private const SCORE_BACKGROUND = '#808080';
+
 	/** Parse the numeric score from the tool's stdout (a bare float, or "Score: N"). */
 	public static function parseScore( string $stdout ): float {
 		if ( preg_match( '/-?\d+(?:\.\d+)?/', $stdout, $m ) ) {
@@ -38,12 +46,34 @@ class Ssimulacra2 {
 	/** Score one reference PNG vs one candidate PNG. */
 	public static function scorePair( string $ref, string $candidate ): float {
 		$bin = ToolLocator::require( self::$bin, 'tests/bench/bin/install-ssimulacra2.sh' );
+		// Flatten transparency away first (see SCORE_BACKGROUND): without this,
+		// transparent content yields garbage/negative scores. Opaque images are
+		// unaffected because compositing leaves their visible RGB unchanged.
 		// CLI: ssimulacra2_rs <original.png> <distorted.png>  →  bare float on stdout.
-		$proc = Subprocess::run( [ $bin, $ref, $candidate ] );
+		$proc = Subprocess::run( [ $bin, self::flatten( $ref ), self::flatten( $candidate ) ] );
 		if ( !$proc->ok() ) {
 			throw new RuntimeException( 'ssimulacra2 failed: ' . $proc->stderr );
 		}
 		return self::parseScore( $proc->stdout );
+	}
+
+	/**
+	 * Composite $png over SCORE_BACKGROUND and return the flattened copy's path.
+	 * Lossless for opaque inputs (no transparent pixels to fill).
+	 */
+	private static function flatten( string $png ): string {
+		$convert = ToolLocator::require( 'convert', 'imagemagick' );
+		$flat = preg_replace( '/\.png$/', '_flat.png', $png );
+		if ( $flat === null || $flat === $png ) {
+			$flat = $png . '_flat.png';
+		}
+		$proc = Subprocess::run(
+			[ $convert, $png, '-background', self::SCORE_BACKGROUND, '-alpha', 'remove', '-alpha', 'off', $flat ]
+		);
+		if ( !$proc->ok() || !is_file( $flat ) ) {
+			throw new RuntimeException( 'flatten failed for ' . $png . ': ' . $proc->stderr );
+		}
+		return $flat;
 	}
 
 	/**
