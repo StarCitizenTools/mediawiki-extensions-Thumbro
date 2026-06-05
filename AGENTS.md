@@ -10,14 +10,14 @@ Run only what's relevant to the files you changed.
 
 | Files changed | Command |
 | --- | --- |
-| `*.php` | `composer preflight` (lint, style, and Phan) |
+| `*.php` | `composer preflight` (lint, style, Phan, and PHPUnit) |
 | `*.js` | `npm run lint:js` |
 | `*.less`, `*.css` | `npm run lint:styles` |
 | `i18n/` | `npm run lint:i18n` |
 
 Auto-fix commands: `composer fix` (PHP), `npm run lint:fix:js` (JS), `npm run lint:fix:styles` (styles).
 
-**Preflight**: Run `npm run preflight` to execute all Node-based lints in one command. Run `composer preflight` from within a MediaWiki installation to execute all PHP lints, style checks, and Phan static analysis.
+**Preflight**: Run `npm run preflight` to execute all Node-based lints in one command. Run `composer preflight` from within a MediaWiki installation to execute all PHP lints, style checks, Phan static analysis, and PHPUnit tests.
 
 **Always run the relevant checks before committing.** Read the full output — PHPCS warnings must be fixed, not just errors. The command exits 0 even with warnings, so do not treat exit code alone as a pass.
 
@@ -32,6 +32,16 @@ docker compose exec mediawiki bash -c "cd /var/www/html/w/extensions/Thumbro && 
 ```
 
 Note: the `vipsthumbnail` binary (libvips) must be available in the environment for runtime thumbnail generation, but is not required for lint/test/Phan.
+
+### PHPUnit
+
+PHPUnit tests live under `tests/phpunit/` (auto-discovered via `TestAutoloadNamespaces` in `extension.json`) and require a full MediaWiki installation to run. From the MediaWiki core root:
+
+```sh
+docker compose exec mediawiki bash -c "cd /var/www/html/w && composer phpunit -- extensions/Thumbro/tests/phpunit"
+```
+
+Integration tests (those needing MediaWiki services, e.g. media-handler tests that exercise `normaliseParams`) go under `tests/phpunit/integration/`; pure unit tests go under `tests/phpunit/unit/`.
 
 ### Phan
 

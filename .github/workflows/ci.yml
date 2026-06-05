@@ -32,6 +32,7 @@ jobs:
           files_yaml: |
             php:
               - includes/**/*.php
+              - tests/**/*.php
               - extension.json
               - composer.json
               - composer.lock
@@ -77,6 +78,15 @@ jobs:
     needs: changes
     if: needs.changes.outputs.php == 'true'
     uses: StarCitizenTools/mediawiki-ci-workflows/.github/workflows/analyze-php.yml@main
+    with:
+      project-type: extension
+      project-name: Thumbro
+      runner: ubuntu-24.04-arm
+
+  test-php:
+    needs: changes
+    if: needs.changes.outputs.php == 'true'
+    uses: StarCitizenTools/mediawiki-ci-workflows/.github/workflows/test-php.yml@main
     with:
       project-type: extension
       project-name: Thumbro
