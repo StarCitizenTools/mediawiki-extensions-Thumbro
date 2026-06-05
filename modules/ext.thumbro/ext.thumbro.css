@@ -15,7 +15,8 @@
 	box-shadow: none;
 }
 
-#mw-thumbrotest-thumbnails {
+.mw-thumbrotest-thumbnails {
 	max-width: 100%;
-	overflow: auto;
+	/* stylelint-disable-next-line declaration-no-important -- override the ucompare plugin's inline overflow:hidden so oversized comparisons scroll instead of clipping */
+	overflow: auto !important;
 }
