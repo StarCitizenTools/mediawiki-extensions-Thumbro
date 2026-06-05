@@ -17,5 +17,5 @@
 
 #mw-thumbrotest-thumbnails {
 	max-width: 100%;
-	overflow: auto !important;
+	overflow: auto;
 }
