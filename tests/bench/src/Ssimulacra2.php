@@ -75,12 +75,16 @@ class Ssimulacra2 {
 	 */
 	public static function extractFrames( string $candidate, int $frameCount, string $destDir ): array {
 		$convert = ToolLocator::require( 'convert', 'imagemagick' );
+		// `-coalesce +repage` restores each frame to the full logical canvas. Optimised
+		// GIFs (e.g. an ImageMagick baseline written with `-layers optimize`) store frames
+		// as minimal sub-rectangles with an offset; without this the extracted PNG would be
+		// the sub-rectangle size and mismatch the full-canvas reference, crashing the metric.
 		if ( $frameCount <= 1 ) {
 			$dst = $destDir . '/cand_000.png';
-			Subprocess::run( [ $convert, $candidate . '[0]', $dst ] );
+			Subprocess::run( [ $convert, $candidate . '[0]', '-coalesce', '+repage', $dst ] );
 			return [ $dst ];
 		}
-		Subprocess::run( [ $convert, $candidate, '-coalesce', $destDir . '/cand_%03d.png' ] );
+		Subprocess::run( [ $convert, $candidate, '-coalesce', '+repage', $destDir . '/cand_%03d.png' ] );
 		$frames = glob( $destDir . '/cand_*.png' ) ?: [];
 		sort( $frames );
 		if ( $frames === [] ) {
