@@ -93,17 +93,22 @@ docker compose exec mediawiki bash -c "cd /var/www/html/w/extensions/Thumbro && 
 
 ### Benchmarking handlers (required)
 
-Every handler must demonstrably beat the MediaWiki baseline (ImageMagick primary;
-GD where it is a real core path) on the three axes Thumbro optimises: **file size**,
-**perceptual quality** (SSIMULACRA2), and **performance** (wall time + peak RSS).
+Every handler must demonstrably improve on default MediaWiki on the axes Thumbro
+optimises: **file size** and **perceptual quality** (SSIMULACRA2), within hard
+**performance** caps (wall time + peak RSS). MediaWiki's default scaler is **GD**
+(`$wgUseImageMagick = false`); **ImageMagick** is the typical configured path. The gate
+treats **ImageMagick as the binding pass/fail baseline** and **GD as a never-regress
+floor** (see `docs/adr/0001-image-benchmark-gate.md`).
 
 - Harness: `php tests/bench/benchmark.php` (see `tests/bench/README.md` for dev deps + setup).
 - Quality metric: **SSIMULACRA2** (bands: ≥90 visually lossless, ≥70 high, ≥50 medium).
 - Acceptance rule (full detail in `tests/bench/README.md`):
-  production-to-production **dominance** vs each applicable baseline — smaller at
-  ≥ quality, or better at ≤ size — with hard safety constraints (quality ≥ 50,
-  wall-time ≤ 3 s static / 10 s animated, peak RSS ≤ 512 MB) and soft budgets.
-  A genuine trade-off is **INCOMPARABLE** and needs a recorded decision.
+  **dominance vs ImageMagick** — smaller at no-worse quality, or higher quality at
+  no-larger size — where a SSIMULACRA2 gap within the noise-tolerance counts as a tie.
+  GD must not regress (floor). Performance is a safety cap, not a dominance axis: hard
+  caps (quality ≥ 50, wall-time ≤ 3 s static / 10 s animated, peak RSS ≤ 512 MB) FAIL a
+  candidate outright, and soft budgets flag regressions. A genuine trade-off is
+  **INCOMPARABLE** and needs a recorded decision.
 - **PR requirement:** any new or changed handler/option set must include harness
   results and pass the gate; INCOMPARABLE results need an explicit recorded decision.
 - **Trade-off principle:** generation cost is paid once and cached; the size/quality
