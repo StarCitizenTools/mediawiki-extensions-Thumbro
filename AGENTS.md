@@ -118,6 +118,10 @@ GD where it is a real core path) on the three axes Thumbro optimises: **file siz
 
 - Use [Conventional Commits](https://www.conventionalcommits.org/) (e.g. `fix:`, `feat:`, `refactor:`)
 - Use `ci:` or `chore:` for non-user-facing changes (tooling, config, dependencies)
+- The benchmark harness (`tests/bench/`) is non-user-facing dev tooling: scope its commits
+  with `test:` or `chore:` (e.g. `test(bench):`), never `feat:`/`fix:`. release-please groups
+  the changelog by commit **type** (not scope) and hides `test`/`chore` by default, so the
+  type — not the `bench` scope — is what keeps these out of the release notes.
 
 ### i18n
 
