@@ -58,7 +58,7 @@ class Orchestrator {
 		foreach ( $applicableBaselines as $b ) {
 			$res = $b->run( $entry['path'], $mime, $w, $dir );
 			$baseResults[$b->name()] = $res;
-			$baseQualities[$b->name()] = $res->available ? $this->scoreQuality( $res, $entry, $dir ) : null;
+			$baseQualities[$b->name()] = $res->available ? $this->tryScoreQuality( $res, $entry, $dir ) : null;
 		}
 
 		// Representative fixtures drive the dominance go/no-go; stress fixtures are checked
@@ -70,7 +70,7 @@ class Orchestrator {
 				continue;
 			}
 			$res = $c->run( $entry['path'], $mime, $w, $dir );
-			$quality = $res->available ? $this->scoreQuality( $res, $entry, $dir ) : null;
+			$quality = $res->available ? $this->tryScoreQuality( $res, $entry, $dir ) : null;
 			$verdicts = [];
 			$capsVerdict = null;
 			if ( $res->available && $quality !== null ) {
@@ -103,6 +103,25 @@ class Orchestrator {
 			'baselines' => $baseResults, 'baselineQualities' => $baseQualities,
 			'candidates' => $candResults, 'dir' => $dir,
 		];
+	}
+
+	/**
+	 * Score quality, degrading to null on a scoring failure instead of aborting the whole run.
+	 * A contender that flattens an animated source (candidate frame count != reference frame
+	 * count) makes the metric throw; that one cell is left unscored and reported as such, while
+	 * the rest of the corpus still runs. A single bad fixture/contender must never crash the suite.
+	 *
+	 * @param Result $res
+	 * @param array{path:string,mime:string,tier:string,animated:bool,frames:int,targets:int[]} $entry
+	 */
+	private function tryScoreQuality( Result $res, array $entry, string $dir ): ?Quality {
+		try {
+			return $this->scoreQuality( $res, $entry, $dir );
+		} catch ( RuntimeException $e ) {
+			fwrite( STDERR, sprintf( "  warning: could not score %s on %s @%dpx: %s\n",
+				$res->contender, basename( $entry['path'] ), $res->targetWidth, $e->getMessage() ) );
+			return null;
+		}
 	}
 
 	/**

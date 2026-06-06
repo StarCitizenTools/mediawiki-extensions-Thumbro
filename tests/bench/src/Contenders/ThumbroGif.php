@@ -116,7 +116,8 @@ class ThumbroGif implements Contender {
 		$tmpGif = dirname( $dst ) . '/thumbro_resize_' . $targetWidth . '.gif';
 		// Load options are the configured gif block's (production's planLibwebpEncode uses
 		// inputOptions() verbatim here, unlike the delegation paths which force n at runtime).
-		$resize = [ $vips, $srcPath . self::makeOptions( $cfg['gifInput'] ), '--size', $targetWidth . 'x100000', '-o', $tmpGif ];
+		$in = $srcPath . self::makeOptions( $cfg['gifInput'] );
+		$resize = [ $vips, $in, '--size', $targetWidth . 'x100000', '-o', $tmpGif ];
 		$p1 = Subprocess::run( $resize );
 		if ( !$p1->ok() || !is_file( $tmpGif ) ) {
 			return Result::unavailable( $this->name(), $srcPath, $targetWidth, 'vips resize failed: ' . $p1->stderr );
