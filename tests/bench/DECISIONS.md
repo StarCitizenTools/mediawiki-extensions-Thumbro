@@ -99,3 +99,21 @@ on size).
 target (a separate, documented harness limitation) and is not folded into this rule; its cells
 go through the strict `evaluateCaps` (stress) or non-advisory `evaluate` (representative)
 paths as before.
+
+**Superseded (2026-06-06, ADR-0001):** the size-keyed ≤120px advisory was generalised into
+a single uniform quality noise-tolerance applied at every width, and the representative
+corpus no longer measures ≤120px; the `qualityAdvisory`/`qualityAdvisoryMaxWidth` mechanism
+was removed.
+
+## 2026-06-06 — gate redesign (see ADR-0001)
+
+The image benchmark gate was redesigned (`docs/adr/0001-image-benchmark-gate.md`): dominance
+vs ImageMagick with a SSIMULACRA2 noise-tolerance, GD as a never-regress floor (fixed to
+`imagecopyresampled`, faithful to `BitmapHandler::transformGd`), performance retained as
+hard safety caps + soft budgets (not a dominance axis), and the representative corpus refit
+to 180/250/400 with 4K-class sources.
+
+**GD numbers in earlier entries are invalid** — they came from a GD contender that used
+`imagescale()` and produced broken scores. Per-MIME options (JPEG, PNG) must be
+re-validated against the new gate + corpus, and all numbers regenerated. That re-validation
+is the immediate follow-up PR and is **not** done here.
