@@ -26,11 +26,34 @@ class LibvipsBackend implements ThumbnailBackend {
 			'size' => $request->physicalSize(),
 		] );
 		$command->setIO(
-			$request->srcPath() . $this->makeOptions( $options->inputOptions() ),
+			$request->srcPath() . $this->makeOptions( $this->inputOptions( $request ) ),
 			$request->dstPath() . $this->makeOptions( $options->outputOptions() )
 		);
 
 		return CommandPlan::of( $command );
+	}
+
+	/**
+	 * Source load options. Normally the resolved inputOptions verbatim, but for an animated
+	 * source whose thumbnail may itself be animated (the handler's canAnimateThumbnail() — an
+	 * animated file under the area threshold) we force `n=-1` so vipsthumbnail keeps every
+	 * frame. Without this it reads only the first frame, silently flattening e.g. an animated
+	 * WebP to a static thumbnail. A caller that already pinned `n` (the GIF backend, when it
+	 * delegates with an explicit first-frame/all-frames choice) is respected, never overridden.
+	 *
+	 * @return array<string,string>
+	 */
+	private function inputOptions( BackendRequest $request ): array {
+		$options = $request->getOptions()->inputOptions();
+		if ( isset( $options['n'] ) ) {
+			return $options;
+		}
+		$handler = $request->getHandler();
+		$file = $request->getFile();
+		if ( $handler->isAnimatedImage( $file ) && $handler->canAnimateThumbnail( $file ) ) {
+			return [ 'n' => '-1' ] + $options;
+		}
+		return $options;
 	}
 
 	/**

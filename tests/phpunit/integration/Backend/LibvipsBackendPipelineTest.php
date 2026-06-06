@@ -110,6 +110,92 @@ class LibvipsBackendPipelineTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( 80, $width, 'output should be resized to the requested width' );
 	}
 
+	/**
+	 * End-to-end proof that an animated WebP keeps its frames: when the handler reports the
+	 * source animated and animatable (canAnimateThumbnail), LibvipsBackend forces n=-1, so the
+	 * output WebP is multi-page rather than a flattened first frame.
+	 */
+	public function testPreservesAnimationForAnimatableWebP(): void {
+		$vips = $this->bin( 'vipsthumbnail' );
+		$convert = $this->bin( 'convert' );
+		$vipsheader = $this->bin( 'vipsheader' );
+
+		$src = $this->tmp( 'thumbro_asrc_', '.webp' );
+		$dst = $this->tmp( 'thumbro_adst_', '.webp' );
+		// A 3-frame animated WebP.
+		// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.shell_exec,MediaWiki.Usage.ForbiddenFunctions.escapeshellarg
+		shell_exec( escapeshellarg( $convert )
+			. ' -delay 10 -size 100x100 xc:red xc:green xc:blue -loop 0 ' . escapeshellarg( $src ) );
+
+		$handler = $this->createMock( TransformationalImageHandler::class );
+		$handler->method( 'isAnimatedImage' )->willReturn( true );
+		$handler->method( 'canAnimateThumbnail' )->willReturn( true );
+
+		$dst = $this->transform( $vips, $handler, $src, $dst );
+
+		$this->assertSame( 'webpload', $this->header( $vipsheader, 'vips-loader', $dst ) );
+		$this->assertGreaterThan(
+			1, $this->nPages( $vipsheader, $dst ), 'animated WebP must keep its frames'
+		);
+	}
+
+	/**
+	 * The counterpart: when the thumbnail may NOT animate (e.g. over the area threshold),
+	 * n=-1 is not forced and the output is a single-frame thumbnail.
+	 */
+	public function testFlattensWebPWhenItCannotAnimate(): void {
+		$vips = $this->bin( 'vipsthumbnail' );
+		$convert = $this->bin( 'convert' );
+		$vipsheader = $this->bin( 'vipsheader' );
+
+		$src = $this->tmp( 'thumbro_fsrc_', '.webp' );
+		$dst = $this->tmp( 'thumbro_fdst_', '.webp' );
+		// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.shell_exec,MediaWiki.Usage.ForbiddenFunctions.escapeshellarg
+		shell_exec( escapeshellarg( $convert )
+			. ' -delay 10 -size 100x100 xc:red xc:green xc:blue -loop 0 ' . escapeshellarg( $src ) );
+
+		$handler = $this->createMock( TransformationalImageHandler::class );
+		$handler->method( 'isAnimatedImage' )->willReturn( true );
+		$handler->method( 'canAnimateThumbnail' )->willReturn( false );
+
+		$dst = $this->transform( $vips, $handler, $src, $dst );
+
+		$this->assertSame(
+			1, $this->nPages( $vipsheader, $dst ), 'a non-animatable thumbnail stays single-frame'
+		);
+	}
+
+	/** Run the libvips pipeline for $handler over $src, returning the produced $dst path. */
+	private function transform(
+		string $vips, TransformationalImageHandler $handler, string $src, string $dst
+	): string {
+		$params = [
+			'srcPath' => $src, 'dstPath' => $dst,
+			'physicalWidth' => 80, 'physicalHeight' => 80,
+			'dstUrl' => 'http://x/80px.webp', 'clientWidth' => 80, 'clientHeight' => 80,
+		];
+		$options = new TransformOptions( 'libvips', $vips, [], [ 'Q' => '90' ], false );
+		$request = new BackendRequest( $handler, $this->dummyFile(), $params, $options );
+
+		$mto = null;
+		$this->runner()->run( $this->backend()->plan( $request ), $request, $mto );
+		$this->assertFileExists( $dst );
+		return $dst;
+	}
+
+	/** Read one vipsheader string field. */
+	private function header( string $vipsheader, string $field, string $path ): string {
+		// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.shell_exec,MediaWiki.Usage.ForbiddenFunctions.escapeshellarg
+		return trim( (string)shell_exec( escapeshellarg( $vipsheader )
+			. ' -f ' . escapeshellarg( $field ) . ' ' . escapeshellarg( $path ) . ' 2>/dev/null' ) );
+	}
+
+	/** Page/frame count of an image; a single-frame WebP has no n-pages field, so absent = 1. */
+	private function nPages( string $vipsheader, string $path ): int {
+		$value = $this->header( $vipsheader, 'n-pages', $path );
+		return $value === '' ? 1 : (int)$value;
+	}
+
 	public function testReportsErrorOnTransformFailure(): void {
 		$vips = $this->bin( 'vipsthumbnail' );
 		$dst = $this->tmp( 'thumbro_verr_', '.webp' );
