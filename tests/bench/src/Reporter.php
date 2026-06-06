@@ -19,12 +19,68 @@ class Reporter {
 
 	/** @param array<int,array<string,mixed>> $rows */
 	public function printTable( array $rows ): void {
-		// summary[baseline] = [ win, trade, loss ]
+		$isStress = static fn ( array $r ): bool => ( $r['tier'] ?? 'representative' ) === 'stress';
+		$representative = array_filter( $rows, static fn ( array $r ): bool => !$isStress( $r ) );
+		$stress = array_filter( $rows, $isStress );
+
+		// summary[baseline] = [ win, trade, loss ] — representative tier only.
 		$summary = [];
-		foreach ( $rows as $row ) {
-			$this->printRow( $row, $summary );
+		if ( $representative !== [] ) {
+			print "\n=== REPRESENTATIVE — go/no-go vs the MediaWiki baseline ===\n";
+			foreach ( $representative as $row ) {
+				$this->printRow( $row, $summary );
+			}
+		}
+		if ( $stress !== [] ) {
+			print "\n=== STRESS — safety caps only, never a win/loss ===\n";
+			foreach ( $stress as $row ) {
+				$this->printStressRow( $row );
+			}
 		}
 		$this->printSummary( $summary );
+	}
+
+	/**
+	 * Stress-tier row: show the contenders, then PASS / CAP-BREACH for the candidate against the
+	 * hard safety caps. No baseline dominance — a stress fixture can never be a win or a loss.
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	private function printStressRow( array $row ): void {
+		printf( "\n%s · %dpx · %s%s\n",
+			basename( $row['source'] ), $row['width'], $row['mime'],
+			$row['animated'] ? " · {$row['frames']}f animated" : '' );
+		printf( "  %-15s %9s  %-24s %8s  %7s\n", 'contender', 'size', 'SSIM2', 'time', 'peak RSS' );
+
+		foreach ( $row['baselines'] as $name => $r ) {
+			$bq = $row['baselineQualities'][$name] ?? null;
+			$this->printContenderRow( strtoupper( $name ) . ' (context)', $r, $bq );
+		}
+		foreach ( $row['candidates'] as $name => $c ) {
+			$this->printContenderRow( $name, $c['result'], $c['quality'] );
+			if ( $c['capsVerdict'] !== null ) {
+				printf( "    %s\n", $this->capsLine( $c['capsVerdict'], $c['quality'] ) );
+			}
+		}
+	}
+
+	/** PASS / CAP-BREACH line for a stress candidate. */
+	private function capsLine( GateResult $g, ?Quality $q ): string {
+		if ( $g->verdict === Verdict::PASS ) {
+			return '✓ PASS — within every safety cap';
+		}
+		$breaches = [];
+		foreach ( $g->reasons as $r ) {
+			$breaches[] = match ( $r ) {
+				'quality-floor' => $q !== null
+					? sprintf( 'quality %.1f below the floor', $q->mean )
+					: 'quality below the floor',
+				'time-ceiling' => 'over the time ceiling',
+				'rss-ceiling' => 'over the memory ceiling',
+				default => $r,
+			};
+		}
+		return '✗ CAP-BREACH — ' . implode( '; ', $breaches );
 	}
 
 	/**
