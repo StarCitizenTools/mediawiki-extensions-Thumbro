@@ -117,12 +117,11 @@ cross-link to it. This ADR is the first.
 
 ### Follow-ups (explicitly NOT in this change's scope)
 
-- **Re-validate every per-MIME option** (JPEG q90, PNG near-lossless) against the new
-  gate + corpus + widths; the knees may shift. Run the new gate once to capture a new
-  baseline-of-record — current options may read INCOMPARABLE until the follow-up re-tunes
-  them. This is the immediate next PR.
+- **Re-validate every per-MIME option** against the new gate + corpus + widths. *Done:* JPEG
+  re-tuned Q90 → Q80; PNG re-validated and kept. See `docs/encoding/`.
 - **Regenerate GD numbers** and revisit prior GD claims (now migrated to `docs/encoding/`),
-  since earlier GD results came from a contender that did not match MediaWiki's GD path.
-- **Pre-existing issues** documented but not fixed here: `flat-graphic.png` losing to
-  ImageMagick (PNG near-lossless on a flat graphic); `anim-transparent.gif` breaching the
-  quality floor.
+  since earlier GD results came from a contender that did not match MediaWiki's GD path. *Done.*
+- **Pre-existing issues:** `flat-graphic.png` losing to ImageMagick — *investigated and
+  accepted* as a fundamental format limit (PNG palette beats WebP on 2-colour content; sub-KB,
+  visually equivalent); see `docs/encoding/image-png.md`. `anim-transparent.gif` breaching the
+  quality floor — *still open.*

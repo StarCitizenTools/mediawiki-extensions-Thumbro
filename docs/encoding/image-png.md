@@ -55,11 +55,16 @@ outright (40–50% smaller). The trade-offs are content outside its strength —
   lower-quality than ImageMagick at 180/250 (wins at 400). Accepted: graphics/transparency
   is PNG's dominant real use; the photographic-PNG case is secondary, and re-tuning toward it
   would forfeit the large logo/UI wins.
-- **`flat-graphic.png`: near-lossless can't beat lossless PNG on a flat-colour graphic
-  (pre-existing, tracked).** At 250px it is larger and lower-quality than both ImageMagick and
-  GD — a loss vs the binding baseline *and* a GD floor breach. At 400px it wins vs ImageMagick
-  but is still larger than GD's tiny PNG (a second GD floor breach). Documented as a
-  pre-existing follow-up in ADR-0001 (not introduced by the gate redesign or the JPEG re-tune).
+- **`flat-graphic.png` (2-colour): accepted format trade-off.** Ultra-low-colour graphics are
+  where PNG's palette/lossless compression is unbeatable — IM's PNG is 3.0 KB, GD's just 2.0 KB,
+  and even *lossless* WebP is ~98% larger. near-lossless is the best WebP can do here: at 250px
+  it is ~0.4 KB larger and lower-quality than IM (a loss + GD floor breach); at 400px it wins
+  vs IM but stays larger than GD's tiny PNG (a GD floor breach). **Investigated and accepted**
+  (ADR-0001 follow-up): the difference is sub-KB and visually indistinguishable at thumbnail
+  scale — the SSIMULACRA2 gap does not show as edge artifacts — and no WebP profile wins it
+  without regressing the logo / UI / transparency cases that are PNG's primary use (lossless
+  drops the whole tier to 7 win / 2 loss). A content-aware path (emit PNG for near-binary
+  content) was weighed and rejected as over-engineering for an invisible, sub-KB difference.
 
 **Performance:** all cells well under the hard caps (peak RSS ≤ ~85 MB, wall time < 0.5 s)
 — near-lossless raises peak RSS at small sizes. Generation cost is paid once and cached.
