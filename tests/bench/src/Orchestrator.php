@@ -21,7 +21,7 @@ class Orchestrator {
 	}
 
 	/**
-	 * @param array<int,array{path:string,mime:string,animated:bool,frames:int,targets:int[]}> $corpus
+	 * @param array<int,array{path:string,mime:string,tier:string,animated:bool,frames:int,targets:int[]}> $corpus
 	 * @return array<int,array<string,mixed>> rows for the reporter
 	 */
 	public function run( array $corpus, ?string $onlyMime, string $outDir ): array {
@@ -39,7 +39,7 @@ class Orchestrator {
 	}
 
 	/**
-	 * @param array{path:string,mime:string,animated:bool,frames:int,targets:int[]} $entry
+	 * @param array{path:string,mime:string,tier:string,animated:bool,frames:int,targets:int[]} $entry
 	 * @return array<string,mixed>
 	 */
 	private function runOne( array $entry, int $w, string $outDir ): array {
@@ -61,6 +61,9 @@ class Orchestrator {
 			$baseQualities[$b->name()] = $res->available ? $this->scoreQuality( $res, $entry, $dir ) : null;
 		}
 
+		// Representative fixtures drive the dominance go/no-go; stress fixtures are checked
+		// only against the hard safety caps (no baseline comparison, never a win/loss).
+		$tier = $entry['tier'] ?? 'representative';
 		$candResults = [];
 		foreach ( $this->candidates as $c ) {
 			if ( !$c->applies( $mime ) || !$c->isAvailable() ) {
@@ -69,23 +72,33 @@ class Orchestrator {
 			$res = $c->run( $entry['path'], $mime, $w, $dir );
 			$quality = $res->available ? $this->scoreQuality( $res, $entry, $dir ) : null;
 			$verdicts = [];
+			$capsVerdict = null;
 			if ( $res->available && $quality !== null ) {
 				$gate = new AcceptanceGate( new GateThresholds(), $entry['animated'] );
-				foreach ( $baseResults as $name => $base ) {
-					if ( !$base->available || $baseQualities[$name] === null ) {
-						continue;
-					}
-					$verdicts[$name] = $gate->evaluate(
-						$res->bytes ?? 0, $quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0,
-						$base->bytes ?? 0, $baseQualities[$name]->mean, $base->wallMs ?? 0.0, $base->peakRssKb ?? 0
+				if ( $tier === 'stress' ) {
+					$capsVerdict = $gate->evaluateCaps(
+						$quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0
 					);
+				} else {
+					foreach ( $baseResults as $name => $base ) {
+						if ( !$base->available || $baseQualities[$name] === null ) {
+							continue;
+						}
+						$verdicts[$name] = $gate->evaluate(
+							$res->bytes ?? 0, $quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0,
+							$base->bytes ?? 0, $baseQualities[$name]->mean, $base->wallMs ?? 0.0, $base->peakRssKb ?? 0
+						);
+					}
 				}
 			}
-			$candResults[$c->name()] = [ 'result' => $res, 'quality' => $quality, 'verdicts' => $verdicts ];
+			$candResults[$c->name()] = [
+				'result' => $res, 'quality' => $quality,
+				'verdicts' => $verdicts, 'capsVerdict' => $capsVerdict,
+			];
 		}
 
 		return [
-			'source' => $entry['path'], 'mime' => $mime, 'width' => $w,
+			'source' => $entry['path'], 'mime' => $mime, 'width' => $w, 'tier' => $tier,
 			'animated' => $entry['animated'], 'frames' => $entry['frames'],
 			'baselines' => $baseResults, 'baselineQualities' => $baseQualities,
 			'candidates' => $candResults, 'dir' => $dir,
@@ -94,7 +107,7 @@ class Orchestrator {
 
 	/**
 	 * @param Result $res
-	 * @param array{path:string,mime:string,animated:bool,frames:int,targets:int[]} $entry
+	 * @param array{path:string,mime:string,tier:string,animated:bool,frames:int,targets:int[]} $entry
 	 */
 	private function scoreQuality( Result $res, array $entry, string $dir ): Quality {
 		[ $w, $h ] = ImageDims::of( $res->thumbPath );
@@ -115,7 +128,7 @@ class Orchestrator {
 	}
 
 	/**
-	 * @param array<int,array{path:string,mime:string,animated:bool,frames:int,targets:int[]}> $corpus
+	 * @param array<int,array{path:string,mime:string,tier:string,animated:bool,frames:int,targets:int[]}> $corpus
 	 */
 	private function assertToolsFor( array $corpus, ?string $onlyMime ): void {
 		$needed = [

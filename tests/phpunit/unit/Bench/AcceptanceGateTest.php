@@ -70,6 +70,37 @@ class AcceptanceGateTest extends MediaWikiUnitTestCase {
 		$this->assertSame( Verdict::INCOMPARABLE, $v->verdict );
 	}
 
+	public function testCapsOnlyPassesUnderEveryCap(): void {
+		// Under quality floor (50), time ceiling (3000 static), RSS ceiling (512000) => PASS.
+		$v = $this->gate()->evaluateCaps( candQuality: 60.0, candWallMs: 1500, candRssKb: 80000 );
+		$this->assertSame( Verdict::PASS, $v->verdict );
+		$this->assertSame( [], $v->reasons );
+	}
+
+	public function testCapsOnlyFailsOnQualityFloor(): void {
+		$v = $this->gate()->evaluateCaps( candQuality: 39.0, candWallMs: 100, candRssKb: 1000 );
+		$this->assertSame( Verdict::FAIL, $v->verdict );
+		$this->assertContains( 'quality-floor', $v->reasons );
+	}
+
+	public function testCapsOnlyFailsOnRssCeiling(): void {
+		// 600 MB > 512 MB ceiling.
+		$v = $this->gate()->evaluateCaps( candQuality: 90.0, candWallMs: 100, candRssKb: 600_000 );
+		$this->assertSame( Verdict::FAIL, $v->verdict );
+		$this->assertContains( 'rss-ceiling', $v->reasons );
+	}
+
+	public function testCapsOnlyUsesAnimatedTimeCeiling(): void {
+		$animated = new AcceptanceGate( new GateThresholds(), true );
+		// 9000 ms is under the 10000 ms animated ceiling => PASS (would breach the 3000 static one).
+		$v = $animated->evaluateCaps( candQuality: 90.0, candWallMs: 9000, candRssKb: 80000 );
+		$this->assertSame( Verdict::PASS, $v->verdict );
+		// 11000 ms breaches even the animated ceiling.
+		$v2 = $animated->evaluateCaps( candQuality: 90.0, candWallMs: 11000, candRssKb: 80000 );
+		$this->assertSame( Verdict::FAIL, $v2->verdict );
+		$this->assertContains( 'time-ceiling', $v2->reasons );
+	}
+
 	public function testAnimatedTimeCeiling(): void {
 		// Animated: ceiling is 10000 ms
 		$animatedGate = new AcceptanceGate( new GateThresholds(), true );

@@ -10,6 +10,28 @@ class AcceptanceGate {
 	) {
 	}
 
+	/**
+	 * Caps-only evaluation for the STRESS tier. Returns PASS when the candidate is under every
+	 * hard safety cap (quality floor, wall-time ceiling, RSS ceiling) and FAIL otherwise, with
+	 * the breached caps as reasons. It consults no baseline: the stress tier asks "does Thumbro
+	 * stay safe on pathological input?", never "is Thumbro better?", so it can never produce a
+	 * win/loss/trade-off.
+	 */
+	public function evaluateCaps( float $candQuality, float $candWallMs, int $candRssKb ): GateResult {
+		$reasons = [];
+		if ( $candQuality < $this->t->qualityFloor ) {
+			$reasons[] = 'quality-floor';
+		}
+		$timeCeiling = $this->animated ? $this->t->timeCeilingAnimatedMs : $this->t->timeCeilingStaticMs;
+		if ( $candWallMs > $timeCeiling ) {
+			$reasons[] = 'time-ceiling';
+		}
+		if ( $candRssKb > $this->t->rssCeilingKb ) {
+			$reasons[] = 'rss-ceiling';
+		}
+		return new GateResult( $reasons === [] ? Verdict::PASS : Verdict::FAIL, $reasons, [] );
+	}
+
 	public function evaluate(
 		int $candBytes, float $candQuality, float $candWallMs, int $candRssKb,
 		int $baseBytes, float $baseQuality, float $baseWallMs, int $baseRssKb
