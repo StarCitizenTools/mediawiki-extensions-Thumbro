@@ -33,28 +33,21 @@ class AcceptanceGate {
 	}
 
 	/**
-	 * Dominance evaluation vs one baseline. When $qualityAdvisory is true (a small,
-	 * ≤ qualityAdvisoryMaxWidth thumbnail whose SSIMULACRA2 is unstable), quality is advisory: a
-	 * sub-floor score is flagged rather than a hard FAIL, and quality differences within
-	 * $qualityWithinOfBaseline are treated as ties so metric jitter cannot hand either side a win.
-	 * See tests/bench/README.md.
+	 * Dominance evaluation vs the binding baseline. A SSIMULACRA2 gap within
+	 * GateThresholds::qualityWithinOfBaseline counts as a tie, so a smaller file is not denied
+	 * a win by metric jitter and the baseline cannot win on jitter either. The hard quality
+	 * floor remains a hard FAIL. See ADR-0001.
 	 */
 	public function evaluate(
 		int $candBytes, float $candQuality, float $candWallMs, int $candRssKb,
-		int $baseBytes, float $baseQuality, float $baseWallMs, int $baseRssKb,
-		bool $qualityAdvisory = false
+		int $baseBytes, float $baseQuality, float $baseWallMs, int $baseRssKb
 	): GateResult {
 		$reasons = [];
 		$flags = [];
 
-		// Hard constraints (any breach => FAIL). At advisory widths the quality metric is
-		// unreliable, so a sub-floor score becomes a flag for visual follow-up, never a FAIL.
+		// Hard constraints (any breach => FAIL).
 		if ( $candQuality < $this->t->qualityFloor ) {
-			if ( $qualityAdvisory ) {
-				$flags[] = 'quality-floor-advisory';
-			} else {
-				$reasons[] = 'quality-floor';
-			}
+			$reasons[] = 'quality-floor';
 		}
 		$timeCeiling = $this->animated ? $this->t->timeCeilingAnimatedMs : $this->t->timeCeilingStaticMs;
 		if ( $candWallMs > $timeCeiling ) {
@@ -67,8 +60,10 @@ class AcceptanceGate {
 			return new GateResult( Verdict::FAIL, $reasons, $flags );
 		}
 
+		$tol = $this->t->qualityWithinOfBaseline;
+
 		// Soft budgets (flag, do not FAIL)
-		if ( $candQuality < $baseQuality - $this->t->qualityWithinOfBaseline ) {
+		if ( $candQuality < $baseQuality - $tol ) {
 			$flags[] = 'quality-below-baseline';
 		}
 		$timeBudget = max( $this->t->timeSoftFloorMs, $this->t->timeSoftMultiple * $baseWallMs );
@@ -79,28 +74,50 @@ class AcceptanceGate {
 			$flags[] = 'memory-regression';
 		}
 
-		// Dominance on {bytes, quality}. At advisory widths, quality gaps within the metric's
-		// noise band ($qualityWithinOfBaseline) count as ties, so a smaller file is not denied a
-		// win by jitter — and, symmetrically, the baseline cannot win on jitter either.
-		$tol = $qualityAdvisory ? $this->t->qualityWithinOfBaseline : 0.0;
+		// Dominance on {bytes, quality}, with the noise-tolerance applied to quality.
 		$candNoWorseQ = $candQuality >= $baseQuality - $tol;
 		$candBetterQ = $candQuality > $baseQuality + $tol;
-		$baseNoWorseQ = $baseQuality >= $candQuality - $tol;
-		$baseBetterQ = $baseQuality > $candQuality + $tol;
-
 		$noWorse = $candBytes <= $baseBytes && $candNoWorseQ;
 		$strictly = $candBytes < $baseBytes || $candBetterQ;
 		if ( $noWorse && $strictly ) {
 			return new GateResult( Verdict::PASS, $reasons, $flags );
 		}
 
-		$baselineNoWorse = $baseBytes <= $candBytes && $baseNoWorseQ;
-		$baselineStrictly = $baseBytes < $candBytes || $baseBetterQ;
-		if ( $baselineNoWorse && $baselineStrictly ) {
+		if ( $this->baselineDominates( $candBytes, $candQuality, $baseBytes, $baseQuality ) ) {
 			return new GateResult( Verdict::FAIL, [ 'baseline-dominates' ], $flags );
 		}
 
 		// Genuine trade-off within constraints.
 		return new GateResult( Verdict::INCOMPARABLE, $reasons, $flags );
+	}
+
+	/**
+	 * Floor check for a non-binding baseline (e.g. GD, the literal MediaWiki default): PASS
+	 * unless the baseline dominates the candidate on {bytes, quality}. It is never a win — only
+	 * a guard that the candidate is not worse than the weak default. See ADR-0001.
+	 */
+	public function evaluateFloor(
+		int $candBytes, float $candQuality, int $baseBytes, float $baseQuality
+	): GateResult {
+		if ( $this->baselineDominates( $candBytes, $candQuality, $baseBytes, $baseQuality ) ) {
+			return new GateResult( Verdict::FAIL, [ 'baseline-dominates' ], [] );
+		}
+		return new GateResult( Verdict::PASS, [], [] );
+	}
+
+	/**
+	 * True when the baseline dominates the candidate on {bytes, quality} (with the same
+	 * noise-tolerance) — i.e. the baseline is no worse on both and strictly better on one.
+	 * Shared by evaluate() and evaluateFloor().
+	 */
+	private function baselineDominates(
+		int $candBytes, float $candQuality, int $baseBytes, float $baseQuality
+	): bool {
+		$tol = $this->t->qualityWithinOfBaseline;
+		$baseNoWorseQ = $baseQuality >= $candQuality - $tol;
+		$baseBetterQ = $baseQuality > $candQuality + $tol;
+		$baselineNoWorse = $baseBytes <= $candBytes && $baseNoWorseQ;
+		$baselineStrictly = $baseBytes < $candBytes || $baseBetterQ;
+		return $baselineNoWorse && $baselineStrictly;
 	}
 }

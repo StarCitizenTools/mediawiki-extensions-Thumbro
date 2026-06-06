@@ -15,7 +15,6 @@ class Reporter {
 	private const FLAG_LABELS = [
 		'memory-regression' => 'more memory',
 		'time-regression' => 'slower',
-		'quality-floor-advisory' => 'sub-floor quality (advisory, small thumb)',
 	];
 
 	/** @param array<int,array<string,mixed>> $rows */
@@ -95,8 +94,8 @@ class Reporter {
 		printf( "  %-15s %9s  %-24s %8s  %7s\n", 'contender', 'size', 'SSIM2', 'time', 'peak RSS' );
 
 		foreach ( $row['baselines'] as $name => $r ) {
-			$label = strtoupper( $name ) . ' (baseline)';
-			$this->printContenderRow( $label, $r, $row['baselineQualities'][$name] ?? null );
+			$role = ( $row['baselineRoles'][$name] ?? 'floor' ) === 'floor' ? 'floor' : 'baseline';
+			$this->printContenderRow( strtoupper( $name ) . " ($role)", $r, $row['baselineQualities'][$name] ?? null );
 		}
 		foreach ( $row['candidates'] as $name => $c ) {
 			$this->printContenderRow( $name, $c['result'], $c['quality'] );
@@ -109,6 +108,10 @@ class Reporter {
 					Verdict::INCOMPARABLE => 'trade',
 				};
 				$summary[$base][$bucket] = ( $summary[$base][$bucket] ?? 0 ) + 1;
+			}
+			foreach ( $c['floorVerdicts'] ?? [] as $base => $v ) {
+				printf( "    vs %-3s  %s\n", strtoupper( $base ),
+					$this->floorLine( $v, $c['result'], $row['baselines'][$base] ) );
 			}
 		}
 	}
@@ -131,6 +134,15 @@ class Reporter {
 			Verdict::INCOMPARABLE => [ '~', 'TRADE-OFF' ],
 		};
 		return sprintf( '%s %-9s — %s', $symbol, $word, $this->detail( $g, $cand, $base, $candQ ) );
+	}
+
+	/** Floor-baseline line: floor OK, or FLOOR BREACH when the baseline dominates. */
+	private function floorLine( GateResult $g, Result $cand, Result $base ): string {
+		if ( $g->verdict === Verdict::FAIL ) {
+			return sprintf( '✗ FLOOR BREACH — %s; the default scaler dominates',
+				$this->sizeDelta( $cand->bytes, $base->bytes ) );
+		}
+		return sprintf( '· floor OK — %s', $this->sizeDelta( $cand->bytes, $base->bytes ) );
 	}
 
 	private function detail( GateResult $g, Result $cand, Result $base, Quality $candQ ): string {
