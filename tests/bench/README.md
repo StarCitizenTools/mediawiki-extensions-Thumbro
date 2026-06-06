@@ -97,7 +97,10 @@ hard caps (an outright FAIL above the ceiling, so generation cannot choke the se
 soft budgets (a material regression versus the baseline is flagged).
 
 The **stress** tier uses a caps-only check (`AcceptanceGate::evaluateCaps`): PASS when the
-candidate is under every hard cap, CAP-BREACH otherwise. No baseline comparison.
+candidate is under the hard **time and RSS** caps, CAP-BREACH otherwise. No baseline
+comparison. **Quality is advisory here, not a hard cap** — stress fixtures are synthetic
+pathologies (never served to users) and SSIMULACRA2 is unreliable on them (tiny / animated /
+transparent), so a sub-floor score is flagged, not failed.
 
 See `docs/adr/0001-image-benchmark-gate.md` for the rationale.
 
