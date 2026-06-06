@@ -1,19 +1,19 @@
 <?php
 declare( strict_types=1 );
 
-namespace MediaWiki\Extension\Thumbro\Tests\Integration;
+namespace MediaWiki\Extension\Thumbro\Tests\Integration\Image;
 
-use MediaWiki\Extension\Thumbro\Transparency;
+use MediaWiki\Extension\Thumbro\Image\VipsHeaderAlphaDetector;
 use MediaWikiIntegrationTestCase;
 
 /**
- * Characterization tests for Transparency::hasAlpha — pins the real vipsheader-based
+ * Characterization tests for VipsHeaderAlphaDetector::hasAlpha — pins the real vipsheader-based
  * alpha probe and its safe-false failure modes.
  *
- * @covers \MediaWiki\Extension\Thumbro\Transparency
+ * @covers \MediaWiki\Extension\Thumbro\Image\VipsHeaderAlphaDetector
  * @group Thumbro
  */
-class TransparencyTest extends MediaWikiIntegrationTestCase {
+class VipsHeaderAlphaDetectorTest extends MediaWikiIntegrationTestCase {
 
 	/** @var string[] Temp files to remove in tearDown (survives assertion failures). */
 	private array $tmpFiles = [];
@@ -52,21 +52,21 @@ class TransparencyTest extends MediaWikiIntegrationTestCase {
 		$vipsthumbnail = $this->bin( 'vipsthumbnail' );
 		$this->bin( 'vipsheader' );
 		$src = $this->makeGif( 'thumbro_tr_', true );
-		$this->assertTrue( Transparency::hasAlpha( $src, $vipsthumbnail ) );
+		$this->assertTrue( ( new VipsHeaderAlphaDetector( $vipsthumbnail ) )->hasAlpha( $src ) );
 	}
 
 	public function testOpaqueGifReportsNoAlpha(): void {
 		$vipsthumbnail = $this->bin( 'vipsthumbnail' );
 		$this->bin( 'vipsheader' );
 		$src = $this->makeGif( 'thumbro_op_', false );
-		$this->assertFalse( Transparency::hasAlpha( $src, $vipsthumbnail ) );
+		$this->assertFalse( ( new VipsHeaderAlphaDetector( $vipsthumbnail ) )->hasAlpha( $src ) );
 	}
 
 	public function testMissingSourceReturnsFalse(): void {
 		$vipsthumbnail = $this->bin( 'vipsthumbnail' );
 		$this->bin( 'vipsheader' );
 		$this->assertFalse(
-			Transparency::hasAlpha( '/nonexistent/thumbro-does-not-exist.gif', $vipsthumbnail )
+			( new VipsHeaderAlphaDetector( $vipsthumbnail ) )->hasAlpha( '/nonexistent/thumbro-does-not-exist.gif' )
 		);
 	}
 
@@ -74,7 +74,7 @@ class TransparencyTest extends MediaWikiIntegrationTestCase {
 		// vipsheader is looked up as a sibling of the configured vips command; a command
 		// whose directory has no vipsheader can't be probed => safe false.
 		$this->assertFalse(
-			Transparency::hasAlpha( '/tmp/whatever.gif', '/nonexistent-thumbro-dir/vipsthumbnail' )
+			( new VipsHeaderAlphaDetector( '/nonexistent-thumbro-dir/vipsthumbnail' ) )->hasAlpha( '/tmp/whatever.gif' )
 		);
 	}
 }

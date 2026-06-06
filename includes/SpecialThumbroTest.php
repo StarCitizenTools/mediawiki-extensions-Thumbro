@@ -1,35 +1,19 @@
 <?php
-/*
- * Copyright © Bryan Tong Minh, 2011
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- * http://www.gnu.org/copyleft/gpl.html
- *
- * @file
- */
-
 declare( strict_types=1 );
 
 namespace MediaWiki\Extension\Thumbro;
 
 use Imagick;
 use MediaTransformOutput;
+use MediaWiki\Extension\Thumbro\Backend\BackendDispatcher;
+use MediaWiki\Extension\Thumbro\Backend\BackendRequest;
+use MediaWiki\Extension\Thumbro\Options\TransformOptionsResolver;
+use MediaWiki\FileBackend\FSFile\TempFSFileFactory;
 use MediaWiki\Html\Html;
 use MediaWiki\HTMLForm\Field\HTMLIntField;
 use MediaWiki\HTMLForm\Field\HTMLTextField;
 use MediaWiki\HTMLForm\HTMLForm;
+use MediaWiki\Http\HttpRequestFactory;
 use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Output\StreamFile;
@@ -37,12 +21,14 @@ use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Status\Status;
 use MediaWiki\Title\Title;
 use MediaWiki\User\User;
+use MediaWiki\Utils\UrlUtils;
 use MWHttpRequest;
 use OOUI\FieldsetLayout;
 use OOUI\HtmlSnippet;
 use OOUI\LabelWidget;
 use OOUI\PanelLayout;
 use PermissionsError;
+use RepoGroup;
 
 /**
  * A Special page intended to test Thumbro.
@@ -50,7 +36,14 @@ use PermissionsError;
  */
 class SpecialThumbroTest extends SpecialPage {
 
-	public function __construct() {
+	public function __construct(
+		private readonly TransformOptionsResolver $optionsResolver,
+		private readonly BackendDispatcher $backendDispatcher,
+		private readonly RepoGroup $repoGroup,
+		private readonly HttpRequestFactory $httpRequestFactory,
+		private readonly TempFSFileFactory $tempFactory,
+		private readonly UrlUtils $urlUtils,
+	) {
 		parent::__construct( 'ThumbroTest', 'thumbro-test' );
 	}
 
@@ -121,8 +114,7 @@ class SpecialThumbroTest extends SpecialPage {
 			$this->getOutput()->addWikiMsg( 'thumbro-invalid-file' );
 			return;
 		}
-		$services = MediaWikiServices::getInstance();
-		$file = $services->getRepoGroup()->findFile( $title );
+		$file = $this->repoGroup->findFile( $title );
 		if ( !$file || !$file->exists() ) {
 			$this->getOutput()->addWikiMsg( 'thumbro-invalid-file' );
 			return;
@@ -154,7 +146,7 @@ class SpecialThumbroTest extends SpecialPage {
 
 		$imageUrls = [
 			'original' => $file->getFullUrl(),
-			'normal' => $services->getUrlUtils()->expand( $thumb->getUrl() ),
+			'normal' => $this->urlUtils->expand( $thumb->getUrl() ),
 			'thumbro' => $this->getPageTitle()->getFullUrl( $vipsUrlOptions )
 		];
 
@@ -309,8 +301,7 @@ class SpecialThumbroTest extends SpecialPage {
 	 * Return the MWHttpRequest object if the request is successful
 	 */
 	private function getImageRequest( string $url ): ?MWHttpRequest {
-		$httpRequestFactory = MediaWikiServices::getInstance()->getHttpRequestFactory();
-		$req = $httpRequestFactory->create( $url, [], __METHOD__ );
+		$req = $this->httpRequestFactory->create( $url, [], __METHOD__ );
 		$req->setHeader( 'X-Thumbro-Secret', $this->getConfig()->get( MainConfigNames::SecretKey ) );
 		$result = $req->execute();
 		if ( !$result->isGood() ) {
@@ -471,8 +462,7 @@ class SpecialThumbroTest extends SpecialPage {
 			$this->streamError( 404, "Thumbro: invalid title" );
 			return;
 		}
-		$services = MediaWikiServices::getInstance();
-		$file = $services->getRepoGroup()->findFile( $title );
+		$file = $this->repoGroup->findFile( $title );
 		if ( !$file || !$file->exists() ) {
 			$this->streamError( 404, "Thumbro: file not found" );
 			return;
@@ -500,7 +490,7 @@ class SpecialThumbroTest extends SpecialPage {
 		// Get the thumbnail
 		// No remote scaler, need to do it ourselves.
 		// Emulate the BitmapHandlerTransform hook
-		$tmpFile = ShellCommand::makeTemp( $extension );
+		$tmpFile = $this->tempFactory->newTempFSFile( 'thumbro_', $extension );
 		$tmpFile->bind( $this );
 		$dstPath = $tmpFile->getPath();
 		$dstUrl = '';
@@ -527,9 +517,9 @@ class SpecialThumbroTest extends SpecialPage {
 			'interlace' => $request->getBool( 'interlace' ),
 		];
 
-		$options = Utils::getOptions( $handler, $file, $config );
+		$options = $this->optionsResolver->resolve( $handler, $file );
 		if ( $options === null ) {
-			// getOptions() returns null for any file Thumbro will not transform: the output
+			// resolve() returns null for any file Thumbro will not transform: the output
 			// type's block is disabled, the file is multipage, or its area is outside the
 			// configured [minArea, maxArea) range.
 			$this->streamError(
@@ -544,7 +534,10 @@ class SpecialThumbroTest extends SpecialPage {
 		// comparison reflects the backend production actually serves (e.g. libwebp for
 		// animated GIFs) rather than always libvips.
 		/** @var MediaTransformOutput $mto */
-		BackendDispatcher::dispatch( $handler, $file, $scalerParams, $options, $config, $mto );
+		$this->backendDispatcher->dispatch(
+			new BackendRequest( $handler, $file, $scalerParams, $options ),
+			$mto
+		);
 		if ( $mto && !$mto->isError() ) {
 			wfDebug( __METHOD__ . ": streaming thumbnail..." );
 			$this->getOutput()->disable();

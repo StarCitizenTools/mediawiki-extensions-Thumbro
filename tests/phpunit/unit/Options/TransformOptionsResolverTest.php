@@ -1,30 +1,30 @@
 <?php
 declare( strict_types=1 );
 
-namespace MediaWiki\Extension\Thumbro\Tests\Unit;
+namespace MediaWiki\Extension\Thumbro\Tests\Unit\Options;
 
 use File;
 use MediaWiki\Config\HashConfig;
-use MediaWiki\Extension\Thumbro\Utils;
+use MediaWiki\Extension\Thumbro\Options\TransformOptionsResolver;
 use MediaWikiUnitTestCase;
 use TransformationalImageHandler;
 
 /**
- * Characterization tests for Utils::getOptions — they pin CURRENT behaviour
- * (including its quirks) so a later refactor can be verified as behaviour-preserving.
+ * Characterization tests for TransformOptionsResolver::resolve — they pin CURRENT behaviour
+ * (including its quirks) so this DI refactor is verifiably behaviour-preserving. Ported from
+ * the former UtilsTest.
  *
- * Key quirk under test: getThumbType() always reports image/webp, so getOptions
- * always matches the image/webp block; only `library` and `inputOptions` come from
- * the input-MIME block. That makes the image/webp block's `enabled`/`minArea`/`maxArea`
- * the effective gate for ALL inputs.
+ * Key quirk under test: getThumbType() always reports image/webp, so resolve() always matches
+ * the image/webp block; only `library` and `inputOptions` come from the input-MIME block. That
+ * makes the image/webp block's `enabled`/`minArea`/`maxArea` the effective gate for ALL inputs.
  *
- * @covers \MediaWiki\Extension\Thumbro\Utils
+ * @covers \MediaWiki\Extension\Thumbro\Options\TransformOptionsResolver
  */
-class UtilsTest extends MediaWikiUnitTestCase {
+class TransformOptionsResolverTest extends MediaWikiUnitTestCase {
 
 	/** @param array $optionsOverride Replaces the ThumbroOptions map when given. */
-	private function config( array $optionsOverride = [] ): HashConfig {
-		return new HashConfig( [
+	private function resolver( array $optionsOverride = [] ): TransformOptionsResolver {
+		return new TransformOptionsResolver( new HashConfig( [
 			'ThumbroLibraries' => [
 				'libvips' => [ 'command' => '/usr/bin/vipsthumbnail' ],
 				'libwebp' => [ 'command' => '/usr/bin/gif2webp' ],
@@ -38,7 +38,7 @@ class UtilsTest extends MediaWikiUnitTestCase {
 					'inputOptions' => [],
 					'outputOptions' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
 			],
-		] );
+		] ) );
 	}
 
 	private function handler( int $area = 1000 ): TransformationalImageHandler {
@@ -58,90 +58,86 @@ class UtilsTest extends MediaWikiUnitTestCase {
 	}
 
 	public function testGifResolvesLibwebpLibrary(): void {
-		$opts = Utils::getOptions( $this->handler(), $this->file( 'image/gif', 'gif' ), $this->config() );
+		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/gif', 'gif' ) );
 		$this->assertNotNull( $opts );
-		$this->assertSame( 'libwebp', $opts['library'] );
-		$this->assertSame( [ 'n' => '-1' ], $opts['inputOptions'] );
+		$this->assertSame( 'libwebp', $opts->library() );
+		$this->assertSame( [ 'n' => '-1' ], $opts->inputOptions() );
 		// webp-block output options still resolved (the matched block is always image/webp).
-		$this->assertSame( '90', $opts['outputOptions']['Q'] );
+		$this->assertSame( '90', $opts->outputOptions()['Q'] );
 		// command resolves to the selected library's binary.
-		$this->assertSame( '/usr/bin/gif2webp', $opts['command'] );
+		$this->assertSame( '/usr/bin/gif2webp', $opts->command() );
 	}
 
 	public function testJpegResolvesLibvipsLibrary(): void {
-		$opts = Utils::getOptions( $this->handler(), $this->file( 'image/jpeg', 'jpg' ), $this->config() );
+		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/jpeg', 'jpg' ) );
 		$this->assertNotNull( $opts );
-		$this->assertSame( 'libvips', $opts['library'] );
-		$this->assertSame( '/usr/bin/vipsthumbnail', $opts['command'] );
-		$this->assertSame( [], $opts['inputOptions'] );
+		$this->assertSame( 'libvips', $opts->library() );
+		$this->assertSame( '/usr/bin/vipsthumbnail', $opts->command() );
+		$this->assertSame( [], $opts->inputOptions() );
 	}
 
 	public function testPngResolvesLibvipsLibrary(): void {
-		$opts = Utils::getOptions( $this->handler(), $this->file( 'image/png', 'png' ), $this->config() );
+		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/png', 'png' ) );
 		$this->assertNotNull( $opts );
-		$this->assertSame( 'libvips', $opts['library'] );
+		$this->assertSame( 'libvips', $opts->library() );
 	}
 
 	public function testWebpResolvesLibvipsLibrary(): void {
-		$opts = Utils::getOptions( $this->handler(), $this->file( 'image/webp', 'webp' ), $this->config() );
+		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/webp', 'webp' ) );
 		$this->assertNotNull( $opts );
-		$this->assertSame( 'libvips', $opts['library'] );
-		$this->assertSame( 'true', $opts['outputOptions']['strip'] );
+		$this->assertSame( 'libvips', $opts->library() );
+		$this->assertSame( 'true', $opts->outputOptions()['strip'] );
 	}
 
 	public function testReturnsNullWhenWebpBlockDisabled(): void {
 		// The matched (image/webp) block gates everything; disabling it disables Thumbro
 		// for ALL inputs, even a gif. This is a current quirk, pinned here.
-		$opts = $this->config( [
+		$resolver = $this->resolver( [
 			'image/gif' => [ 'enabled' => true, 'library' => 'libwebp', 'inputOptions' => [] ],
 			'image/webp' => [ 'enabled' => false, 'library' => 'libvips', 'inputOptions' => [], 'outputOptions' => [] ],
 		] );
-		$this->assertNull( Utils::getOptions( $this->handler(), $this->file( 'image/gif', 'gif' ), $opts ) );
+		$this->assertNull( $resolver->resolve( $this->handler(), $this->file( 'image/gif', 'gif' ) ) );
 	}
 
 	public function testReturnsNullForMultipageFile(): void {
-		$opts = Utils::getOptions(
-			$this->handler(),
-			$this->file( 'image/webp', 'webp', true ),
-			$this->config()
-		);
+		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/webp', 'webp', true ) );
 		$this->assertNull( $opts );
 	}
 
 	public function testReturnsNullWhenAreaAtOrAboveMaxArea(): void {
 		// maxArea is read from the matched (image/webp) block; area >= maxArea => null.
-		$cfg = $this->config( [
+		$resolver = $this->resolver( [
 			'image/webp' => [ 'enabled' => true, 'library' => 'libvips', 'maxArea' => 500,
 				'inputOptions' => [], 'outputOptions' => [] ],
 		] );
-		$this->assertNull( Utils::getOptions( $this->handler( 1000 ), $this->file( 'image/webp', 'webp' ), $cfg ) );
+		$this->assertNull( $resolver->resolve( $this->handler( 1000 ), $this->file( 'image/webp', 'webp' ) ) );
 		// Below the cap it is handled.
-		$this->assertNotNull( Utils::getOptions( $this->handler( 100 ), $this->file( 'image/webp', 'webp' ), $cfg ) );
+		$this->assertNotNull( $resolver->resolve( $this->handler( 100 ), $this->file( 'image/webp', 'webp' ) ) );
 	}
 
 	public function testReturnsNullWhenAreaBelowMinArea(): void {
-		$cfg = $this->config( [
+		$resolver = $this->resolver( [
 			'image/webp' => [ 'enabled' => true, 'library' => 'libvips', 'minArea' => 2000,
 				'inputOptions' => [], 'outputOptions' => [] ],
 		] );
-		$this->assertNull( Utils::getOptions( $this->handler( 1000 ), $this->file( 'image/webp', 'webp' ), $cfg ) );
+		$this->assertNull( $resolver->resolve( $this->handler( 1000 ), $this->file( 'image/webp', 'webp' ) ) );
 	}
 
 	public function testReturnsNullWhenSelectedLibraryUnknown(): void {
 		// library resolves from the input-MIME block; an unregistered library => null.
-		$cfg = $this->config( [
+		$resolver = $this->resolver( [
 			'image/jpeg' => [ 'enabled' => true, 'library' => 'libdoesnotexist', 'inputOptions' => [] ],
 			'image/webp' => [ 'enabled' => true, 'library' => 'libvips', 'inputOptions' => [], 'outputOptions' => [] ],
 		] );
-		$this->assertNull( Utils::getOptions( $this->handler(), $this->file( 'image/jpeg', 'jpg' ), $cfg ) );
+		$this->assertNull( $resolver->resolve( $this->handler(), $this->file( 'image/jpeg', 'jpg' ) ) );
 	}
 
 	public function testUnconfiguredInputMimeFallsThroughToWebpBlockLibrary(): void {
 		// An input MIME with no own block still gets handled via the image/webp block:
 		// library falls back to the webp block's, inputOptions to []. Pinned quirk.
-		$opts = Utils::getOptions( $this->handler(), $this->file( 'image/tiff', 'tiff' ), $this->config() );
+		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/tiff', 'tiff' ) );
 		$this->assertNotNull( $opts );
-		$this->assertSame( 'libvips', $opts['library'] );
-		$this->assertSame( [], $opts['inputOptions'] );
+		$this->assertSame( 'libvips', $opts->library() );
+		$this->assertSame( [], $opts->inputOptions() );
 	}
 }
