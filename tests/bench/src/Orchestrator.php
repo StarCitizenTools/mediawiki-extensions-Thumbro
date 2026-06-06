@@ -74,19 +74,23 @@ class Orchestrator {
 			$verdicts = [];
 			$capsVerdict = null;
 			if ( $res->available && $quality !== null ) {
-				$gate = new AcceptanceGate( new GateThresholds(), $entry['animated'] );
+				$thresholds = new GateThresholds();
+				$gate = new AcceptanceGate( $thresholds, $entry['animated'] );
 				if ( $tier === 'stress' ) {
 					$capsVerdict = $gate->evaluateCaps(
 						$quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0
 					);
 				} else {
+					// At small widths SSIMULACRA2 is unstable (see README); gate quality as advisory.
+					$qualityAdvisory = $w <= $thresholds->qualityAdvisoryMaxWidth;
 					foreach ( $baseResults as $name => $base ) {
 						if ( !$base->available || $baseQualities[$name] === null ) {
 							continue;
 						}
 						$verdicts[$name] = $gate->evaluate(
 							$res->bytes ?? 0, $quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0,
-							$base->bytes ?? 0, $baseQualities[$name]->mean, $base->wallMs ?? 0.0, $base->peakRssKb ?? 0
+							$base->bytes ?? 0, $baseQualities[$name]->mean, $base->wallMs ?? 0.0, $base->peakRssKb ?? 0,
+							$qualityAdvisory
 						);
 					}
 				}

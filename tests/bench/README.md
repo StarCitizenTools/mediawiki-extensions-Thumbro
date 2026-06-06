@@ -82,6 +82,15 @@ FAIL; a genuine trade-off → INCOMPARABLE (record a decision in the PR).
 The **stress** tier uses a caps-only check (`AcceptanceGate::evaluateCaps`): PASS when the
 candidate is under every hard cap, CAP-BREACH otherwise. No baseline comparison.
 
+**Advisory quality at small widths.** SSIMULACRA2 is unstable at ≤120px (the "Interpreting
+scores" note above), so for representative cells at or below `GateThresholds::qualityAdvisoryMaxWidth`
+(120px) the gate treats quality as **advisory**: a sub-floor score is recorded as a
+`quality-floor-advisory` flag rather than a hard FAIL, and a quality gap within
+`qualityWithinOfBaseline` counts as a tie for dominance (so metric jitter can't hand either
+side a win on its own — size decides). Larger differences still matter, and size/time/RSS
+caps are unaffected. This keys on the **target width**; animation's separate "scored at 84px"
+limitation is not folded in here. The stress tier (`evaluateCaps`) keeps the strict floor.
+
 ## Add a fixture
 - **Stress fixture:** edit `bin/make_corpus.php`, run it, add a `"tier": "stress"` entry
   to `corpus/manifest.json`.

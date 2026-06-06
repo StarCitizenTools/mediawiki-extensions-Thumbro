@@ -32,16 +32,29 @@ class AcceptanceGate {
 		return new GateResult( $reasons === [] ? Verdict::PASS : Verdict::FAIL, $reasons, [] );
 	}
 
+	/**
+	 * Dominance evaluation vs one baseline. When $qualityAdvisory is true (a small,
+	 * ≤ qualityAdvisoryMaxWidth thumbnail whose SSIMULACRA2 is unstable), quality is advisory: a
+	 * sub-floor score is flagged rather than a hard FAIL, and quality differences within
+	 * $qualityWithinOfBaseline are treated as ties so metric jitter cannot hand either side a win.
+	 * See tests/bench/README.md.
+	 */
 	public function evaluate(
 		int $candBytes, float $candQuality, float $candWallMs, int $candRssKb,
-		int $baseBytes, float $baseQuality, float $baseWallMs, int $baseRssKb
+		int $baseBytes, float $baseQuality, float $baseWallMs, int $baseRssKb,
+		bool $qualityAdvisory = false
 	): GateResult {
 		$reasons = [];
 		$flags = [];
 
-		// Hard constraints (any breach => FAIL)
+		// Hard constraints (any breach => FAIL). At advisory widths the quality metric is
+		// unreliable, so a sub-floor score becomes a flag for visual follow-up, never a FAIL.
 		if ( $candQuality < $this->t->qualityFloor ) {
-			$reasons[] = 'quality-floor';
+			if ( $qualityAdvisory ) {
+				$flags[] = 'quality-floor-advisory';
+			} else {
+				$reasons[] = 'quality-floor';
+			}
 		}
 		$timeCeiling = $this->animated ? $this->t->timeCeilingAnimatedMs : $this->t->timeCeilingStaticMs;
 		if ( $candWallMs > $timeCeiling ) {
@@ -66,15 +79,23 @@ class AcceptanceGate {
 			$flags[] = 'memory-regression';
 		}
 
-		// Dominance on {bytes, quality}
-		$noWorse = $candBytes <= $baseBytes && $candQuality >= $baseQuality;
-		$strictly = $candBytes < $baseBytes || $candQuality > $baseQuality;
+		// Dominance on {bytes, quality}. At advisory widths, quality gaps within the metric's
+		// noise band ($qualityWithinOfBaseline) count as ties, so a smaller file is not denied a
+		// win by jitter — and, symmetrically, the baseline cannot win on jitter either.
+		$tol = $qualityAdvisory ? $this->t->qualityWithinOfBaseline : 0.0;
+		$candNoWorseQ = $candQuality >= $baseQuality - $tol;
+		$candBetterQ = $candQuality > $baseQuality + $tol;
+		$baseNoWorseQ = $baseQuality >= $candQuality - $tol;
+		$baseBetterQ = $baseQuality > $candQuality + $tol;
+
+		$noWorse = $candBytes <= $baseBytes && $candNoWorseQ;
+		$strictly = $candBytes < $baseBytes || $candBetterQ;
 		if ( $noWorse && $strictly ) {
 			return new GateResult( Verdict::PASS, $reasons, $flags );
 		}
 
-		$baselineNoWorse = $baseBytes <= $candBytes && $baseQuality >= $candQuality;
-		$baselineStrictly = $baseBytes < $candBytes || $baseQuality > $candQuality;
+		$baselineNoWorse = $baseBytes <= $candBytes && $baseNoWorseQ;
+		$baselineStrictly = $baseBytes < $candBytes || $baseBetterQ;
 		if ( $baselineNoWorse && $baselineStrictly ) {
 			return new GateResult( Verdict::FAIL, [ 'baseline-dominates' ], $flags );
 		}

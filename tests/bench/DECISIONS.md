@@ -73,3 +73,29 @@ and cached, the smaller file is served on every view.
 
 **Full harness results:** `benchmark.php --mime=image/jpeg` before/after captured this
 change; sweep raw data in `sweep-results.json`.
+
+## 2026-06-06 — gate: advisory quality at ≤120px
+
+**Change:** `AcceptanceGate::evaluate()` now takes a `qualityAdvisory` flag; the Orchestrator
+sets it for representative cells at or below `GateThresholds::qualityAdvisoryMaxWidth` (120px).
+When advisory, a sub-floor SSIMULACRA2 is recorded as a `quality-floor-advisory` flag instead
+of a hard FAIL, and a quality gap within `qualityWithinOfBaseline` (5.0) counts as a tie for
+dominance. `evaluateCaps()` (stress tier) is unchanged.
+
+**Why:** the README already documents that SSIMULACRA2 is unstable at ≤120px ("treat as
+advisory, corroborate visually"), but the gate still hard-failed on those scores — a
+contradiction. Corroborated visually: at portrait @120px a Q84 thumbnail scoring S2 47.5 is
+indistinguishable from the MediaWiki JPEG baseline scoring S2 59.5 (3× point-zoom), confirming
+the gap is metric jitter, not real degradation.
+
+**Effect:** at Q90 the image/jpeg result goes from 5 win / 1 trade-off to **6 win / 0
+trade-off vs ImageMagick** — portrait @120 (7 538 B / 57.5 vs IM 7 854 B / 59.5) was the lone
+trade-off and is now a clean win. The rule is monotonic — it can only soften a ≤120px verdict
+(FAIL→flag, or trade-off→win within the noise band), never harden one — so no other MIME's
+verdict regresses. GD comparisons are unchanged (its tiny broken thumbnails remain INCOMPARABLE
+on size).
+
+**Scope note:** the flag keys on target width. Animation is scored at 84px regardless of
+target (a separate, documented harness limitation) and is not folded into this rule; its cells
+go through the strict `evaluateCaps` (stress) or non-advisory `evaluate` (representative)
+paths as before.

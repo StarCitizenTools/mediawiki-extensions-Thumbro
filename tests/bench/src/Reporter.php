@@ -15,6 +15,7 @@ class Reporter {
 	private const FLAG_LABELS = [
 		'memory-regression' => 'more memory',
 		'time-regression' => 'slower',
+		'quality-floor-advisory' => 'sub-floor quality (advisory, small thumb)',
 	];
 
 	/** @param array<int,array<string,mixed>> $rows */

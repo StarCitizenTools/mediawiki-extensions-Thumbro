@@ -70,6 +70,48 @@ class AcceptanceGateTest extends MediaWikiUnitTestCase {
 		$this->assertSame( Verdict::INCOMPARABLE, $v->verdict );
 	}
 
+	public function testAdvisorySubFloorQualityDoesNotFail(): void {
+		// A smaller candidate below the quality floor at an advisory width: flagged, not failed.
+		$v = $this->gate()->evaluate(
+			candBytes: 100, candQuality: 45.0, candWallMs: 100, candRssKb: 1000,
+			baseBytes: 1700, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000,
+			qualityAdvisory: true
+		);
+		$this->assertNotSame( Verdict::FAIL, $v->verdict );
+		$this->assertNotContains( 'quality-floor', $v->reasons );
+		$this->assertContains( 'quality-floor-advisory', $v->flags );
+	}
+
+	public function testAdvisoryQualityGapWithinToleranceIsATieAndWins(): void {
+		// Smaller, and 2 SSIM2 below baseline — within the noise band, so size wins.
+		$v = $this->gate()->evaluate(
+			candBytes: 900, candQuality: 78.0, candWallMs: 100, candRssKb: 1000,
+			baseBytes: 1000, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000,
+			qualityAdvisory: true
+		);
+		$this->assertSame( Verdict::PASS, $v->verdict );
+	}
+
+	public function testNonAdvisorySameGapIsTradeOff(): void {
+		// The identical inputs without the advisory flag: a 2-point deficit denies the win.
+		$v = $this->gate()->evaluate(
+			candBytes: 900, candQuality: 78.0, candWallMs: 100, candRssKb: 1000,
+			baseBytes: 1000, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000
+		);
+		$this->assertSame( Verdict::INCOMPARABLE, $v->verdict );
+	}
+
+	public function testAdvisoryFarBelowBaselineStaysIncomparable(): void {
+		// Smaller but 20 SSIM2 below baseline — beyond the noise band, so not a win even when
+		// advisory; quality still matters, it just cannot hard-FAIL here.
+		$v = $this->gate()->evaluate(
+			candBytes: 100, candQuality: 45.0, candWallMs: 100, candRssKb: 1000,
+			baseBytes: 1700, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000,
+			qualityAdvisory: true
+		);
+		$this->assertSame( Verdict::INCOMPARABLE, $v->verdict );
+	}
+
 	public function testCapsOnlyPassesUnderEveryCap(): void {
 		// Under quality floor (50), time ceiling (3000 static), RSS ceiling (512000) => PASS.
 		$v = $this->gate()->evaluateCaps( candQuality: 60.0, candWallMs: 1500, candRssKb: 80000 );
