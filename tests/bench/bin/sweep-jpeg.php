@@ -7,7 +7,7 @@ declare( strict_types=1 );
  * Encodes each JPEG fixture to WebP across a grid of webpsave options, scores every
  * cell with SSIMULACRA2 against the same lossless vips reference the gate uses, and
  * prints a size-vs-quality table so the knee can be read off by eye. It produces NO
- * verdict: selection is a human decision recorded in tests/bench/DECISIONS.md, after
+ * verdict: selection is a human decision recorded in docs/encoding/image-jpeg.md, after
  * which the chosen profile is written into extension.json and proven with benchmark.php.
  *
  * Reuses the gate's own scoring plumbing (Reference, Ssimulacra2, ImageDims, Subprocess,
@@ -56,8 +56,9 @@ $corpusDir = __DIR__ . '/../corpus';
  * — it is never part of the knee read.
  */
 $fixtures = [
-	[ 'file' => 'photo.jpg', 'widths' => [ 250, 640 ], 'role' => 'representative' ],
-	[ 'file' => 'portrait.jpg', 'widths' => [ 250, 640 ], 'role' => 'representative' ],
+	[ 'file' => 'photo.jpg', 'widths' => [ 180, 250, 400 ], 'role' => 'representative' ],
+	[ 'file' => 'portrait.jpg', 'widths' => [ 180, 250, 400 ], 'role' => 'representative' ],
+	[ 'file' => 'concept-art.jpg', 'widths' => [ 180, 250, 400 ], 'role' => 'representative' ],
 	[ 'file' => 'huge.jpg', 'widths' => [ 320 ], 'role' => 'stress' ],
 ];
 
@@ -179,7 +180,7 @@ foreach ( $fixtures as $fx ) {
 	}
 }
 
-// Persist raw rows for later inspection / DECISIONS.md.
+// Persist raw rows for later inspection / docs/encoding/image-jpeg.md.
 file_put_contents( $outDir . '/sweep-results.json', json_encode( $rows, JSON_PRETTY_PRINT ) . "\n" );
 
 // Per (fixture,width) table sorted by size ascending — the knee is read top-to-bottom:
