@@ -11,16 +11,21 @@ class AcceptanceGate {
 	}
 
 	/**
-	 * Caps-only evaluation for the STRESS tier. Returns PASS when the candidate is under every
-	 * hard safety cap (quality floor, wall-time ceiling, RSS ceiling) and FAIL otherwise, with
-	 * the breached caps as reasons. It consults no baseline: the stress tier asks "does Thumbro
-	 * stay safe on pathological input?", never "is Thumbro better?", so it can never produce a
-	 * win/loss/trade-off.
+	 * Caps-only evaluation for the STRESS tier. Returns PASS when the candidate is under the hard
+	 * safety caps (wall-time ceiling, RSS ceiling), FAIL otherwise with the breached caps as
+	 * reasons. It consults no baseline: the stress tier asks "does Thumbro stay safe on
+	 * pathological input?", never "is Thumbro better?", so it never produces a win/loss/trade-off.
+	 *
+	 * Quality is advisory here, not a hard cap: stress fixtures are synthetic pathologies (never
+	 * served to users) and SSIMULACRA2 is unreliable on them (tiny / animated / transparent — see
+	 * tests/bench/README.md), so a sub-floor score is flagged for visual follow-up rather than
+	 * failing the run.
 	 */
 	public function evaluateCaps( float $candQuality, float $candWallMs, int $candRssKb ): GateResult {
 		$reasons = [];
+		$flags = [];
 		if ( $candQuality < $this->t->qualityFloor ) {
-			$reasons[] = 'quality-floor';
+			$flags[] = 'quality-floor-advisory';
 		}
 		$timeCeiling = $this->animated ? $this->t->timeCeilingAnimatedMs : $this->t->timeCeilingStaticMs;
 		if ( $candWallMs > $timeCeiling ) {
@@ -29,7 +34,7 @@ class AcceptanceGate {
 		if ( $candRssKb > $this->t->rssCeilingKb ) {
 			$reasons[] = 'rss-ceiling';
 		}
-		return new GateResult( $reasons === [] ? Verdict::PASS : Verdict::FAIL, $reasons, [] );
+		return new GateResult( $reasons === [] ? Verdict::PASS : Verdict::FAIL, $reasons, $flags );
 	}
 
 	/**
