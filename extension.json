@@ -126,7 +126,7 @@
 					"inputOptions": {},
 					"outputOptions": {
 						"strip": "true",
-						"Q": "90",
+						"Q": "80",
 						"smart_subsample": "false",
 						"effort": "6"
 					}
