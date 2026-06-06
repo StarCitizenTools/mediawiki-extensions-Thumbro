@@ -80,7 +80,12 @@ $wgThumbroOptions = [
 	'image/png' => [
 		'enabled' => true,
 		'library' => 'libvips',
-		'inputOptions' => []
+		'inputOptions' => [],
+		'outputOptions' => [
+			'near_lossless' => 'true',
+			'Q' => '60',
+			'strip' => 'true'
+		]
 	],
 	'image/webp' => [
 		'enabled' => true,
