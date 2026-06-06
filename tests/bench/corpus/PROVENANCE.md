@@ -22,10 +22,24 @@ Every entry must record: source URL, licence, author/attribution, and any normal
 
 ## Pending human sign-off
 
-Fixtures whose licence could not be verified automatically are kept as synthetic
-stand-ins, marked `"pending_license": true` in `manifest.json`, and listed here for a
-human to acquire a real, licence-verified replacement before merge.
+The acquisition pipeline is verified working (Wikimedia Commons API reachable; licence
+read programmatically from `extmetadata`). Real-fixture acquisition is **blocked on a
+licensing-policy decision**, so all representative cells remain synthetic stand-ins
+(`"pending_license": true` in `manifest.json`) until resolved.
+
+**Blocker — licence whitelist vs. source reality.** The approved spec restricts the
+corpus to **CC0 / public-domain / CC-BY (no ShareAlike)**. Wikimedia Commons is
+overwhelmingly **CC BY-SA**: in a sample probe, the modern, representative photos /
+graphics / animations were all CC BY-SA 3.0; only stale or trivial files were PD/CC0.
+Acquiring genuinely representative content therefore requires either (a) widening the
+whitelist to include CC BY-SA (attribution + share-alike recorded — acceptable for
+committed test fixtures), or (b) accepting a narrower, less-representative PD/CC0-only
+set. **This is a human decision** (outward-facing licensing); see the PR/branch summary.
+
+**Gaming-specific cells need human curation regardless of (a)/(b):**
 
 | Intended file | Intended content | Blocker |
 | :--- | :--- | :--- |
-| _none yet_ | | |
+| gaming screenshot | 3D scene + HUD (FOSS game: 0 A.D./SuperTuxKart/OpenTTD) | source + licence selection is judgement-heavy; AAA screenshots are copyrighted |
+| sprite / animated sprite | CC0 pixel-art (Kenney.nl / OpenGameArt CC0) | needs asset-pack navigation; not a single stable Commons URL |
+| all photo/graphic/animation cells | representative real content | licence-whitelist decision above |
