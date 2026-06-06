@@ -1,6 +1,11 @@
 <?php
 declare( strict_types=1 );
-// Regenerates the benchmark corpus into ../corpus. Requires `convert` (ImageMagick).
+// Regenerates the STRESS-tier benchmark fixtures into ../corpus. Requires `convert` (ImageMagick).
+//
+// Scope: this generates only the synthetic stress fixtures (pathologies and size extremes),
+// where precise control over frame count / transparency / area is needed to hit thresholds.
+// The REPRESENTATIVE tier is real, committed, freely-licensed images that are curated by hand,
+// NOT generated here — see corpus/CREDITS.md and corpus/PROVENANCE.md.
 
 $dir = dirname( __DIR__ ) . '/corpus';
 // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
@@ -17,53 +22,8 @@ $run = static function ( string $cmd ): void {
 // phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.escapeshellarg
 $q = static fn ( string $s ) => escapeshellarg( $s );
 
-// photographic — structured synthetic: smooth gradient base + solid-colour shapes (circles,
-// rounded rectangles). No plasma/noise so perceptual metrics (SSIMULACRA2) score sensibly.
-$run( 'convert -size 800x600 gradient:skyblue-navy '
-	. '\( -size 800x600 xc:none '
-	. '-fill gold -draw "circle 220,200 220,90" '
-	. '-fill crimson -draw "roundrectangle 480,120 740,360 30,30" '
-	. '-fill white -draw "circle 600,460 600,400" \) '
-	. '-composite ' . $q( "$dir/photographic.jpg" ) );
-
-// flat graphic (hard edges, few colours)
-$run( 'convert -size 800x600 xc:white -fill "#3366cc" -draw "roundrectangle 80,80 720,520 40,40" '
-	. '-fill white -font DejaVu-Sans -pointsize 120 -gravity center -annotate 0 "AB" '
-	. $q( "$dir/flat-graphic.png" ) );
-
-// static sprite (small palette, 1 frame)
-$run( 'convert -size 64x64 xc:none -fill "#e23" -draw "circle 32,32 32,8" -colors 16 ' . $q( "$dir/sprite.gif" ) );
-
-// alpha PNG with transparency
-$run( 'convert -size 400x400 xc:none -fill "rgba(20,140,90,0.7)" -draw "circle 200,200 200,40" '
-	. $q( "$dir/alpha.png" ) );
-
-// animated UNDER MaxAnimatedGifArea (wgMaxAnimatedGifArea = 12,500,000 px*frames):
-// 120x120 x 20 frames = 288,000 px*frames  (<< 12.5M)
-$run( 'convert -size 120x120 xc:white -delay 5 '
-	. '\( -clone 0 -fill red   -draw "circle 30,60 30,40"  \) '
-	. '\( -clone 0 -fill green -draw "circle 60,60 60,40"  \) '
-	. '\( -clone 0 -fill blue  -draw "circle 90,60 90,40"  \) '
-	. '\( -clone 0 -fill red   -draw "circle 30,60 30,40"  \) '
-	. '\( -clone 0 -fill green -draw "circle 60,60 60,40"  \) '
-	. '\( -clone 0 -fill blue  -draw "circle 90,60 90,40"  \) '
-	. '\( -clone 0 -fill red   -draw "circle 30,60 30,40"  \) '
-	. '\( -clone 0 -fill green -draw "circle 60,60 60,40"  \) '
-	. '\( -clone 0 -fill blue  -draw "circle 90,60 90,40"  \) '
-	. '\( -clone 0 -fill red   -draw "circle 30,60 30,40"  \) '
-	. '\( -clone 0 -fill green -draw "circle 60,60 60,40"  \) '
-	. '\( -clone 0 -fill blue  -draw "circle 90,60 90,40"  \) '
-	. '\( -clone 0 -fill red   -draw "circle 30,60 30,40"  \) '
-	. '\( -clone 0 -fill green -draw "circle 60,60 60,40"  \) '
-	. '\( -clone 0 -fill blue  -draw "circle 90,60 90,40"  \) '
-	. '\( -clone 0 -fill red   -draw "circle 30,60 30,40"  \) '
-	. '\( -clone 0 -fill green -draw "circle 60,60 60,40"  \) '
-	. '\( -clone 0 -fill blue  -draw "circle 90,60 90,40"  \) '
-	. '\( -clone 0 -fill red   -draw "circle 30,60 30,40"  \) '
-	. '\( -clone 0 -fill blue  -draw "circle 90,60 90,40"  \) '
-	. '-loop 0 ' . $q( "$dir/anim-small.gif" ) );
-
-// animated OVER MaxAnimatedGifArea: 700x700 x 30 frames = 14,700,000 px*frames (> 12.5M)
+// STRESS: large animated GIF (700x700 x 30 frames = 14,700,000 px*frames) — exercises the
+// ImageMagick -coalesce memory blow-up (full canvas held per frame) vs Thumbro's flat profile.
 // Build the frame list in PHP to avoid shell arithmetic / for-loop portability issues.
 $frameParts = [];
 $colors = [ 'red', 'blue', 'green', 'orange', 'purple', 'cyan' ];
