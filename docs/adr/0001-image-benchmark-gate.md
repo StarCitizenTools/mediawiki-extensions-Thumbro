@@ -102,7 +102,7 @@ the tolerance, the baseline roles, and the width rationale.
 
 ### 5. Record practice
 
-Adopt MADR-lite ADRs (`docs/adr/`). `tests/bench/DECISIONS.md` keeps its narrower role
+Adopt MADR-lite ADRs (`docs/adr/`). `docs/encoding/` (per-MIME living docs) keeps the narrower role
 (per-MIME benchmark option-set results); ADRs capture system/methodology rationale and
 cross-link to it. This ADR is the first.
 
@@ -121,8 +121,8 @@ cross-link to it. This ADR is the first.
   gate + corpus + widths; the knees may shift. Run the new gate once to capture a new
   baseline-of-record — current options may read INCOMPARABLE until the follow-up re-tunes
   them. This is the immediate next PR.
-- **Regenerate GD numbers** and revisit GD claims in `tests/bench/DECISIONS.md`, since
-  earlier GD results came from a contender that did not match MediaWiki's GD path.
+- **Regenerate GD numbers** and revisit prior GD claims (now migrated to `docs/encoding/`),
+  since earlier GD results came from a contender that did not match MediaWiki's GD path.
 - **Pre-existing issues** documented but not fixed here: `flat-graphic.png` losing to
   ImageMagick (PNG near-lossless on a flat graphic); `anim-transparent.gif` breaching the
   quality floor.

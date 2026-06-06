@@ -8,6 +8,9 @@
 # Tests and benchmarks (incl. the tests/bench/ harness + corpus fixtures)
 /tests                          export-ignore
 
+# Developer rationale: ADRs + per-MIME encoding decision records (docs/adr, docs/encoding)
+/docs                           export-ignore
+
 # CI / repo automation
 /.github                        export-ignore
 /release-please-config.json     export-ignore

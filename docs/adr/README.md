@@ -7,10 +7,11 @@ Format: **MADR-lite** — Context · Decision · Options considered · Consequen
 short. Number sequentially (`NNNN-kebab-title.md`), never renumber, never delete; supersede
 instead (set the old one's status to `Superseded by ADR-XXXX`).
 
-**Scope boundary with `tests/bench/DECISIONS.md`:** that file logs per-MIME benchmark
-*option-set results* ("we chose Q90 for JPEG, here are the numbers"). ADRs are a higher
-altitude — *how the system is designed*, including how the benchmark gate itself works.
-When an ADR constrains benchmark tuning, it links to `DECISIONS.md`; the reverse too.
+**Scope boundary with `docs/encoding/`:** those per-MIME living docs record the
+*encoding-profile outcome* for each MIME ("the JPEG profile is Q80, here's why and the
+numbers"). ADRs are a higher altitude — *how the system is designed*, including how the
+benchmark gate itself works. When an ADR constrains benchmark tuning, it links to
+`docs/encoding/`; the reverse too.
 
 Don't backfill old decisions wholesale — write one only when the decision is being made or
 revisited.
