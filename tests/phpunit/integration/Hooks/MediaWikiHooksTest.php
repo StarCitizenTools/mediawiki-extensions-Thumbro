@@ -48,7 +48,13 @@ class MediaWikiHooksTest extends MediaWikiIntegrationTestCase {
 	}
 
 	private function hooks(): MediaWikiHooks {
-		return new MediaWikiHooks( $this->getServiceContainer()->getConfigFactory() );
+		$services = $this->getServiceContainer();
+		return new MediaWikiHooks(
+			$services->getConfigFactory(),
+			$services->get( 'Thumbro.OptionsResolver' ),
+			$services->get( 'Thumbro.BackendDispatcher' ),
+			$services->get( 'Thumbro.VersionProviders' )
+		);
 	}
 
 	private function gifHandler(): TransformationalImageHandler {

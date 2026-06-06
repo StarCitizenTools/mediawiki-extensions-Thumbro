@@ -19,8 +19,21 @@
 		"MediaWiki\\Extension\\Thumbro\\Tests\\": "tests/phpunit/",
 		"MediaWiki\\Extension\\Thumbro\\Bench\\": "tests/bench/src/"
 	},
+	"ServiceWiringFiles": [
+		"includes/ServiceWiring.php"
+	],
 	"SpecialPages": {
-		"ThumbroTest": "MediaWiki\\Extension\\Thumbro\\SpecialThumbroTest"
+		"ThumbroTest": {
+			"class": "MediaWiki\\Extension\\Thumbro\\SpecialThumbroTest",
+			"services": [
+				"Thumbro.OptionsResolver",
+				"Thumbro.BackendDispatcher",
+				"RepoGroup",
+				"HttpRequestFactory",
+				"TempFSFileFactory",
+				"UrlUtils"
+			]
+		}
 	},
 	"GroupPermissions": {
 		"sysop": {
@@ -48,7 +61,10 @@
 		"main": {
 			"class": "MediaWiki\\Extension\\Thumbro\\Hooks\\MediaWikiHooks",
 			"services": [
-				"ConfigFactory"
+				"ConfigFactory",
+				"Thumbro.OptionsResolver",
+				"Thumbro.BackendDispatcher",
+				"Thumbro.VersionProviders"
 			]
 		}
 	},

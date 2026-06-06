@@ -1,37 +1,17 @@
 <?php
-/**
- * PHP wrapper class for VIPS under MediaWiki
- *
- * Copyright © Bryan Tong Minh, 2011
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- * http://www.gnu.org/copyleft/gpl.html
- * @file
- */
-
 declare( strict_types=1 );
 
-namespace MediaWiki\Extension\Thumbro;
+namespace MediaWiki\Extension\Thumbro\Shell;
 
-use MediaWiki\MediaWikiServices;
+use MediaWiki\FileBackend\FSFile\TempFSFileFactory;
 use MediaWiki\Shell\Shell;
 use Wikimedia\FileBackend\FSFile\TempFSFile;
 
 /**
  * Wrapper class around the shell command, useful to chain multiple commands
- * with intermediate files
+ * with intermediate files.
+ *
+ * Construct these through {@see ShellCommandFactory} so the temp-file factory is injected.
  */
 class ShellCommand {
 
@@ -46,7 +26,15 @@ class ShellCommand {
 
 	protected bool $removeInput;
 
+	/**
+	 * @param TempFSFileFactory $tempFactory Factory for intermediate temp files.
+	 * @param string $name Human-readable backend label for debug logging.
+	 * @param string $command Binary to run.
+	 * @param array<string,string> $args Flags for the command.
+	 * @param string $style Argument flattening style: 'vips' or 'gif2webp'.
+	 */
 	public function __construct(
+		private readonly TempFSFileFactory $tempFactory,
 		private readonly string $name,
 		private readonly string $command,
 		private readonly array $args,
@@ -71,7 +59,7 @@ class ShellCommand {
 			$this->removeInput = false;
 		}
 		if ( $tempOutput ) {
-			$tmpFile = self::makeTemp( $output );
+			$tmpFile = $this->newTempFile( $output );
 			$tmpFile->bind( $this );
 			$this->output = $tmpFile->getPath();
 		} else {
@@ -172,11 +160,9 @@ class ShellCommand {
 	}
 
 	/**
-	 * Generate a random, non-existent temporary file with a specified
-	 * extension.
+	 * Generate a random, non-existent temporary file with a specified extension.
 	 */
-	public static function makeTemp( string $extension ): TempFSFile {
-		$tmpFactory = MediaWikiServices::getInstance()->getTempFSFileFactory();
-		return $tmpFactory->newTempFSFile( 'thumbro_', $extension );
+	private function newTempFile( string $extension ): TempFSFile {
+		return $this->tempFactory->newTempFSFile( 'thumbro_', $extension );
 	}
 }

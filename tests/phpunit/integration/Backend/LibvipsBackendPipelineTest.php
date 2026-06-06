@@ -1,23 +1,29 @@
 <?php
 declare( strict_types=1 );
 
-namespace MediaWiki\Extension\Thumbro\Tests\Integration\Libraries;
+namespace MediaWiki\Extension\Thumbro\Tests\Integration\Backend;
 
 use File;
 use MediaTransformOutput;
-use MediaWiki\Extension\Thumbro\Libraries\Libvips;
+use MediaWiki\Extension\Thumbro\Backend\BackendRequest;
+use MediaWiki\Extension\Thumbro\Backend\CommandPlanRunner;
+use MediaWiki\Extension\Thumbro\Backend\LibvipsBackend;
+use MediaWiki\Extension\Thumbro\Image\ExifCommentWriter;
+use MediaWiki\Extension\Thumbro\Options\TransformOptions;
+use MediaWiki\Extension\Thumbro\Shell\ShellCommandFactory;
 use MediaWiki\Extension\Thumbro\ThumbroThumbnailImage;
 use MediaWikiIntegrationTestCase;
 use TransformationalImageHandler;
 
 /**
- * Characterization tests for Libvips::doTransform — pins the real vipsthumbnail
- * static-image path (the default backend) so a refactor can be verified against it.
+ * Characterization tests for the libvips backend plan + runner over the real vipsthumbnail
+ * static-image path (the default backend), so the refactor is verified against real output.
  *
- * @covers \MediaWiki\Extension\Thumbro\Libraries\Libvips
+ * @covers \MediaWiki\Extension\Thumbro\Backend\LibvipsBackend
+ * @covers \MediaWiki\Extension\Thumbro\Backend\CommandPlanRunner
  * @group Thumbro
  */
-class LibvipsTest extends MediaWikiIntegrationTestCase {
+class LibvipsBackendPipelineTest extends MediaWikiIntegrationTestCase {
 
 	/** @var string[] Temp files to remove in tearDown (survives assertion failures). */
 	private array $tmpFiles = [];
@@ -52,6 +58,16 @@ class LibvipsTest extends MediaWikiIntegrationTestCase {
 		return $file;
 	}
 
+	private function runner(): CommandPlanRunner {
+		return new CommandPlanRunner( new ExifCommentWriter( '' ) );
+	}
+
+	private function backend(): LibvipsBackend {
+		return new LibvipsBackend(
+			new ShellCommandFactory( $this->getServiceContainer()->getTempFSFileFactory() )
+		);
+	}
+
 	public function testProducesWebpFromStaticImage(): void {
 		$vips = $this->bin( 'vipsthumbnail' );
 		$convert = $this->bin( 'convert' );
@@ -64,22 +80,22 @@ class LibvipsTest extends MediaWikiIntegrationTestCase {
 			// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.escapeshellarg
 			. '-draw "rectangle 40,40 160,160" ' . escapeshellarg( $src ) );
 
-		$handler = $this->createMock( TransformationalImageHandler::class );
 		$params = [
 			'srcPath' => $src, 'dstPath' => $dst,
 			'physicalWidth' => 80, 'physicalHeight' => 80,
 			'dstUrl' => 'http://x/80px.webp', 'clientWidth' => 80, 'clientHeight' => 80,
 		];
-		$options = [
-			'command' => $vips,
-			'inputOptions' => [],
-			'outputOptions' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ],
-		];
+		$options = new TransformOptions(
+			'libvips', $vips, [], [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ], false
+		);
+		$request = new BackendRequest(
+			$this->createMock( TransformationalImageHandler::class ), $this->dummyFile(), $params, $options
+		);
 
 		$mto = null;
-		$ret = Libvips::doTransform( $handler, $this->dummyFile(), $params, $options, $mto );
+		$ret = $this->runner()->run( $this->backend()->plan( $request ), $request, $mto );
 
-		// doTransform returns false (stop further processing) and yields a ThumbroThumbnailImage.
+		// run() returns false (stop further processing) and yields a ThumbroThumbnailImage.
 		$this->assertFalse( $ret );
 		$this->assertInstanceOf( ThumbroThumbnailImage::class, $mto );
 		$this->assertFileExists( $dst );
@@ -107,10 +123,11 @@ class LibvipsTest extends MediaWikiIntegrationTestCase {
 			'physicalWidth' => 80, 'physicalHeight' => 80,
 			'dstUrl' => 'http://x/80px.webp', 'clientWidth' => 80, 'clientHeight' => 80,
 		];
-		$options = [ 'command' => $vips, 'inputOptions' => [], 'outputOptions' => [] ];
+		$options = new TransformOptions( 'libvips', $vips, [], [], false );
+		$request = new BackendRequest( $handler, $this->dummyFile(), $params, $options );
 
 		$mto = null;
-		$ret = Libvips::doTransform( $handler, $this->dummyFile(), $params, $options, $mto );
+		$ret = $this->runner()->run( $this->backend()->plan( $request ), $request, $mto );
 
 		$this->assertFalse( $ret );
 		$this->assertSame( $error, $mto, 'a failed transform must surface the handler MediaTransformError' );
