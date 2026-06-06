@@ -67,12 +67,6 @@ class Reporter {
 	/** PASS / CAP-BREACH line for a stress candidate. */
 	private function capsLine( GateResult $g, ?Quality $q ): string {
 		if ( $g->verdict === Verdict::PASS ) {
-			if ( in_array( 'quality-floor-advisory', $g->flags, true ) ) {
-				return sprintf(
-					'✓ PASS — within the hard caps (quality %s advisory: SSIMULACRA2 unreliable on this fixture)',
-					$q !== null ? sprintf( '%.1f', $q->mean ) : 'sub-floor'
-				);
-			}
 			return '✓ PASS — within every safety cap';
 		}
 		$breaches = [];

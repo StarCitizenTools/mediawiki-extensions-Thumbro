@@ -11,21 +11,20 @@ class AcceptanceGate {
 	}
 
 	/**
-	 * Caps-only evaluation for the STRESS tier. Returns PASS when the candidate is under the hard
-	 * safety caps (wall-time ceiling, RSS ceiling), FAIL otherwise with the breached caps as
-	 * reasons. It consults no baseline: the stress tier asks "does Thumbro stay safe on
-	 * pathological input?", never "is Thumbro better?", so it never produces a win/loss/trade-off.
+	 * Caps-only evaluation for the STRESS tier. Returns PASS when the candidate is under every
+	 * hard safety cap (quality floor, wall-time ceiling, RSS ceiling), FAIL otherwise with the
+	 * breached caps as reasons. It consults no baseline: the stress tier asks "does Thumbro stay
+	 * safe on pathological input?", never "is Thumbro better?", so it never produces a
+	 * win/loss/trade-off.
 	 *
-	 * Quality is advisory here, not a hard cap: stress fixtures are synthetic pathologies (never
-	 * served to users) and SSIMULACRA2 is unreliable on them (tiny / animated / transparent — see
-	 * tests/bench/README.md), so a sub-floor score is flagged for visual follow-up rather than
-	 * failing the run.
+	 * The quality floor is a hard cap here because the stress animations are scored at standard
+	 * widths (≥120px), where SSIMULACRA2 is reliable — small/animated/transparent content is no
+	 * longer measured at the unstable 84px.
 	 */
 	public function evaluateCaps( float $candQuality, float $candWallMs, int $candRssKb ): GateResult {
 		$reasons = [];
-		$flags = [];
 		if ( $candQuality < $this->t->qualityFloor ) {
-			$flags[] = 'quality-floor-advisory';
+			$reasons[] = 'quality-floor';
 		}
 		$timeCeiling = $this->animated ? $this->t->timeCeilingAnimatedMs : $this->t->timeCeilingStaticMs;
 		if ( $candWallMs > $timeCeiling ) {
@@ -34,7 +33,7 @@ class AcceptanceGate {
 		if ( $candRssKb > $this->t->rssCeilingKb ) {
 			$reasons[] = 'rss-ceiling';
 		}
-		return new GateResult( $reasons === [] ? Verdict::PASS : Verdict::FAIL, $reasons, $flags );
+		return new GateResult( $reasons === [] ? Verdict::PASS : Verdict::FAIL, $reasons, [] );
 	}
 
 	/**

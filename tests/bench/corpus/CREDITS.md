@@ -7,7 +7,7 @@ third-party content, no licensing).
 
 ## Representative fixtures
 
-| File | Format | Licence | Author / source (Wikimedia Commons) |
+| File | Format | Licence | Author / source |
 | :--- | :--- | :--- | :--- |
 | `photo.jpg` | JPEG | CC BY-SA 4.0 | Basile Morin — *Felis silvestris catus lying on rice straw.jpg* |
 | `portrait.jpg` | JPEG | CC0 | ThuyHaBich — *Bearded man smoking pipe-3013924.jpg* |
@@ -18,6 +18,7 @@ third-party content, no licensing).
 | `screenshot-gaming.png` | PNG | CC BY-SA 3.0 | PantheraLeo1359531 (game: 0 A.D. by Wildfire Games) — *0 A.D. Screenshot 2022.09.30 - 23.19.15.44.png* |
 | `sprite.gif` | GIF (alpha) | CC0 | Kenney.nl — *Kenney.nl platformer characters - zombie vector.svg* (rasterised) |
 | `anim-opaque.gif` | GIF (animated) | CC BY-SA 3.0 | Marvel — *Rotating earth (large).gif* |
+| `anim-sprite.gif` | GIF (animated, alpha) | CC0 | Kenney.nl — *Toon Characters* (zombie walk cycle) |
 | `photo.webp` | WebP | CC BY-SA 3.0 | Alvesgaspar — *Cat November 2010-1a.jpg* (converted) |
 | `anim.webp` | WebP (animated) | CC BY-SA 3.0 | Marvel — *Rotating earth (large).gif* (converted) |
 

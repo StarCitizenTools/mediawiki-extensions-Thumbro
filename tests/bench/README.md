@@ -48,11 +48,12 @@ Animation runs are slow (metric is per-frame ~0.6 s).
   and reference are flattened identically, so visible content is compared fairly — but
   alpha-channel fidelity itself is *not* scored. Corroborate transparent fixtures via
   the `--visual` contact sheet.
-- **Animated fixtures are scored at 84px only.** The pure-Python SSIMULACRA2 costs
-  ~0.6 s/frame at 84px but ~6 s/frame at 320px, so a many-frame fixture at 320px makes
-  the run intractable. File **size** at larger sizes is the size axis (no metric needed)
-  and can be checked directly with `vipsthumbnail`/`gif2webp`. A compiled SSIMULACRA2
-  binary would lift this limit (see `Ssimulacra2::$bin`).
+- **Animated fixtures are scored at their target width**, like static ones — there is no
+  fixed scoring size. Keep animation targets modest (≤250px): the pure-Python SSIMULACRA2
+  costs ~0.6 s/frame at small sizes but ~6 s/frame at 320px, so a many-frame fixture at
+  320px+ makes the run intractable. Targets stay at standard content widths (180/250),
+  which are above the ≤120px instability point, so animation quality scores are reliable.
+  A compiled SSIMULACRA2 binary would lift the speed limit (see `Ssimulacra2::$bin`).
 
 ## Corpus tiers (representative vs stress)
 
@@ -97,10 +98,9 @@ hard caps (an outright FAIL above the ceiling, so generation cannot choke the se
 soft budgets (a material regression versus the baseline is flagged).
 
 The **stress** tier uses a caps-only check (`AcceptanceGate::evaluateCaps`): PASS when the
-candidate is under the hard **time and RSS** caps, CAP-BREACH otherwise. No baseline
-comparison. **Quality is advisory here, not a hard cap** — stress fixtures are synthetic
-pathologies (never served to users) and SSIMULACRA2 is unreliable on them (tiny / animated /
-transparent), so a sub-floor score is flagged, not failed.
+candidate is under every hard cap (quality floor, time, RSS), CAP-BREACH otherwise. No
+baseline comparison. The stress animations are scored at standard widths (≥120px) where
+SSIMULACRA2 is reliable, so the quality floor is a meaningful hard cap here too.
 
 See `docs/adr/0001-image-benchmark-gate.md` for the rationale.
 

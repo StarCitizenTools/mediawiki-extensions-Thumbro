@@ -26,15 +26,10 @@ licence whitelist widened to include **CC BY-SA** by maintainer decision):
 | `screenshot-gaming.png` | 0 A.D. Screenshot 2022.09.30 - 23.19.15.44.png | CC BY-SA 3.0 | PantheraLeo1359531 (game: 0 A.D. by Wildfire Games) | downscaled to 2560×1440 (from 3840×2160) to cut repo-history size; still a large-PNG downscale at the 180/250/400 targets |
 | `sprite.gif` | Kenney.nl platformer characters - zombie vector.svg | CC0 | Kenney.nl | SVG → PNG @512 px wide → GIF (64-colour, alpha) |
 | `anim-opaque.gif` | Rotating earth (large).gif | CC BY-SA 3.0 | Marvel | none (44 frames) |
+| `anim-sprite.gif` | Kenney.nl *Toon Characters* — `Zombie/PNG/Poses HD/character_zombie_walk{0..7}.png` | CC0 | Kenney.nl | 8 HD walk frames (192×256) upscaled 200% → 384×512, assembled GIF (`convert -background none -dispose previous -delay 8 -resize 200% ... -loop 0`), binary alpha preserved (RGBA) |
 | `photo.webp` | Cat November 2010-1a.jpg | CC BY-SA 3.0 | Alvesgaspar | vips JPEG → WebP (Q=88) |
 | `anim.webp` | Rotating earth (large).gif | CC BY-SA 3.0 | Marvel | vips GIF → animated WebP (44 frames) |
 
-All Commons pages: `https://commons.wikimedia.org/wiki/File:<name>`.
-
-## Pending human sign-off
-
-One representative cell remains unfilled:
-
-| Intended file | Intended content | Status |
-| :--- | :--- | :--- |
-| `anim-sprite.gif` | transparent **animated** sprite (gaming-wiki staple) | No clean CC-licensed source found on Commons (results were opaque/photographic). Acquire from a CC0 animated sprite sheet (Kenney.nl / OpenGameArt CC0) and assemble a small transparent GIF. The synthetic `anim-transparent.gif` (stress tier) already exercises the gif2webp transparent path for safety, so this gap affects only the representative go/no-go for transparent animation. |
+Commons pages: `https://commons.wikimedia.org/wiki/File:<name>`. The CC0 sprite fixtures
+(`sprite.gif`, `anim-sprite.gif`) come from Kenney.nl, not Commons:
+`anim-sprite.gif` ← `https://kenney.nl/assets/toon-characters` (CC0, bundled `License.txt`).
