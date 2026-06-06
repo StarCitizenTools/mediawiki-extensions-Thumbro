@@ -26,7 +26,6 @@ namespace MediaWiki\Extension\Thumbro;
 
 use Imagick;
 use MediaTransformOutput;
-use MediaWiki\Extension\Thumbro\Libraries\Libvips;
 use MediaWiki\Html\Html;
 use MediaWiki\HTMLForm\Field\HTMLIntField;
 use MediaWiki\HTMLForm\Field\HTMLTextField;
@@ -494,8 +493,6 @@ class SpecialThumbroTest extends SpecialPage {
 
 		$config = $this->getConfig();
 		$thumbroTestExpiry = $config->get( 'ThumbroTestExpiry' );
-		$thumbroOptions = $config->get( 'ThumbroOptions' );
-		$thumbroLibraries = $config->get( 'ThumbroLibraries' );
 
 		// Respect MediaHandler thumbType
 		[ $extension, $mimeType ] = $handler->getThumbType( $file->getExtension(), $inputMimeType );
@@ -530,29 +527,24 @@ class SpecialThumbroTest extends SpecialPage {
 			'interlace' => $request->getBool( 'interlace' ),
 		];
 
-		$library = $thumbroOptions[$mimeType]['library'] ?? 'libvips';
-		$options = [
-			'command' => $thumbroLibraries[$library]['command'],
-			'inputOptions' => $thumbroOptions[$inputMimeType]['inputOptions'] ?? [],
-			'outputOptions' => $thumbroOptions[$mimeType]['outputOptions'] ?? []
-		];
-
-		/*
-		if ( $request->getBool( 'bilinear' ) ) {
-			$options['bilinear'] = true;
-			wfDebug( __METHOD__ . ": using bilinear scaling" );
+		$options = Utils::getOptions( $handler, $file, $config );
+		if ( $options === null ) {
+			// getOptions() returns null for any file Thumbro will not transform: the output
+			// type's block is disabled, the file is multipage, or its area is outside the
+			// configured [minArea, maxArea) range.
+			$this->streamError(
+				500,
+				'Thumbro: this file is not handled (its type may be disabled, multipage, '
+					. 'or outside the configured size limits)'
+			);
+			return;
 		}
-		if ( $request->getRawVal( 'sharpen' ) !== null && $request->getFloat( 'sharpen' ) < 5 ) {
-			// Limit sharpen sigma to 5, otherwise we have to write huge convolution matrices
-			$sharpen = $request->getFloat( 'sharpen' );
-			$options['sharpen'] = [ 'sigma' => $sharpen ];
-			wfDebug( __METHOD__ . ": sharpening with radius {$sharpen}" );
-		}
-		*/
 
-		// Call the hook
+		// Dispatch through the same seam the BitmapHandlerTransform hook uses, so the
+		// comparison reflects the backend production actually serves (e.g. libwebp for
+		// animated GIFs) rather than always libvips.
 		/** @var MediaTransformOutput $mto */
-		Libvips::doTransform( $handler, $file, $scalerParams, $options, $mto );
+		BackendDispatcher::dispatch( $handler, $file, $scalerParams, $options, $config, $mto );
 		if ( $mto && !$mto->isError() ) {
 			wfDebug( __METHOD__ . ": streaming thumbnail..." );
 			$this->getOutput()->disable();
