@@ -51,9 +51,13 @@ class Orchestrator {
 		$applicableBaselines = array_values( array_filter(
 			$this->baselines, static fn ( Contender $c ) => $c->applies( $mime ) && $c->isAvailable()
 		) );
+		// Score each baseline's quality once (the gate needs it, and the reporter shows it).
 		$baseResults = [];
+		$baseQualities = [];
 		foreach ( $applicableBaselines as $b ) {
-			$baseResults[$b->name()] = $b->run( $entry['path'], $mime, $w, $dir );
+			$res = $b->run( $entry['path'], $mime, $w, $dir );
+			$baseResults[$b->name()] = $res;
+			$baseQualities[$b->name()] = $res->available ? $this->scoreQuality( $res, $entry, $dir ) : null;
 		}
 
 		$candResults = [];
@@ -67,13 +71,12 @@ class Orchestrator {
 			if ( $res->available && $quality !== null ) {
 				$gate = new AcceptanceGate( new GateThresholds(), $entry['animated'] );
 				foreach ( $baseResults as $name => $base ) {
-					if ( !$base->available ) {
+					if ( !$base->available || $baseQualities[$name] === null ) {
 						continue;
 					}
-					$baseQ = $this->scoreQuality( $base, $entry, $dir );
 					$verdicts[$name] = $gate->evaluate(
 						$res->bytes ?? 0, $quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0,
-						$base->bytes ?? 0, $baseQ->mean, $base->wallMs ?? 0.0, $base->peakRssKb ?? 0
+						$base->bytes ?? 0, $baseQualities[$name]->mean, $base->wallMs ?? 0.0, $base->peakRssKb ?? 0
 					);
 				}
 			}
@@ -83,7 +86,8 @@ class Orchestrator {
 		return [
 			'source' => $entry['path'], 'mime' => $mime, 'width' => $w,
 			'animated' => $entry['animated'], 'frames' => $entry['frames'],
-			'baselines' => $baseResults, 'candidates' => $candResults, 'dir' => $dir,
+			'baselines' => $baseResults, 'baselineQualities' => $baseQualities,
+			'candidates' => $candResults, 'dir' => $dir,
 		];
 	}
 
