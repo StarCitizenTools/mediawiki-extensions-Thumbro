@@ -10,19 +10,20 @@ licence whitelist widened to include **CC BY-SA** by maintainer decision):
 
 - **Photos / generic graphics:** Wikimedia Commons (CC0 / PD / CC-BY / CC-BY-SA).
 - **Sprites:** CC0 game-asset sources (Kenney.nl / OpenGameArt CC0).
-- **Gaming screenshots:** open-source games (SuperTuxKart / 0 A.D. / OpenTTD); AAA
+- **Gaming screenshots:** open-source games (0 A.D. / SuperTuxKart / OpenTTD); AAA
   screenshots are NOT used.
 
 ## Representative fixtures
 
 | File | Source (Commons `File:` page) | Licence | Author | Normalisation |
 | :--- | :--- | :--- | :--- | :--- |
-| `photo.jpg` | Cat November 2010-1a.jpg | CC BY-SA 3.0 | Alvesgaspar | none (original) |
-| `portrait.jpg` | Boy Face from Venezuela.jpg | CC0 | Wilfredor | resized to 2048 px wide, q88 |
+| `photo.jpg` | Felis silvestris catus lying on rice straw.jpg | CC BY-SA 4.0 | Basile Morin | re-encoded JPEG q88, full resolution 4811×3207 (long edge ≥ 3840) |
+| `portrait.jpg` | Bearded man smoking pipe-3013924.jpg | CC0 | ThuyHaBich | re-encoded JPEG q88, full resolution 5500×3667 (long edge ≥ 3840) |
+| `concept-art.jpg` | 2010-10-06 Kinytia by-David-Revoy.jpg | CC BY 4.0 | David Revoy | none (original JPEG, full resolution 4200×5552, long edge ≥ 3840) |
 | `logo-transparent.png` | PNG transparency demonstration 1.png | CC BY-SA 3.0 | POV-Ray source / Daniel G. et al | none |
 | `flat-graphic.png` | Fido character from Don't Buy This.png | Public domain | Firebird Software / S. Wilson / J.D. Woodcock | none |
 | `screenshot-ui.png` | Screenshot of GIMP in single window mode.png | CC BY-SA 4.0 | Delayline | none |
-| `screenshot-gaming.png` | SuperTuxKart in-race (2018).png | CC BY-SA 4.0 | QwertyChouskie | none |
+| `screenshot-gaming.png` | 0 A.D. Screenshot 2022.09.30 - 23.19.15.44.png | CC BY-SA 3.0 | PantheraLeo1359531 (game: 0 A.D. by Wildfire Games) | downscaled to 2560×1440 (from 3840×2160) to cut repo-history size; still a large-PNG downscale at the 180/250/400 targets |
 | `sprite.gif` | Kenney.nl platformer characters - zombie vector.svg | CC0 | Kenney.nl | SVG → PNG @512 px wide → GIF (64-colour, alpha) |
 | `anim-opaque.gif` | Rotating earth (large).gif | CC BY-SA 3.0 | Marvel | none (44 frames) |
 | `photo.webp` | Cat November 2010-1a.jpg | CC BY-SA 3.0 | Alvesgaspar | vips JPEG → WebP (Q=88) |
