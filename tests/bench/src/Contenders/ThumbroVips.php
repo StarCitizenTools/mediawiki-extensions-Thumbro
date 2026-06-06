@@ -9,34 +9,30 @@ use MediaWiki\Extension\Thumbro\Bench\Subprocess;
 use MediaWiki\Extension\Thumbro\Bench\ToolLocator;
 
 /**
- * Reproduces Thumbro's current vipsthumbnail path. Keep these option strings in
- * sync with extension.json -> config.ThumbroOptions.value[<mime>]. (Manual sync;
- * automated lockstep is future work.)
+ * Reproduces Thumbro's vipsthumbnail path.
  *
- * Output is always WebP. jpeg/webp resolve outputOptions to the shared image/webp block
- * ({strip, Q=90, smart_subsample}); image/png carries its own near-lossless block (better
- * for graphics/alpha, which dominate the PNG corpus) — see TransformOptionsResolver and
- * extension.json. (gif2webp flags are not webpsave options and are handled on the gif path.)
+ * The load/save option suffixes are derived from extension.json (config.ThumbroOptions.value)
+ * rather than hand-copied, so the contender cannot silently drift from production — earlier
+ * copies diverged twice (a stale jpeg Q, and a pngsave `filter` that crashes webpsave).
+ * {@see self::optionsFor()} mirrors the production resolution rule (TransformOptionsResolver):
+ * `inputOptions` come from the input-MIME block; `outputOptions` come from the input-MIME block,
+ * falling back to the image/webp block (so jpeg/webp share the webp save options while image/png
+ * carries its own near-lossless block).
+ *
+ * GIF is the exception: its vips options are decided at runtime by LibwebpBackend (load options
+ * forced to n=-1/1, or the whole transform handed to gif2webp), not by config, so this row models
+ * the all-frames vips delegation explicitly.
  */
 class ThumbroVips implements Contender {
-	/** input [..] options appended to the source path, per MIME. */
-	private const INPUT = [
-		'image/gif' => '[n=-1]',
-	];
-	/** output [..] options appended to the .webp dest, per MIME. */
-	private const OUTPUT = [
-		'image/jpeg' => '[Q=90,smart_subsample=true,strip=true]',
-		'image/png'  => '[near_lossless=true,Q=60,strip=true]',
-		'image/webp' => '[Q=90,smart_subsample=true,strip=true]',
-		'image/gif'  => '',
-	];
+	/** MIMEs whose vips suffixes are derived from extension.json. */
+	private const DERIVED = [ 'image/jpeg', 'image/png', 'image/webp' ];
 
 	public function name(): string {
 		return 'thumbro-vips';
 	}
 
 	public function applies( string $mime ): bool {
-		return isset( self::OUTPUT[$mime] );
+		return $mime === 'image/gif' || in_array( $mime, self::DERIVED, true );
 	}
 
 	public function isAvailable(): bool {
@@ -49,8 +45,9 @@ class ThumbroVips implements Contender {
 			return Result::unavailable( $this->name(), $srcPath, $targetWidth, 'vipsthumbnail not found' );
 		}
 		$dst = $destDir . '/thumbro_' . $targetWidth . '.webp';
-		$in = $srcPath . ( self::INPUT[$mime] ?? '' );
-		$out = $dst . ( self::OUTPUT[$mime] ?? '' );
+		[ $inSuffix, $outSuffix ] = self::optionsFor( $mime, self::thumbroOptions() );
+		$in = $srcPath . $inSuffix;
+		$out = $dst . $outSuffix;
 		// Height bound large so width governs (matches MediaWiki width-based thumbs).
 		$cmd = [ $bin, $in, '--size', $targetWidth . 'x100000', '-o', $out ];
 
@@ -62,5 +59,59 @@ class ThumbroVips implements Contender {
 			$this->name(), $srcPath, $targetWidth, $dst,
 			filesize( $dst ), $proc->wallMs, $proc->peakRssKb, true
 		);
+	}
+
+	/**
+	 * The vipsthumbnail "[..]" load/save suffixes Thumbro runs for $mime, derived from the given
+	 * ThumbroOptions config. Mirrors TransformOptionsResolver's libvips path: inputOptions from the
+	 * input-MIME block; outputOptions from the input-MIME block, else the image/webp block. GIF is
+	 * modeled explicitly (its vips options are a runtime LibwebpBackend decision, not config).
+	 *
+	 * @param string $mime input MIME type
+	 * @param array<string,array<string,mixed>> $thumbroOptions config.ThumbroOptions.value
+	 * @return array{0:string,1:string} [ inputSuffix, outputSuffix ]
+	 */
+	public static function optionsFor( string $mime, array $thumbroOptions ): array {
+		if ( $mime === 'image/gif' ) {
+			return [ '[n=-1]', '' ];
+		}
+		$input = $thumbroOptions[$mime]['inputOptions'] ?? [];
+		$output = $thumbroOptions[$mime]['outputOptions']
+			?? $thumbroOptions['image/webp']['outputOptions']
+			?? [];
+		return [ self::makeOptions( $input ), self::makeOptions( $output ) ];
+	}
+
+	/**
+	 * Format an options array as a "[key=value,key=value]" suffix, empty array -> "". Matches
+	 * LibvipsBackend::makeOptions (insertion order preserved; vips treats save options as
+	 * order-independent keyword args).
+	 *
+	 * @param array<string,mixed> $args
+	 */
+	private static function makeOptions( array $args ): string {
+		if ( $args === [] ) {
+			return '';
+		}
+		$parts = [];
+		foreach ( $args as $key => $value ) {
+			$parts[] = "$key=$value";
+		}
+		return '[' . implode( ',', $parts ) . ']';
+	}
+
+	/**
+	 * Reads config.ThumbroOptions.value from extension.json — the production source of truth.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private static function thumbroOptions(): array {
+		static $cache = null;
+		if ( $cache === null ) {
+			$path = __DIR__ . '/../../../../extension.json';
+			$json = json_decode( (string)file_get_contents( $path ), true );
+			$cache = $json['config']['ThumbroOptions']['value'] ?? [];
+		}
+		return $cache;
 	}
 }
