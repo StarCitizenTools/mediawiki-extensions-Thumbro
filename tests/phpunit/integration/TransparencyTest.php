@@ -70,10 +70,11 @@ class TransparencyTest extends MediaWikiIntegrationTestCase {
 		);
 	}
 
-	public function testNonVipsthumbnailCommandReturnsFalse(): void {
-		// The vipsheader path is derived by replacing 'vipsthumbnail' in the command;
-		// a command without that substring can't be derived => safe false.
-		$src = $this->makeGif( 'thumbro_tr2_', true );
-		$this->assertFalse( Transparency::hasAlpha( $src, '/usr/bin/convert' ) );
+	public function testVipsheaderMissingFromCommandDirReturnsFalse(): void {
+		// vipsheader is looked up as a sibling of the configured vips command; a command
+		// whose directory has no vipsheader can't be probed => safe false.
+		$this->assertFalse(
+			Transparency::hasAlpha( '/tmp/whatever.gif', '/nonexistent-thumbro-dir/vipsthumbnail' )
+		);
 	}
 }

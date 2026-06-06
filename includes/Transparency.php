@@ -14,14 +14,19 @@ class Transparency {
 	/**
 	 * @param string $srcPath Source file path.
 	 * @param string $vipsthumbnailCommand Configured vipsthumbnail binary path
-	 *   (vipsheader is derived from it — they ship together).
+	 *   (vipsheader is located next to it — they ship together).
 	 * @return bool True if the image reports an alpha band (>= 4 bands). On any
 	 *   failure (vipsheader missing / error) returns false — the safe default that
 	 *   keeps the file on libvips.
 	 */
 	public static function hasAlpha( string $srcPath, string $vipsthumbnailCommand ): bool {
-		$vipsheader = str_replace( 'vipsthumbnail', 'vipsheader', $vipsthumbnailCommand );
-		if ( $vipsheader === $vipsthumbnailCommand || !is_executable( $vipsheader ) ) {
+		// vipsheader ships alongside vipsthumbnail, so look for it in the same directory.
+		// This handles a renamed or wrapped vipsthumbnail (where substituting the binary
+		// name in the path would not), as long as vipsheader is its sibling.
+		$vipsheader = dirname( $vipsthumbnailCommand ) . '/vipsheader';
+		if ( !is_executable( $vipsheader ) ) {
+			wfDebug( "[Extension:Thumbro] vipsheader not found next to $vipsthumbnailCommand; "
+				. 'treating the image as opaque.' );
 			return false;
 		}
 		$result = Shell::command( [ $vipsheader, '-f', 'bands', $srcPath ] )->execute();
