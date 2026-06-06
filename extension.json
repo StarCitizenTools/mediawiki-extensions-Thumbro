@@ -123,7 +123,13 @@
 				"image/jpeg": {
 					"enabled": true,
 					"library": "libvips",
-					"inputOptions": {}
+					"inputOptions": {},
+					"outputOptions": {
+						"strip": "true",
+						"Q": "90",
+						"smart_subsample": "false",
+						"effort": "6"
+					}
 				},
 				"image/png": {
 					"enabled": true,
