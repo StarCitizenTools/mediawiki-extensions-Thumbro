@@ -45,10 +45,10 @@ Pass = a real size win with no *visible* quality regression vs the binding basel
 
 The tolerance applies uniformly at every width: differences within the metric's noise band
 are ties, so a smaller file is not denied a win by jitter, and the baseline cannot win on
-jitter either. The hard quality floor of 50 remains a safety cap in the representative tier;
-on the **stress** tier it is advisory (flagged, not failed), because those fixtures are
-synthetic pathologies — never served — on which SSIMULACRA2 is unreliable (see the stress
-note in `tests/bench/README.md`). The stress tier's hard caps are wall time and peak RSS.
+jitter either. The hard quality floor of 50 remains a safety cap in **both** tiers: every
+fixture — animation included — is scored at a standard width (≥120px) where SSIMULACRA2 is
+reliable, so the floor is meaningful everywhere (no fixed 84px scoring; see
+`tests/bench/README.md`).
 
 **Performance is a safety cap, not a dominance axis.** Generation cost is paid once and
 cached while the size/quality win is served on every view (the trade-off principle), so wall
@@ -127,7 +127,7 @@ cross-link to it. This ADR is the first.
 - **Pre-existing issues:** `flat-graphic.png` losing to ImageMagick — *investigated and
   accepted* as a fundamental format limit (PNG palette beats WebP on 2-colour content; sub-KB,
   visually equivalent); see `docs/encoding/image-png.md`. `anim-transparent.gif` breaching the
-  quality floor — *investigated and resolved*: a measurement artifact (84px + transparent +
-  48-frame animation; ImageMagick scores it ~50 too, and the thumbnail is visually fine —
-  smoother than the blocky scoring reference). Quality is now advisory on the stress tier;
-  the fixture's real concern (no size/RSS blow-up) passes with room to spare.
+  quality floor — *resolved*: it was an 84px measurement artifact (the 84px target was a
+  leftover from the originating bug report). The stress animations now score at standard
+  widths where SSIMULACRA2 is reliable — anim-transparent at 180px scores 73.3, well above
+  the floor — so the hard floor holds with no advisory needed.
