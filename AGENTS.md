@@ -106,6 +106,13 @@ GD where it is a real core path) on the three axes Thumbro optimises: **file siz
   A genuine trade-off is **INCOMPARABLE** and needs a recorded decision.
 - **PR requirement:** any new or changed handler/option set must include harness
   results and pass the gate; INCOMPARABLE results need an explicit recorded decision.
+- **Trade-off principle:** generation cost is paid once and cached; the size/quality
+  win is paid on every view, forever. A memory or time regression that stays within the
+  hard caps is therefore acceptable when it buys a real size/quality gain — prefer the
+  smaller, higher-quality thumbnail even when it costs more to produce.
+- **Recorded decisions:** option-set choices and their trade-offs are logged in
+  `tests/bench/DECISIONS.md` — one entry per change. Every INCOMPARABLE verdict and every
+  accepted memory/time regression must be recorded there, with the reasoning.
 
 ### Commits
 
