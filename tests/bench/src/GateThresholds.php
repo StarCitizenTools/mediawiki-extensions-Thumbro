@@ -16,6 +16,11 @@ class GateThresholds {
 		public readonly float $timeSoftFloorMs = 250.0,
 		public readonly float $timeSoftMultiple = 1.5,
 		public readonly float $rssSoftMultiple = 2.0,
+		// Targets at or below this width score unstably under SSIMULACRA2 — too few
+		// scales for the metric (see tests/bench/README.md). Their quality is treated
+		// as advisory: it cannot cause a hard FAIL, and quality gaps within
+		// $qualityWithinOfBaseline do not decide dominance. Set to 0 to disable.
+		public readonly int $qualityAdvisoryMaxWidth = 120,
 	) {
 	}
 }
