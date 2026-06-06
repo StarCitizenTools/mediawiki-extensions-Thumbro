@@ -1,10 +1,10 @@
 {
 	"files": [
-		{ "file": "photographic.jpg", "mime": "image/jpeg", "tier": "representative", "animated": false, "frames": 1, "targets": [ 120, 320 ] },
-		{ "file": "flat-graphic.png", "mime": "image/png", "tier": "representative", "animated": false, "frames": 1, "targets": [ 120, 320 ] },
-		{ "file": "sprite.gif", "mime": "image/gif", "tier": "representative", "animated": false, "frames": 1, "targets": [ 64, 120 ] },
-		{ "file": "alpha.png", "mime": "image/png", "tier": "representative", "animated": false, "frames": 1, "targets": [ 120, 320 ] },
-		{ "file": "anim-small.gif", "mime": "image/gif", "tier": "representative", "animated": true, "frames": 21, "targets": [ 84 ] },
+		{ "file": "photographic.jpg", "mime": "image/jpeg", "tier": "representative", "pending_license": true, "animated": false, "frames": 1, "targets": [ 120, 320 ] },
+		{ "file": "flat-graphic.png", "mime": "image/png", "tier": "representative", "pending_license": true, "animated": false, "frames": 1, "targets": [ 120, 320 ] },
+		{ "file": "sprite.gif", "mime": "image/gif", "tier": "representative", "pending_license": true, "animated": false, "frames": 1, "targets": [ 64, 120 ] },
+		{ "file": "alpha.png", "mime": "image/png", "tier": "representative", "pending_license": true, "animated": false, "frames": 1, "targets": [ 120, 320 ] },
+		{ "file": "anim-small.gif", "mime": "image/gif", "tier": "representative", "pending_license": true, "animated": true, "frames": 21, "targets": [ 84 ] },
 		{ "file": "anim-large.gif", "mime": "image/gif", "tier": "stress", "animated": true, "frames": 31, "targets": [ 84 ] },
 		{ "file": "anim-transparent.gif", "mime": "image/gif", "tier": "stress", "animated": true, "frames": 48, "targets": [ 84 ] },
 		{ "file": "tiny.png", "mime": "image/png", "tier": "stress", "animated": false, "frames": 1, "targets": [ 16 ] },
