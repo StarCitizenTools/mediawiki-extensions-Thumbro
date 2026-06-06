@@ -12,6 +12,11 @@ use MediaWiki\Extension\Thumbro\Bench\ToolLocator;
  * Reproduces Thumbro's current vipsthumbnail path. Keep these option strings in
  * sync with extension.json -> config.ThumbroOptions.value[<mime>]. (Manual sync;
  * automated lockstep is future work.)
+ *
+ * Output is always WebP. jpeg/webp resolve outputOptions to the shared image/webp block
+ * ({strip, Q=90, smart_subsample}); image/png carries its own near-lossless block (better
+ * for graphics/alpha, which dominate the PNG corpus) — see TransformOptionsResolver and
+ * extension.json. (gif2webp flags are not webpsave options and are handled on the gif path.)
  */
 class ThumbroVips implements Contender {
 	/** input [..] options appended to the source path, per MIME. */
@@ -20,8 +25,8 @@ class ThumbroVips implements Contender {
 	];
 	/** output [..] options appended to the .webp dest, per MIME. */
 	private const OUTPUT = [
-		'image/jpeg' => '[Q=80,strip=true]',
-		'image/png'  => '[strip=true,filter=VIPS_FOREIGN_PNG_FILTER_ALL]',
+		'image/jpeg' => '[Q=90,smart_subsample=true,strip=true]',
+		'image/png'  => '[near_lossless=true,Q=60,strip=true]',
 		'image/webp' => '[Q=90,smart_subsample=true,strip=true]',
 		'image/gif'  => '',
 	];
