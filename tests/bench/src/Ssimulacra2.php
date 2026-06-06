@@ -95,8 +95,13 @@ class Ssimulacra2 {
 	}
 
 	/**
-	 * Extract candidate frames to PNGs. Single frame via convert [0]; animated WebP and
-	 * animated GIF both via convert -coalesce (no anim_dump dependency).
+	 * Extract candidate frames to full-canvas PNGs. Single frame via convert [0]; animated GIF
+	 * via convert -coalesce; animated WebP via libvips, page by page.
+	 *
+	 * The tool split matters: ImageMagick's -coalesce does NOT correctly reconstruct animated
+	 * WebP whose frames are stored as optimised partial/disposed regions (gif2webp output), so
+	 * the extracted PNGs come out mostly transparent and the metric craters (negative scores).
+	 * libvips's WebP loader composites each page to the full canvas, so it is used for WebP.
 	 *
 	 * @param string $candidate Path to candidate image
 	 * @param int $frameCount Expected number of frames (1 = static)
@@ -114,6 +119,9 @@ class Ssimulacra2 {
 			Subprocess::run( [ $convert, $candidate . '[0]', '-coalesce', '+repage', $dst ] );
 			return [ $dst ];
 		}
+		if ( self::isWebp( $candidate ) ) {
+			return self::extractWebpFrames( $candidate, $destDir );
+		}
 		Subprocess::run( [ $convert, $candidate, '-coalesce', '+repage', $destDir . '/cand_%03d.png' ] );
 		$frames = glob( $destDir . '/cand_*.png' ) ?: [];
 		sort( $frames );
@@ -121,5 +129,45 @@ class Ssimulacra2 {
 			throw new RuntimeException( 'No candidate frames extracted from ' . $candidate );
 		}
 		return $frames;
+	}
+
+	/**
+	 * Extract every page of an animated WebP to a full-canvas PNG via libvips (see
+	 * {@see self::extractFrames()} for why ImageMagick can't be used here).
+	 *
+	 * @return string[] frame PNG paths, index-ordered
+	 */
+	private static function extractWebpFrames( string $candidate, string $destDir ): array {
+		$vips = ToolLocator::require( 'vips', 'libvips-tools' );
+		$pages = self::webpPageCount( $candidate );
+		$frames = [];
+		for ( $i = 0; $i < $pages; $i++ ) {
+			$dst = sprintf( '%s/cand_%03d.png', $destDir, $i );
+			// `vips copy file.webp[page=N]` yields the composited full frame N.
+			$proc = Subprocess::run( [ $vips, 'copy', $candidate . "[page=$i]", $dst ] );
+			if ( !$proc->ok() || !is_file( $dst ) ) {
+				throw new RuntimeException( "vips failed extracting WebP frame $i from $candidate: " . $proc->stderr );
+			}
+			$frames[] = $dst;
+		}
+		if ( $frames === [] ) {
+			throw new RuntimeException( 'No candidate frames extracted from ' . $candidate );
+		}
+		return $frames;
+	}
+
+	/** Number of pages (frames) in an image, via vipsheader's n-pages field (>= 1). */
+	private static function webpPageCount( string $path ): int {
+		$vipsheader = ToolLocator::require( 'vipsheader', 'libvips-tools' );
+		$proc = Subprocess::run( [ $vipsheader, '-f', 'n-pages', $path ] );
+		return $proc->ok() ? max( 1, (int)trim( $proc->stdout ) ) : 1;
+	}
+
+	/** True if the file is a RIFF/WebP container (by magic bytes, not extension). */
+	public static function isWebp( string $path ): bool {
+		$header = (string)file_get_contents( $path, false, null, 0, 12 );
+		return strlen( $header ) >= 12
+			&& substr( $header, 0, 4 ) === 'RIFF'
+			&& substr( $header, 8, 4 ) === 'WEBP';
 	}
 }
