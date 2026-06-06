@@ -34,17 +34,21 @@ wfLoadExtension( 'Thumbro' );
 > ℹ️ **Thumbro works out of the box — no configuration required.**
 
 ### `$wgThumbroLibraries`
-Lists the image libraries Thumbro can use and the command that runs each one.
+The image libraries Thumbro can use, and how to run each.
 
 Key | Description
 :--- | :---
-`command` | Path to the executable Thumbro runs for image transformation
+`command` | Path to the library's executable
+`flags` | Optional encoder flags for the library, passed straight through (libwebp → [`gif2webp`](https://developers.google.com/speed/webp/docs/gif2webp), e.g. `mixed`, `q`, `m`)
 
 Default:
 ```php
 $wgThumbroLibraries = [
 	'libvips' => [ 'command' => '/usr/bin/vipsthumbnail' ],
-	'libwebp' => [ 'command' => '/usr/bin/gif2webp' ],
+	'libwebp' => [
+		'command' => '/usr/bin/gif2webp',
+		'flags' => [ 'mixed' => '', 'q' => '80', 'm' => '4' ]
+	],
 ];
 ```
 
@@ -55,8 +59,8 @@ Key | Description
 :--- | :---
 `enabled` | Turn Thumbro on or off for this file type
 `library` | Which library handles this type (a key from `$wgThumbroLibraries`)
-`inputOptions` | Options applied when loading and resizing the source image
-`outputOptions` | Options applied when saving the thumbnail. Valid keys depend on the chosen library — e.g. [`VipsForeignSave`](https://www.libvips.org/API/current/VipsForeignSave.html) options for `libvips`, or [`gif2webp`](https://developers.google.com/speed/webp/docs/gif2webp) flags (such as `mixed`, `q`, `m`) for `libwebp`
+`inputOptions` | Options for loading and resizing the source image
+`outputOptions` | WebP save options ([`VipsForeignSave`](https://www.libvips.org/API/current/VipsForeignSave.html)), e.g. `Q`, `strip`, `smart_subsample`. Set per file type; if omitted, the `image/webp` block's options apply. (gif2webp's encoder flags live on the `libwebp` library, not here.)
 
 Default:
 ```php
@@ -66,11 +70,6 @@ $wgThumbroOptions = [
 		'library' => 'libwebp',
 		'inputOptions' => [
 			'n' => '-1'
-		],
-		'outputOptions' => [
-			'mixed' => '',
-			'q' => '80',
-			'm' => '4'
 		]
 	],
 	'image/jpeg' => [
