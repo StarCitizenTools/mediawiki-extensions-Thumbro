@@ -5,6 +5,7 @@ namespace MediaWiki\Extension\Thumbro\Bench;
 
 use MediaWiki\Extension\Thumbro\Bench\Contenders\GdBaseline;
 use MediaWiki\Extension\Thumbro\Bench\Contenders\ImageMagickBaseline;
+use MediaWiki\Extension\Thumbro\Bench\Contenders\ThumbroGif;
 use MediaWiki\Extension\Thumbro\Bench\Contenders\ThumbroVips;
 use RuntimeException;
 
@@ -16,7 +17,7 @@ class Orchestrator {
 
 	public function __construct() {
 		$this->baselines = [ new ImageMagickBaseline(), new GdBaseline() ];
-		$this->candidates = [ new ThumbroVips() ];
+		$this->candidates = [ new ThumbroVips(), new ThumbroGif() ];
 	}
 
 	/**

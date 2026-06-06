@@ -15,7 +15,6 @@ class ThumbroVipsTest extends MediaWikiUnitTestCase {
 		'image/jpeg' => [ 'inputOptions' => [] ],
 		'image/png'  => [ 'inputOptions' => [], 'outputOptions' => [ 'near_lossless' => 'true', 'Q' => '60' ] ],
 		'image/webp' => [ 'inputOptions' => [], 'outputOptions' => [ 'strip' => 'true', 'Q' => '90' ] ],
-		'image/gif'  => [ 'inputOptions' => [ 'n' => '-1' ] ],
 	];
 
 	public function testPngUsesItsOwnOutputBlock(): void {
@@ -39,14 +38,6 @@ class ThumbroVipsTest extends MediaWikiUnitTestCase {
 		// Same rule as LibvipsBackend::makeOptions — keys are emitted in config order.
 		[ , $out ] = ThumbroVips::optionsFor( 'image/png', self::CONFIG );
 		$this->assertSame( '[near_lossless=true,Q=60]', $out );
-	}
-
-	public function testGifIsModeledExplicitlyNotFromConfig(): void {
-		// Even though the webp block has save options, GIF output stays empty: production
-		// decides GIF's vips options at runtime (LibwebpBackend), not via config.
-		[ $in, $out ] = ThumbroVips::optionsFor( 'image/gif', self::CONFIG );
-		$this->assertSame( '[n=-1]', $in );
-		$this->assertSame( '', $out );
 	}
 
 	/**
