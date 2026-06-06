@@ -10,11 +10,14 @@ use TransformationalImageHandler;
 /**
  * Resolves whether Thumbro should transform a file and, if so, with which options.
  *
- * Behaviour is ported verbatim from the former Utils::getOptions, including its quirk: every
- * Thumbro handler's getThumbType() reports image/webp, so the matched ThumbroOptions block is
- * always the image/webp one — only `library` and `inputOptions` are taken from the input-MIME
- * block, while `outputOptions` (and the enabled/minArea/maxArea gate) come from the webp block.
- * That quirk is preserved here; fixing it is a separate, non-behaviour-preserving change.
+ * Worth knowing: every Thumbro handler's getThumbType() reports image/webp, so the matched
+ * ThumbroOptions block is always image/webp — its enabled/minArea/maxArea gate the transform.
+ * `library`, `inputOptions` and `outputOptions` are each taken from the input-MIME block (falling
+ * back to the webp block), so a MIME can carry its own webpsave flags.
+ *
+ * A libwebp block is the exception for `outputOptions`: there they are gif2webp encoder flags
+ * (which live on the libwebp library), not webpsave flags, so libwebp always takes the webp-block
+ * fallback — the webpsave options its opaque-GIF -> libvips delegation needs.
  */
 class TransformOptionsResolver {
 
@@ -59,13 +62,20 @@ class TransformOptionsResolver {
 				continue;
 			}
 
+			// Per-MIME webpsave flags, falling back to the webp block. libwebp always takes the
+			// fallback (its outputOptions are encoder flags, not webpsave — see the class docblock);
+			// this also keeps old configs with gif2webp flags under image/gif.outputOptions safe.
+			$inputBlockOutput = $library === 'libwebp'
+				? null
+				: ( $options[$inputMimeType]['outputOptions'] ?? null );
+			$outputOptions = $inputBlockOutput ?? $option['outputOptions'] ?? [];
+
 			return new TransformOptions(
 				$library,
 				$libraries[$library]['command'],
-				// inputOptions come from the input-MIME block; outputOptions from the matched
-				// (webp) block — preserving the documented quirk.
+				// inputOptions come from the input-MIME block.
 				$options[$inputMimeType]['inputOptions'] ?? [],
-				$option['outputOptions'] ?? [],
+				$outputOptions,
 				!empty( $option['setcomment'] )
 			);
 		}
