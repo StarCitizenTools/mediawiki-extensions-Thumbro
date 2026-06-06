@@ -15,6 +15,15 @@ class Orchestrator {
 	/** @var Contender[] */
 	private array $candidates;
 
+	/**
+	 * Baseline roles by contender name(). The binding baseline drives the go/no-go via
+	 * dominance; a floor baseline only guards against regression (never a win). See ADR-0001:
+	 * ImageMagick is the typical configured default (binding), GD the literal default (floor).
+	 * A baseline with no entry defaults to 'floor' (guard-only), so a forgotten role never
+	 * silently turns a new baseline into a release gate.
+	 */
+	private const BASELINE_ROLE = [ 'im' => 'binding', 'gd' => 'floor' ];
+
 	public function __construct() {
 		$this->baselines = [ new ImageMagickBaseline(), new GdBaseline() ];
 		$this->candidates = [ new ThumbroVips(), new ThumbroGif() ];
@@ -72,32 +81,38 @@ class Orchestrator {
 			$res = $c->run( $entry['path'], $mime, $w, $dir );
 			$quality = $res->available ? $this->tryScoreQuality( $res, $entry, $dir ) : null;
 			$verdicts = [];
+			$floorVerdicts = [];
 			$capsVerdict = null;
 			if ( $res->available && $quality !== null ) {
-				$thresholds = new GateThresholds();
-				$gate = new AcceptanceGate( $thresholds, $entry['animated'] );
+				$gate = new AcceptanceGate( new GateThresholds(), $entry['animated'] );
 				if ( $tier === 'stress' ) {
 					$capsVerdict = $gate->evaluateCaps(
 						$quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0
 					);
 				} else {
-					// At small widths SSIMULACRA2 is unstable (see README); gate quality as advisory.
-					$qualityAdvisory = $w <= $thresholds->qualityAdvisoryMaxWidth;
 					foreach ( $baseResults as $name => $base ) {
 						if ( !$base->available || $baseQualities[$name] === null ) {
 							continue;
 						}
-						$verdicts[$name] = $gate->evaluate(
-							$res->bytes ?? 0, $quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0,
-							$base->bytes ?? 0, $baseQualities[$name]->mean, $base->wallMs ?? 0.0, $base->peakRssKb ?? 0,
-							$qualityAdvisory
-						);
+						$role = self::BASELINE_ROLE[$name] ?? 'floor';
+						if ( $role === 'floor' ) {
+							$floorVerdicts[$name] = $gate->evaluateFloor(
+								$res->bytes ?? 0, $quality->mean,
+								$base->bytes ?? 0, $baseQualities[$name]->mean
+							);
+						} else {
+							$verdicts[$name] = $gate->evaluate(
+								$res->bytes ?? 0, $quality->mean, $res->wallMs ?? 0.0, $res->peakRssKb ?? 0,
+								$base->bytes ?? 0, $baseQualities[$name]->mean,
+								$base->wallMs ?? 0.0, $base->peakRssKb ?? 0
+							);
+						}
 					}
 				}
 			}
 			$candResults[$c->name()] = [
 				'result' => $res, 'quality' => $quality,
-				'verdicts' => $verdicts, 'capsVerdict' => $capsVerdict,
+				'verdicts' => $verdicts, 'floorVerdicts' => $floorVerdicts, 'capsVerdict' => $capsVerdict,
 			];
 		}
 
@@ -105,6 +120,7 @@ class Orchestrator {
 			'source' => $entry['path'], 'mime' => $mime, 'width' => $w, 'tier' => $tier,
 			'animated' => $entry['animated'], 'frames' => $entry['frames'],
 			'baselines' => $baseResults, 'baselineQualities' => $baseQualities,
+			'baselineRoles' => self::BASELINE_ROLE,
 			'candidates' => $candResults, 'dir' => $dir,
 		];
 	}

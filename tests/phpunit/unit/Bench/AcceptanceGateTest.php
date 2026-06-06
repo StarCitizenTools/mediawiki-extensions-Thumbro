@@ -70,46 +70,33 @@ class AcceptanceGateTest extends MediaWikiUnitTestCase {
 		$this->assertSame( Verdict::INCOMPARABLE, $v->verdict );
 	}
 
-	public function testAdvisorySubFloorQualityDoesNotFail(): void {
-		// A smaller candidate below the quality floor at an advisory width: flagged, not failed.
-		$v = $this->gate()->evaluate(
-			candBytes: 100, candQuality: 45.0, candWallMs: 100, candRssKb: 1000,
-			baseBytes: 1700, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000,
-			qualityAdvisory: true
-		);
-		$this->assertNotSame( Verdict::FAIL, $v->verdict );
-		$this->assertNotContains( 'quality-floor', $v->reasons );
-		$this->assertContains( 'quality-floor-advisory', $v->flags );
-	}
-
-	public function testAdvisoryQualityGapWithinToleranceIsATieAndWins(): void {
-		// Smaller, and 2 SSIM2 below baseline — within the noise band, so size wins.
-		$v = $this->gate()->evaluate(
-			candBytes: 900, candQuality: 78.0, candWallMs: 100, candRssKb: 1000,
-			baseBytes: 1000, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000,
-			qualityAdvisory: true
-		);
-		$this->assertSame( Verdict::PASS, $v->verdict );
-	}
-
-	public function testNonAdvisorySameGapIsTradeOff(): void {
-		// The identical inputs without the advisory flag: a 2-point deficit denies the win.
+	public function testQualityGapWithinToleranceIsATieAndWins(): void {
+		// Smaller, 2 SSIM2 below baseline — within the 3-point noise band, so size wins.
 		$v = $this->gate()->evaluate(
 			candBytes: 900, candQuality: 78.0, candWallMs: 100, candRssKb: 1000,
 			baseBytes: 1000, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000
 		);
-		$this->assertSame( Verdict::INCOMPARABLE, $v->verdict );
+		$this->assertSame( Verdict::PASS, $v->verdict );
 	}
 
-	public function testAdvisoryFarBelowBaselineStaysIncomparable(): void {
-		// Smaller but 20 SSIM2 below baseline — beyond the noise band, so not a win even when
-		// advisory; quality still matters, it just cannot hard-FAIL here.
+	public function testQualityGapBeyondToleranceIsTradeOff(): void {
+		// Smaller, but 4 SSIM2 below baseline — beyond the band, so not a win.
 		$v = $this->gate()->evaluate(
-			candBytes: 100, candQuality: 45.0, candWallMs: 100, candRssKb: 1000,
-			baseBytes: 1700, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000,
-			qualityAdvisory: true
+			candBytes: 900, candQuality: 76.0, candWallMs: 100, candRssKb: 1000,
+			baseBytes: 1000, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000
 		);
 		$this->assertSame( Verdict::INCOMPARABLE, $v->verdict );
+		$this->assertContains( 'quality-below-baseline', $v->flags );
+	}
+
+	public function testSubFloorIsHardFailEvenWhenSmaller(): void {
+		// Below the 50 floor: a hard FAIL regardless of size (no advisory downgrade).
+		$v = $this->gate()->evaluate(
+			candBytes: 100, candQuality: 47.0, candWallMs: 100, candRssKb: 1000,
+			baseBytes: 1700, baseQuality: 80.0, baseWallMs: 1000, baseRssKb: 70000
+		);
+		$this->assertSame( Verdict::FAIL, $v->verdict );
+		$this->assertContains( 'quality-floor', $v->reasons );
 	}
 
 	public function testCapsOnlyPassesUnderEveryCap(): void {
@@ -162,5 +149,22 @@ class AcceptanceGateTest extends MediaWikiUnitTestCase {
 		);
 		$this->assertSame( Verdict::FAIL, $v2->verdict );
 		$this->assertContains( 'time-ceiling', $v2->reasons );
+	}
+
+	public function testFloorOkWhenCandidateHigherQuality(): void {
+		// GD is lower quality (and may be smaller): the floor holds (not a breach).
+		$v = $this->gate()->evaluateFloor(
+			candBytes: 20000, candQuality: 83.0, baseBytes: 7000, baseQuality: 75.0
+		);
+		$this->assertSame( Verdict::PASS, $v->verdict );
+	}
+
+	public function testFloorBreachWhenBaselineDominates(): void {
+		// Baseline smaller AND higher quality (beyond tolerance): a real floor breach.
+		$v = $this->gate()->evaluateFloor(
+			candBytes: 20000, candQuality: 60.0, baseBytes: 7000, baseQuality: 75.0
+		);
+		$this->assertSame( Verdict::FAIL, $v->verdict );
+		$this->assertContains( 'baseline-dominates', $v->reasons );
 	}
 }
