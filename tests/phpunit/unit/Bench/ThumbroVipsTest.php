@@ -42,7 +42,8 @@ class ThumbroVipsTest extends MediaWikiUnitTestCase {
 
 	/**
 	 * The anti-drift guard: resolving against the real extension.json must yield the production
-	 * suffixes, and jpeg (no own block) must match the webp block exactly.
+	 * suffixes. png and jpeg each carry their own output block (near-lossless for png; the
+	 * photographic profile — subsampling off, max effort — for jpeg), so neither matches webp.
 	 */
 	public function testTracksRealExtensionJson(): void {
 		$config = json_decode(
@@ -54,6 +55,10 @@ class ThumbroVipsTest extends MediaWikiUnitTestCase {
 
 		[ , $jpeg ] = ThumbroVips::optionsFor( 'image/jpeg', $config );
 		[ , $webp ] = ThumbroVips::optionsFor( 'image/webp', $config );
-		$this->assertSame( $webp, $jpeg, 'jpeg has no own output block, so it must inherit the webp block' );
+		// jpeg has its own photographic block — the distinguishing choices are subsampling
+		// off and max effort, which the shared webp block does not carry.
+		$this->assertStringContainsString( 'smart_subsample=false', $jpeg );
+		$this->assertStringContainsString( 'effort=6', $jpeg );
+		$this->assertNotSame( $webp, $jpeg, 'jpeg now carries its own output block, not the webp fallback' );
 	}
 }
