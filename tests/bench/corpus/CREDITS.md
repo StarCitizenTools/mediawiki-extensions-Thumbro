@@ -9,12 +9,13 @@ third-party content, no licensing).
 
 | File | Format | Licence | Author / source (Wikimedia Commons) |
 | :--- | :--- | :--- | :--- |
-| `photo.jpg` | JPEG | CC BY-SA 3.0 | Alvesgaspar — *Cat November 2010-1a.jpg* |
-| `portrait.jpg` | JPEG | CC0 | Wilfredor — *Boy Face from Venezuela.jpg* |
+| `photo.jpg` | JPEG | CC BY-SA 4.0 | Basile Morin — *Felis silvestris catus lying on rice straw.jpg* |
+| `portrait.jpg` | JPEG | CC0 | ThuyHaBich — *Bearded man smoking pipe-3013924.jpg* |
+| `concept-art.jpg` | JPEG | CC BY 4.0 | David Revoy — *2010-10-06 Kinytia by-David-Revoy.jpg* |
 | `logo-transparent.png` | PNG (alpha) | CC BY-SA 3.0 | POV-Ray source / Daniel G. and others — *PNG transparency demonstration 1.png* |
 | `flat-graphic.png` | PNG | Public domain | Firebird Software / S. Wilson / J.D. Woodcock — *Fido character from Don't Buy This.png* |
 | `screenshot-ui.png` | PNG | CC BY-SA 4.0 | Delayline — *Screenshot of GIMP in single window mode.png* |
-| `screenshot-gaming.png` | PNG | CC BY-SA 4.0 | QwertyChouskie (game: SuperTuxKart) — *SuperTuxKart in-race (2018).png* |
+| `screenshot-gaming.png` | PNG | CC BY-SA 3.0 | PantheraLeo1359531 (game: 0 A.D. by Wildfire Games) — *0 A.D. Screenshot 2022.09.30 - 23.19.15.44.png* |
 | `sprite.gif` | GIF (alpha) | CC0 | Kenney.nl — *Kenney.nl platformer characters - zombie vector.svg* (rasterised) |
 | `anim-opaque.gif` | GIF (animated) | CC BY-SA 3.0 | Marvel — *Rotating earth (large).gif* |
 | `photo.webp` | WebP | CC BY-SA 3.0 | Alvesgaspar — *Cat November 2010-1a.jpg* (converted) |
