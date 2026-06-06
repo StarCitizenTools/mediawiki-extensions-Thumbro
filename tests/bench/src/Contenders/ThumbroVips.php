@@ -19,9 +19,8 @@ use MediaWiki\Extension\Thumbro\Bench\ToolLocator;
  * falling back to the image/webp block (so jpeg/webp share the webp save options while image/png
  * carries its own near-lossless block).
  *
- * GIF is the exception: its vips options are decided at runtime by LibwebpBackend (load options
- * forced to n=-1/1, or the whole transform handed to gif2webp), not by config, so this row models
- * the all-frames vips delegation explicitly.
+ * GIF is handled by {@see ThumbroGif} instead — its options are a runtime LibwebpBackend routing
+ * decision (gif2webp, or libvips with forced n), not a config lookup.
  */
 class ThumbroVips implements Contender {
 	/** MIMEs whose vips suffixes are derived from extension.json. */
@@ -32,7 +31,7 @@ class ThumbroVips implements Contender {
 	}
 
 	public function applies( string $mime ): bool {
-		return $mime === 'image/gif' || in_array( $mime, self::DERIVED, true );
+		return in_array( $mime, self::DERIVED, true );
 	}
 
 	public function isAvailable(): bool {
@@ -64,17 +63,13 @@ class ThumbroVips implements Contender {
 	/**
 	 * The vipsthumbnail "[..]" load/save suffixes Thumbro runs for $mime, derived from the given
 	 * ThumbroOptions config. Mirrors TransformOptionsResolver's libvips path: inputOptions from the
-	 * input-MIME block; outputOptions from the input-MIME block, else the image/webp block. GIF is
-	 * modeled explicitly (its vips options are a runtime LibwebpBackend decision, not config).
+	 * input-MIME block; outputOptions from the input-MIME block, else the image/webp block.
 	 *
 	 * @param string $mime input MIME type
 	 * @param array<string,array<string,mixed>> $thumbroOptions config.ThumbroOptions.value
 	 * @return array{0:string,1:string} [ inputSuffix, outputSuffix ]
 	 */
 	public static function optionsFor( string $mime, array $thumbroOptions ): array {
-		if ( $mime === 'image/gif' ) {
-			return [ '[n=-1]', '' ];
-		}
 		$input = $thumbroOptions[$mime]['inputOptions'] ?? [];
 		$output = $thumbroOptions[$mime]['outputOptions']
 			?? $thumbroOptions['image/webp']['outputOptions']
