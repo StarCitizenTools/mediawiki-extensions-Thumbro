@@ -45,6 +45,13 @@ class ThumbroVips implements Contender {
 		}
 		$dst = $destDir . '/thumbro_' . $targetWidth . '.webp';
 		[ $inSuffix, $outSuffix ] = self::optionsFor( $mime, self::thumbroOptions() );
+		// Animated WebP: production forces n=-1 (LibvipsBackend, via the handler's
+		// canAnimateThumbnail) so the thumbnail keeps every frame instead of flattening to
+		// the first. Mirror it so the bench measures what production produces. GIF is
+		// ThumbroGif's job; jpeg/png are single-frame.
+		if ( $mime === 'image/webp' && $inSuffix === '' && self::isAnimated( $srcPath ) ) {
+			$inSuffix = '[n=-1]';
+		}
 		$in = $srcPath . $inSuffix;
 		$out = $dst . $outSuffix;
 		// Height bound large so width governs (matches MediaWiki width-based thumbs).
@@ -93,6 +100,16 @@ class ThumbroVips implements Contender {
 			$parts[] = "$key=$value";
 		}
 		return '[' . implode( ',', $parts ) . ']';
+	}
+
+	/** True if the source reports more than one page/frame (via vipsheader's n-pages). */
+	private static function isAnimated( string $path ): bool {
+		$vipsheader = ToolLocator::path( 'vipsheader' );
+		if ( $vipsheader === null ) {
+			return false;
+		}
+		$proc = Subprocess::run( [ $vipsheader, '-f', 'n-pages', $path ] );
+		return $proc->ok() && (int)trim( $proc->stdout ) > 1;
 	}
 
 	/**

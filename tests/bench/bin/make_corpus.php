@@ -129,4 +129,9 @@ foreach ( $transpFrameFiles as $f ) {
 // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 @rmdir( $transpFrameDir );
 
+// STRESS: transparent animated WebP — derived from the transparent GIF above. The WebP-input
+// animation path has no gif2webp escape, so libvips re-encodes per-frame alpha (inefficient);
+// this fixture exercises that blow-up (animate-all policy) against the hard safety caps.
+$runArray( [ 'vips', 'copy', "$dir/anim-transparent.gif[n=-1]", "$dir/anim-transparent.webp" ] );
+
 echo "corpus regenerated in $dir\n";
