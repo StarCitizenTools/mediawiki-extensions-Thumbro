@@ -8,8 +8,8 @@ use File;
 use MediaTransformOutput;
 use MediaWiki\Config\Config;
 use MediaWiki\Config\ConfigFactory;
+use MediaWiki\Extension\Thumbro\BackendDispatcher;
 use MediaWiki\Extension\Thumbro\Libraries\Libvips;
-use MediaWiki\Extension\Thumbro\Libraries\Libwebp;
 use MediaWiki\Extension\Thumbro\MediaHandlers;
 use MediaWiki\Extension\Thumbro\Utils;
 use MediaWiki\Hook\BitmapHandlerCheckImageAreaHook;
@@ -70,26 +70,7 @@ class MediaWikiHooks implements
 			return true;
 		}
 
-		$library = $options['library'] ?? 'libvips';
-
-		if ( $library === 'libwebp' ) {
-			$libraries = $config->get( 'ThumbroLibraries' );
-			$gifOptions = $config->get( 'ThumbroOptions' )['image/gif'] ?? [];
-			$webpOptions = [
-				// vips for the resize step and the libvips delegation.
-				'command' => $libraries['libvips']['command'] ?? $options['command'],
-				// gif2webp for the encode step.
-				'webpCommand' => $libraries['libwebp']['command'] ?? '',
-				'webpOptions' => $gifOptions['outputOptions'] ?? [],
-				// libvips WebP-save flags for the opaque/static delegation.
-				'outputOptions' => $options['outputOptions'] ?? [],
-				'inputOptions' => $options['inputOptions'] ?? [],
-				'maxAnimatedArea' => (int)$config->get( 'ThumbroMaxAnimatedArea' ),
-			];
-			return Libwebp::doTransform( $handler, $file, $params, $webpOptions, $mto );
-		}
-
-		return Libvips::doTransform( $handler, $file, $params, $options, $mto );
+		return BackendDispatcher::dispatch( $handler, $file, $params, $options, $config, $mto );
 	}
 
 	/**
