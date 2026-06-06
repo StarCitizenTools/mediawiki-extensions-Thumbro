@@ -72,7 +72,9 @@ return [
 		$gifOptions = $config->get( 'ThumbroOptions' )['image/gif'] ?? [];
 		return new LibwebpSettings(
 			$libraries['libwebp']['command'] ?? '',
-			$gifOptions['outputOptions'] ?? [],
+			// gif2webp encoder flags live on the libwebp library; fall back to the pre-1.3.x
+			// location (image/gif.outputOptions) so existing configs keep working.
+			$libraries['libwebp']['flags'] ?? $gifOptions['outputOptions'] ?? [],
 			// libvips is the primary backend and is always configured; '' would only surface
 			// in a libwebp-without-libvips misconfiguration, which produces no thumbnail either way.
 			$libraries['libvips']['command'] ?? '',

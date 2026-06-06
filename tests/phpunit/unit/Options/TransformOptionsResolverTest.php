@@ -30,8 +30,9 @@ class TransformOptionsResolverTest extends MediaWikiUnitTestCase {
 				'libwebp' => [ 'command' => '/usr/bin/gif2webp' ],
 			],
 			'ThumbroOptions' => $optionsOverride ?: [
-				'image/gif' => [ 'enabled' => true, 'library' => 'libwebp',
-					'inputOptions' => [ 'n' => '-1' ], 'outputOptions' => [ 'mixed' => '', 'q' => '80', 'm' => '4' ] ],
+				// gif2webp encoder flags now live on the libwebp library, not here; the gif block
+				// carries no outputOptions and its delegation webpsave falls back to the webp block.
+				'image/gif' => [ 'enabled' => true, 'library' => 'libwebp', 'inputOptions' => [ 'n' => '-1' ] ],
 				'image/jpeg' => [ 'enabled' => true, 'library' => 'libvips', 'inputOptions' => [] ],
 				'image/png' => [ 'enabled' => true, 'library' => 'libvips', 'inputOptions' => [] ],
 				'image/webp' => [ 'enabled' => true, 'library' => 'libvips',
@@ -139,5 +140,41 @@ class TransformOptionsResolverTest extends MediaWikiUnitTestCase {
 		$this->assertNotNull( $opts );
 		$this->assertSame( 'libvips', $opts->library() );
 		$this->assertSame( [], $opts->inputOptions() );
+	}
+
+	public function testLibvipsBlockUsesItsOwnOutputOptionsWhenSet(): void {
+		// The new capability: a libvips MIME block carries its own webpsave flags, taken in
+		// preference to the webp-block fallback.
+		$resolver = $this->resolver( [
+			'image/jpeg' => [ 'enabled' => true, 'library' => 'libvips',
+				'inputOptions' => [], 'outputOptions' => [ 'Q' => '82', 'strip' => 'true' ] ],
+			'image/webp' => [ 'enabled' => true, 'library' => 'libvips',
+				'inputOptions' => [],
+				'outputOptions' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
+		] );
+		$opts = $resolver->resolve( $this->handler(), $this->file( 'image/jpeg', 'jpg' ) );
+		$this->assertNotNull( $opts );
+		$this->assertSame( '82', $opts->outputOptions()['Q'], 'jpeg uses its own webpsave Q' );
+	}
+
+	public function testLibwebpBlockOutputOptionsAreNotLeakedAsWebpsave(): void {
+		// Back-compat guard: an old-style config still carries gif2webp flags under
+		// image/gif.outputOptions. Those must NOT surface as the resolved (webpsave) outputOptions;
+		// the libwebp delegation uses the webp block's webpsave flags instead.
+		$resolver = $this->resolver( [
+			'image/gif' => [ 'enabled' => true, 'library' => 'libwebp',
+				'inputOptions' => [ 'n' => '-1' ], 'outputOptions' => [ 'mixed' => '', 'q' => '80', 'm' => '4' ] ],
+			'image/webp' => [ 'enabled' => true, 'library' => 'libvips',
+				'inputOptions' => [],
+				'outputOptions' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
+		] );
+		$opts = $resolver->resolve( $this->handler(), $this->file( 'image/gif', 'gif' ) );
+		$this->assertNotNull( $opts );
+		$this->assertSame(
+			[ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ],
+			$opts->outputOptions(),
+			'libwebp delegation uses webp-block webpsave flags, not the gif2webp flags'
+		);
+		$this->assertArrayNotHasKey( 'mixed', $opts->outputOptions() );
 	}
 }

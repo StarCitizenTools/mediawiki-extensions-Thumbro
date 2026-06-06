@@ -99,7 +99,12 @@
 					"command": "/usr/bin/vipsthumbnail"
 				},
 				"libwebp": {
-					"command": "/usr/bin/gif2webp"
+					"command": "/usr/bin/gif2webp",
+					"flags": {
+						"mixed": "",
+						"q": "80",
+						"m": "4"
+					}
 				}
 			}
 		},
@@ -113,11 +118,6 @@
 					"library": "libwebp",
 					"inputOptions": {
 						"n": "-1"
-					},
-					"outputOptions": {
-						"mixed": "",
-						"q": "80",
-						"m": "4"
 					}
 				},
 				"image/jpeg": {
