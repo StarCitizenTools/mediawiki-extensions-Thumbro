@@ -28,4 +28,19 @@ class Ssimulacra2Test extends MediaWikiUnitTestCase {
 		$this->expectException( \RuntimeException::class );
 		Ssimulacra2::parseScore( "no number here" );
 	}
+
+	public function testIsWebpDetectsByMagicBytesNotExtension(): void {
+		$webp = tempnam( sys_get_temp_dir(), 'thumbro_webp_' );
+		$gif = tempnam( sys_get_temp_dir(), 'thumbro_gif_' );
+		// RIFF<4-byte size>WEBP… vs GIF89a — extension-free, content only.
+		file_put_contents( $webp, "RIFF\x00\x00\x00\x00WEBPVP8X" );
+		file_put_contents( $gif, "GIF89a\x00\x00" );
+		try {
+			$this->assertTrue( Ssimulacra2::isWebp( $webp ) );
+			$this->assertFalse( Ssimulacra2::isWebp( $gif ) );
+		} finally {
+			unlink( $webp );
+			unlink( $gif );
+		}
+	}
 }
