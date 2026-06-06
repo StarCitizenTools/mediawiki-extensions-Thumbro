@@ -18,14 +18,16 @@
 			"license": "CC0", "author": "Kenney.nl (rasterised from SVG)", "source": "https://commons.wikimedia.org/wiki/File:Kenney.nl_platformer_characters_-_zombie_vector.svg" },
 		{ "file": "anim-opaque.gif", "mime": "image/gif", "tier": "representative", "animated": true, "frames": 44, "targets": [ 250 ],
 			"license": "CC BY-SA 3.0", "author": "Marvel (Wikimedia user)", "source": "https://commons.wikimedia.org/wiki/File:Rotating_earth_(large).gif" },
+		{ "file": "anim-sprite.gif", "mime": "image/gif", "tier": "representative", "animated": true, "frames": 8, "targets": [ 250 ],
+			"license": "CC0", "author": "Kenney.nl", "source": "https://kenney.nl/assets/toon-characters" },
 		{ "file": "photo.webp", "mime": "image/webp", "tier": "representative", "animated": false, "frames": 1, "targets": [ 180, 250, 400 ],
 			"license": "CC BY-SA 3.0", "author": "Alvesgaspar (converted to WebP)", "source": "https://commons.wikimedia.org/wiki/File:Cat_November_2010-1a.jpg" },
 		{ "file": "anim.webp", "mime": "image/webp", "tier": "representative", "animated": true, "frames": 44, "targets": [ 250 ],
 			"license": "CC BY-SA 3.0", "author": "Marvel (Wikimedia user; converted to WebP)", "source": "https://commons.wikimedia.org/wiki/File:Rotating_earth_(large).gif" },
 
-		{ "file": "anim-large.gif", "mime": "image/gif", "tier": "stress", "animated": true, "frames": 31, "targets": [ 84 ] },
-		{ "file": "anim-transparent.gif", "mime": "image/gif", "tier": "stress", "animated": true, "frames": 48, "targets": [ 84 ] },
-		{ "file": "anim-transparent.webp", "mime": "image/webp", "tier": "stress", "animated": true, "frames": 48, "targets": [ 128 ] },
+		{ "file": "anim-large.gif", "mime": "image/gif", "tier": "stress", "animated": true, "frames": 31, "targets": [ 250 ] },
+		{ "file": "anim-transparent.gif", "mime": "image/gif", "tier": "stress", "animated": true, "frames": 48, "targets": [ 180 ] },
+		{ "file": "anim-transparent.webp", "mime": "image/webp", "tier": "stress", "animated": true, "frames": 48, "targets": [ 180 ] },
 		{ "file": "tiny.png", "mime": "image/png", "tier": "stress", "animated": false, "frames": 1, "targets": [ 16 ] },
 		{ "file": "huge.jpg", "mime": "image/jpeg", "tier": "stress", "animated": false, "frames": 1, "targets": [ 320, 1280 ] }
 	]

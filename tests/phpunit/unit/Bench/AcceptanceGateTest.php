@@ -106,14 +106,12 @@ class AcceptanceGateTest extends MediaWikiUnitTestCase {
 		$this->assertSame( [], $v->reasons );
 	}
 
-	public function testCapsQualityFloorIsAdvisory(): void {
-		// Stress fixtures are synthetic pathologies (never served) and SSIMULACRA2 is unreliable
-		// on them (small/animated/transparent), so a sub-floor quality is advisory here — flagged,
-		// not a CAP-BREACH. Time and RSS stay hard caps.
+	public function testCapsOnlyFailsOnQualityFloor(): void {
+		// Stress fixtures are scored at standard widths (≥120px) where SSIMULACRA2 is reliable,
+		// so the quality floor is a hard cap: a sub-floor score is a CAP-BREACH.
 		$v = $this->gate()->evaluateCaps( candQuality: 39.0, candWallMs: 100, candRssKb: 1000 );
-		$this->assertSame( Verdict::PASS, $v->verdict );
-		$this->assertNotContains( 'quality-floor', $v->reasons );
-		$this->assertContains( 'quality-floor-advisory', $v->flags );
+		$this->assertSame( Verdict::FAIL, $v->verdict );
+		$this->assertContains( 'quality-floor', $v->reasons );
 	}
 
 	public function testCapsOnlyFailsOnRssCeiling(): void {
