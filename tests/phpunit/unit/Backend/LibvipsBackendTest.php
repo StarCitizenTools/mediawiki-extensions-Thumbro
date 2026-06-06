@@ -23,9 +23,11 @@ class LibvipsBackendTest extends MediaWikiUnitTestCase {
 		);
 	}
 
-	private function request( TransformOptions $options ): BackendRequest {
+	private function request(
+		TransformOptions $options, ?TransformationalImageHandler $handler = null
+	): BackendRequest {
 		return new BackendRequest(
-			$this->createMock( TransformationalImageHandler::class ),
+			$handler ?? $this->createMock( TransformationalImageHandler::class ),
 			$this->createMock( File::class ),
 			[
 				'srcPath' => '/src.png',
@@ -38,6 +40,23 @@ class LibvipsBackendTest extends MediaWikiUnitTestCase {
 			],
 			$options
 		);
+	}
+
+	private function handler( bool $animated, bool $canAnimate ): TransformationalImageHandler {
+		$h = $this->createMock( TransformationalImageHandler::class );
+		$h->method( 'isAnimatedImage' )->willReturn( $animated );
+		$h->method( 'canAnimateThumbnail' )->willReturn( $canAnimate );
+		return $h;
+	}
+
+	private function inputToken( TransformOptions $options, ?TransformationalImageHandler $handler ): string {
+		// The source argument is element [1] of the built command: "<src><suffix>".
+		return $this->backend()->plan( $this->request( $options, $handler ) )
+			->getCommands()[0]->buildCommandForTest()[1];
+	}
+
+	private function opts( array $inputOptions ): TransformOptions {
+		return new TransformOptions( 'libvips', '/usr/bin/vipsthumbnail', $inputOptions, [], false );
 	}
 
 	public function testPlansSingleResizeWithInputAndOutputSuffixes(): void {
@@ -62,5 +81,24 @@ class LibvipsBackendTest extends MediaWikiUnitTestCase {
 			[ '/usr/bin/vipsthumbnail', '/src.png', '--size=84x120', '-o', '/out.webp' ],
 			$plan->getCommands()[0]->buildCommandForTest()
 		);
+	}
+
+	public function testAnimatableSourceForcesAllFrames(): void {
+		// Animated source under the area threshold (canAnimateThumbnail) -> keep every frame.
+		$this->assertSame( '/src.png[n=-1]', $this->inputToken( $this->opts( [] ), $this->handler( true, true ) ) );
+	}
+
+	public function testOverThresholdAnimationKeepsFirstFrame(): void {
+		// Animated but too large to animate -> no n forced, vipsthumbnail takes the first frame.
+		$this->assertSame( '/src.png', $this->inputToken( $this->opts( [] ), $this->handler( true, false ) ) );
+	}
+
+	public function testStaticSourceUnchanged(): void {
+		$this->assertSame( '/src.png', $this->inputToken( $this->opts( [] ), $this->handler( false, true ) ) );
+	}
+
+	public function testExplicitNIsNotOverridden(): void {
+		// The GIF backend pins `n` when it delegates; an animatable source must not override it.
+		$this->assertSame( '/src.png[n=1]', $this->inputToken( $this->opts( [ 'n' => '1' ] ), $this->handler( true, true ) ) );
 	}
 }
