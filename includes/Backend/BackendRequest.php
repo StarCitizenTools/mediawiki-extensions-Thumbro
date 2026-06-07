@@ -80,12 +80,4 @@ class BackendRequest {
 	public function hasComment(): bool {
 		return !empty( $this->params['comment'] );
 	}
-
-	/**
-	 * Return a copy of this request carrying a different option set, used when a backend
-	 * delegates a transform to another backend with adjusted options.
-	 */
-	public function withOptions( TransformOptions $options ): self {
-		return new self( $this->handler, $this->file, $this->params, $options );
-	}
 }

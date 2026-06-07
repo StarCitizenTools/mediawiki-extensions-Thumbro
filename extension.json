@@ -27,7 +27,7 @@
 			"class": "MediaWiki\\Extension\\Thumbro\\SpecialThumbroTest",
 			"services": [
 				"Thumbro.OptionsResolver",
-				"Thumbro.BackendDispatcher",
+				"Thumbro.EncodePipeline",
 				"RepoGroup",
 				"HttpRequestFactory",
 				"TempFSFileFactory",
@@ -63,7 +63,7 @@
 			"services": [
 				"ConfigFactory",
 				"Thumbro.OptionsResolver",
-				"Thumbro.BackendDispatcher",
+				"Thumbro.EncodePipeline",
 				"Thumbro.VersionProviders"
 			]
 		}
@@ -99,12 +99,7 @@
 					"command": "/usr/bin/vipsthumbnail"
 				},
 				"libwebp": {
-					"command": "/usr/bin/gif2webp",
-					"flags": {
-						"mixed": "",
-						"q": "80",
-						"m": "4"
-					}
+					"command": "/usr/bin/gif2webp"
 				}
 			}
 		},
@@ -115,41 +110,53 @@
 			"value": {
 				"image/gif": {
 					"enabled": true,
-					"library": "libwebp",
-					"inputOptions": {
-						"n": "-1"
-					}
+					"resize": { "options": {} },
+					"encode": [
+						{
+							"encoder": "gif2webp",
+							"when": { "animated": true, "alpha": true, "underThreshold": true },
+							"options": { "mixed": "", "q": "80", "m": "4" }
+						},
+						{
+							"encoder": "vips-webp",
+							"when": { "animated": true, "underThreshold": true },
+							"options": { "strip": "true", "Q": "90", "smart_subsample": "true" }
+						},
+						{
+							"encoder": "vips-webp",
+							"options": { "strip": "true", "Q": "90", "smart_subsample": "true" }
+						}
+					]
 				},
 				"image/jpeg": {
 					"enabled": true,
-					"library": "libvips",
-					"inputOptions": {},
-					"outputOptions": {
-						"strip": "true",
-						"Q": "80",
-						"smart_subsample": "false",
-						"effort": "6"
-					}
+					"resize": { "options": {} },
+					"encode": [
+						{
+							"encoder": "vips-webp",
+							"options": { "strip": "true", "Q": "80", "smart_subsample": "false", "effort": "6" }
+						}
+					]
 				},
 				"image/png": {
 					"enabled": true,
-					"library": "libvips",
-					"inputOptions": {},
-					"outputOptions": {
-						"near_lossless": "true",
-						"Q": "60",
-						"strip": "true"
-					}
+					"resize": { "options": {} },
+					"encode": [
+						{
+							"encoder": "vips-webp",
+							"options": { "near_lossless": "true", "Q": "60", "strip": "true" }
+						}
+					]
 				},
 				"image/webp": {
 					"enabled": true,
-					"library": "libvips",
-					"inputOptions": {},
-					"outputOptions": {
-						"strip": "true",
-						"Q": "90",
-						"smart_subsample": "true"
-					}
+					"resize": { "options": {} },
+					"encode": [
+						{
+							"encoder": "vips-webp",
+							"options": { "strip": "true", "Q": "90", "smart_subsample": "true" }
+						}
+					]
 				}
 			}
 		},

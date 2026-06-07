@@ -1,6 +1,6 @@
 # image/jpeg — encoding profile
 
-**Current profile** (`extension.json` → `ThumbroOptions["image/jpeg"].outputOptions`):
+**Current profile** (`extension.json` → the `vips-webp` entry's `options` in `ThumbroOptions["image/jpeg"].encode`):
 
 ```json
 { "strip": "true", "Q": "80", "smart_subsample": "false", "effort": "6" }

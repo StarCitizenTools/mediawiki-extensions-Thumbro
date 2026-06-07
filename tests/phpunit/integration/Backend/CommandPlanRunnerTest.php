@@ -39,7 +39,7 @@ class CommandPlanRunnerTest extends MediaWikiIntegrationTestCase {
 				'physicalHeight' => 120,
 				'comment' => $comment,
 			],
-			new TransformOptions( 'libvips', '/usr/bin/vipsthumbnail', [], [], $setComment )
+			new TransformOptions( [], [ [ 'encoder' => 'vips-webp' ] ], $setComment )
 		);
 	}
 

@@ -78,18 +78,33 @@ docker compose exec mediawiki bash -c "cd /var/www/html/w/extensions/Thumbro && 
 
 ### Media handlers
 
-- New thumbnail backends go under `includes/Libraries/` (e.g. `Libvips`, `Libwebp`).
-- The backend for each MIME type is chosen by the `library` field in its
-  `wgThumbroOptions["<mime>"]` block and dispatched in
-  `MediaWikiHooks::onBitmapHandlerTransform` (`library` → backend class).
-- Backend binaries are configured under `wgThumbroLibraries` (`libvips` →
-  `vipsthumbnail`, `libwebp` → `gif2webp`).
-- **GIF strategy:** `image/gif` selects `libwebp`. The `Libwebp` backend owns the
-  runtime policy. Transparent animated GIFs under `$wgThumbroMaxAnimatedArea` (with
-  gif2webp present) are encoded with gif2webp. Opaque animated GIFs — and the
-  gif2webp-unavailable fallback — delegate to `Libvips` as animated WebP (all frames
-  preserved). Static GIFs and animations over the threshold delegate to `Libvips` as a
-  static first frame.
+A transform is a **resize → encode** pipeline (`includes/Backend/`): libvips resizes; a
+pluggable **`Encoder`** writes the WebP. The `EncodePipeline` coordinator wires the two stages;
+`CommandPlanRunner` executes the planned commands.
+
+- **Encoders** live under `includes/Backend/Encoder/` and implement `Encoder`, declaring their
+  capabilities (`isAvailable`, `supportsAnimation`, `supportsAlpha`, `requiresResizedInput`,
+  `intermediateFormat`) and owning their own option formatting. Today: `vips-webp` (libvips
+  `webpsave`; *fused* — resizes and encodes in one command) and `gif2webp` (libwebp;
+  *encode-only* — consumes a vips-resized intermediate via the `VipsResizer` seam). A new encoder
+  (e.g. cwebp) implements `Encoder` and is registered by name in `ServiceWiring`.
+- **Config is self-describing.** Each `wgThumbroOptions["<mime>"]` block declares `enabled`, a
+  `resize` stage (`options` = vips load/resize opts), and an ordered `encode` list. Each entry
+  names an `encoder`, its own `options` bag, and an optional `when` capability guard
+  (`animated`/`alpha`/`underThreshold`). `EncoderRouter` picks the first entry whose `when` the
+  file satisfies; a `when`-less entry is the catch-all. There are no per-library special-cases in
+  the resolver — it hands each encoder its options verbatim.
+- Binaries are configured under `wgThumbroLibraries` (`libvips` → `vipsthumbnail`, `libwebp` →
+  `gif2webp`).
+- **Routing/policy is visible in config, not buried in code.** The coordinator builds the file's
+  traits (animated; alpha — probed only when it can matter; area vs `$wgThumbroMaxAnimatedArea`
+  → `underThreshold`), drops encoders whose tool is absent, routes via the `when` list, and
+  derives frame loading: `n=-1` only when the chosen encoder will emit animation, otherwise the
+  vips default (first frame).
+- **GIF** is the multi-branch example, now expressed as its `encode` list: transparent animated
+  under threshold → `gif2webp`; opaque animated under threshold → `vips-webp` (animated WebP, all
+  frames); static or over-threshold → `vips-webp` (first frame). A missing gif2webp binary drops
+  that entry, so the transparent case falls through to `vips-webp`.
 
 ### Benchmarking handlers (required)
 

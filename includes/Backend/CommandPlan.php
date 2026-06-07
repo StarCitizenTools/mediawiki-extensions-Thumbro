@@ -6,11 +6,11 @@ namespace MediaWiki\Extension\Thumbro\Backend;
 use MediaWiki\Extension\Thumbro\Shell\ShellCommand;
 
 /**
- * An ordered list of shell commands a backend plans to run for one transform.
+ * An ordered list of shell commands planned for one transform.
  *
- * Backends ({@see ThumbnailBackend}) are pure planners: they build a CommandPlan but never
- * execute it. {@see CommandPlanRunner} executes any plan uniformly. An empty plan is the
- * "nothing to do — let core continue" signal (e.g. libvips with no commands).
+ * The {@see EncodePipeline} is a pure planner: it builds a CommandPlan but never executes it.
+ * {@see CommandPlanRunner} executes any plan uniformly. An empty plan is the
+ * "nothing to do — let core continue" signal (e.g. no available encoder).
  */
 class CommandPlan {
 

@@ -10,14 +10,11 @@ use TransformationalImageHandler;
 /**
  * Resolves whether Thumbro should transform a file and, if so, with which options.
  *
- * Worth knowing: every Thumbro handler's getThumbType() reports image/webp, so the matched
- * ThumbroOptions block is always image/webp — its enabled/minArea/maxArea gate the transform.
- * `library`, `inputOptions` and `outputOptions` are each taken from the input-MIME block (falling
- * back to the webp block), so a MIME can carry its own webpsave flags.
- *
- * A libwebp block is the exception for `outputOptions`: there they are gif2webp encoder flags
- * (which live on the libwebp library), not webpsave flags, so libwebp always takes the webp-block
- * fallback — the webpsave options its opaque-GIF -> libvips delegation needs.
+ * The config is keyed by INPUT MIME type: each block declares its own `enabled`/`minArea`/
+ * `maxArea` gate, a `resize` stage, and an ordered `encode` list. The output is always WebP (a
+ * property of the encoders), so — unlike the former resolver — this no longer matches on the
+ * output MIME or carries any per-library special-case: it just reads the input-MIME block and
+ * hands the encode list on verbatim for the pipeline to route.
  */
 class TransformOptionsResolver {
 
@@ -28,57 +25,37 @@ class TransformOptionsResolver {
 
 	public function resolve( TransformationalImageHandler $handler, File $file ): ?TransformOptions {
 		$options = $this->config->get( 'ThumbroOptions' );
-		$libraries = $this->config->get( 'ThumbroLibraries' );
-		$inputMimeType = $file->getMimeType();
-		$outputMimeType = $handler->getThumbType( $file->getExtension(), $inputMimeType )[1];
-
-		foreach ( $options as $mimeType => $option ) {
-			if ( $mimeType !== $outputMimeType ) {
-				continue;
-			}
-
-			if ( !isset( $option['enabled'] ) || $option['enabled'] !== true ) {
-				continue;
-			}
-
-			// Backend selection is per INPUT MIME type. getThumbType() always reports
-			// image/webp, so $option here is the webp block; take `library` from the
-			// input-MIME block instead so e.g. image/gif can select libwebp.
-			$library = $options[$inputMimeType]['library'] ?? $option['library'];
-			if ( !isset( $libraries[$library] ) || !isset( $libraries[$library]['command'] ) ) {
-				continue;
-			}
-
-			// Multi-page files are not supported
-			if ( $file->isMultipage() ) {
-				continue;
-			}
-
-			$area = $handler->getImageArea( $file );
-			if ( isset( $option['minArea'] ) && $area < $option['minArea'] ) {
-				continue;
-			}
-			if ( isset( $option['maxArea'] ) && $area >= $option['maxArea'] ) {
-				continue;
-			}
-
-			// Per-MIME webpsave flags, falling back to the webp block. libwebp always takes the
-			// fallback (its outputOptions are encoder flags, not webpsave — see the class docblock);
-			// this also keeps old configs with gif2webp flags under image/gif.outputOptions safe.
-			$inputBlockOutput = $library === 'libwebp'
-				? null
-				: ( $options[$inputMimeType]['outputOptions'] ?? null );
-			$outputOptions = $inputBlockOutput ?? $option['outputOptions'] ?? [];
-
-			return new TransformOptions(
-				$library,
-				$libraries[$library]['command'],
-				// inputOptions come from the input-MIME block.
-				$options[$inputMimeType]['inputOptions'] ?? [],
-				$outputOptions,
-				!empty( $option['setcomment'] )
-			);
+		$block = $options[$file->getMimeType()] ?? null;
+		if ( $block === null ) {
+			return null;
 		}
-		return null;
+
+		if ( ( $block['enabled'] ?? false ) !== true ) {
+			return null;
+		}
+
+		// Multi-page files are not supported.
+		if ( $file->isMultipage() ) {
+			return null;
+		}
+
+		$area = $handler->getImageArea( $file );
+		if ( isset( $block['minArea'] ) && $area < $block['minArea'] ) {
+			return null;
+		}
+		if ( isset( $block['maxArea'] ) && $area >= $block['maxArea'] ) {
+			return null;
+		}
+
+		$encodeList = $block['encode'] ?? [];
+		if ( $encodeList === [] ) {
+			return null;
+		}
+
+		return new TransformOptions(
+			$block['resize']['options'] ?? [],
+			$encodeList,
+			!empty( $block['setcomment'] )
+		);
 	}
 }

@@ -52,7 +52,7 @@ class MediaWikiHooksTest extends MediaWikiIntegrationTestCase {
 		return new MediaWikiHooks(
 			$services->getConfigFactory(),
 			$services->get( 'Thumbro.OptionsResolver' ),
-			$services->get( 'Thumbro.BackendDispatcher' ),
+			$services->get( 'Thumbro.EncodePipeline' ),
 			$services->get( 'Thumbro.VersionProviders' )
 		);
 	}
