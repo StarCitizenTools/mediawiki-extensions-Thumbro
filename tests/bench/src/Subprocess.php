@@ -28,7 +28,10 @@ class Subprocess {
 		$full = array_merge( [ self::$timeBin, '-v', '-o', $statFile ], $cmd );
 
 		$descriptors = [ 1 => [ 'pipe', 'w' ], 2 => [ 'pipe', 'w' ] ];
-		$t0 = microtime( true );
+		// Monotonic clock (hrtime), not microtime: microtime reads CLOCK_REALTIME, which can
+		// step backward under an NTP adjustment (and notably on WSL2, where the wall clock
+		// jumps), producing a nonsensical negative wall time. hrtime is immune to clock steps.
+		$t0 = hrtime( true );
 		// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.proc_open
 		$proc = proc_open( $full, $descriptors, $pipes );
 		// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.is_resource
@@ -78,7 +81,8 @@ class Subprocess {
 			}
 		}
 		$exit = proc_close( $proc );
-		$wallMs = ( microtime( true ) - $t0 ) * 1000;
+		// hrtime returns nanoseconds; convert to milliseconds.
+		$wallMs = ( hrtime( true ) - $t0 ) / 1e6;
 
 		// Cast guards false from file_get_contents on an unreadable file; parseTimeStat then returns null.
 		$peak = is_file( $statFile ) ? self::parseTimeStat( (string)file_get_contents( $statFile ) ) : null;
