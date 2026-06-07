@@ -1,5 +1,42 @@
 # Changelog
 
+## [2.0.0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v1.2.1...v2.0.0) (2026-06-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **config:** $wgThumbroLibraries entries are now keyed by library with binaries mapped by name (e.g. libwebp.gif2webp, libwebp.cwebp), replacing the flat per-binary `command` shape. Wikis that set $wgThumbroLibraries explicitly must migrate; the default needs no action.
+* the wgThumbroOptions schema changed. Per-MIME blocks now use `resize: { options }` + `encode: [ { encoder, when?, options } ]` instead of `library` / `inputOptions` / `outputOptions`. Wikis that override wgThumbroOptions in LocalSettings.php must migrate to the new shape; an old-shape block has no `encode` key, so Thumbro will skip that MIME (falling back to core) until updated.
+
+### Features
+
+* add libwebp backend for transparent animated GIFs ([69963c3](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/69963c3ce6958d1009d25db53f90a774c0491e65))
+* generalise ShellCommand for the gif2webp argument style ([177d34b](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/177d34b994e091c62ef9dbc4b11447534a7cddbe))
+* preserve animation when thumbnailing animated WebP ([be93555](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/be93555c963f0cf119ad2f1a39fc4a9c6e8216ab))
+* select thumbnail backends per-MIME via the config library field ([ef59c0a](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/ef59c0a6fb2296b17d8f2aac24e50fc7bb52dcc3))
+* tune PNG thumbnails to near-lossless WebP ([98e19eb](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/98e19eb222bc5a8991a4e6065e35de018cad6de6))
+
+
+### Bug Fixes
+
+* **bench:** extract animated WebP frames with libvips, not ImageMagick ([8ef8444](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/8ef8444292c627631ebae849186c11ff17ea81b8))
+* keep external-link wrapping of link= thumbnails intact ([a697b98](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/a697b9870d9f02b5757b96142a81f95ee49b6f21))
+* locate vipsheader next to the configured vips binary ([7c8e8fc](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/7c8e8fc60ba3bbe55ccddbe451548113ad227292))
+* route Special:ThumbroTest through the backend dispatcher ([34e1917](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/34e1917b4686a408697cf1edab360fe578219192))
+
+
+### Performance Improvements
+
+* encode static WebP thumbnails with cwebp ([8c66752](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/8c66752f22f22fa6287b15307a5a0da8b210ba8a))
+* re-tune JPEG thumbnail quality to Q80 on the redesigned gate ([c6ad345](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/c6ad3456c91fc1bdf2fb68c6b0d5a85bc9e4b53a))
+* tune JPEG thumbnail WebP output for photographic content ([18f8939](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/18f8939aabcd88d9236bf1ebbf7f593dc5d589a0))
+
+
+### Code Refactoring
+
+* **config:** key ThumbroLibraries by library, nest binaries ([4f618ee](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/4f618eec77bf2f6eef99e65824f6f7e679745520))
+* resize-then-encode pipeline replaces backend dispatch ([e98de58](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/e98de58246e79b736d090623ef5b31d4daa77810))
+
 ## [1.2.1](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v1.2.0...v1.2.1) (2026-06-05)
 
 
