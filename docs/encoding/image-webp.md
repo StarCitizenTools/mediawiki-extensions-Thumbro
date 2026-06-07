@@ -1,81 +1,86 @@
 # image/webp — encoding profile
 
-**Current profile** (`extension.json` → the `vips-webp` entry's `options` in `ThumbroOptions["image/webp"].encode`):
+**Current profile** (`extension.json` → `ThumbroOptions["image/webp"].encode`):
 
-```json
-{ "strip": "true", "Q": "90", "smart_subsample": "true" }
-```
+- **Static** WebP → **cwebp** (libwebp): `{ "q": "80", "m": "6" }` (vips resizes; cwebp encodes).
+- **Animated** WebP → **vips-webp**: `{ "strip": "true", "Q": "90", "smart_subsample": "true" }`
+  (cwebp cannot encode animation).
 
-Output format: **WebP** (re-encode + downscale). **Status:** active (2026-06-06).
+Output format: **WebP**. **Status:** active (2026-06-07).
 
 ## Rationale
 
-A WebP source is downscaled and re-encoded to WebP. Q is kept high (90) with
-`smart_subsample` on — a conservative, general-purpose profile: re-encoding already-compressed
-WebP shouldn't add much loss, and `smart_subsample` protects sharp chroma edges (a WebP source
-may be a graphic or a screenshot, not just a photo).
+A WebP source is downscaled (always by libvips) and re-encoded to WebP. The encoder is split by
+animation:
 
-This block doubles as the **shared fallback**: any MIME whose own block is absent inherits
-these save options, and the GIF → libvips delegation (opaque / over-threshold animation) uses
-them too. So changing it affects more than WebP input — see `image-gif.md`.
+- **Static → cwebp.** libwebp's `cwebp` is markedly more byte-efficient than libvips `webpsave`
+  on the same pixels at the same quality (measured ~2× smaller at tied SSIMULACRA2). At **q80** it
+  is the encoder that turns WebP from a size *trade-off* into a clean gate **win** (see below): it
+  is smaller than ImageMagick at no-worse quality *and* smaller than the GD floor. (q84+ would
+  breach the GD floor on the larger sizes; q80 is the floor-safe knee.)
+- **Animated → vips-webp.** cwebp is single-image only; animated WebP keeps the libvips path
+  (`Q=90`, all frames). A `vips-webp` catch-all also covers a missing cwebp binary, so static WebP
+  degrades gracefully to libvips when libwebp is absent.
+
+The `vips-webp` entries here remain the **shared webpsave fallback** the GIF → libvips delegation
+uses (opaque / over-threshold animation) — see `image-gif.md`. cwebp is webp-static-only and is
+not a fallback for other MIMEs.
 
 ## How it compares to MediaWiki
 
-A WebP *source* keeps its format through the pipeline, so MediaWiki's own scalers do apply
-here: with `$wgUseImageMagick = true` ImageMagick re-encodes the WebP (the binding baseline),
-and the out-of-the-box GD default decodes/re-encodes a *static* WebP (the floor). The IM WebP
-baseline takes **no explicit `-quality`** (IM's default), faithfully representing an
-unconfigured install; only the JPEG baseline pins a quality. The GD floor writes WebP at
-**Q80** (`imagewebp(..., 80)`), mirroring GD's JPEG floor — GD has no "default" to fall back on
-the way IM does, so a fixed quality is used. Each cell is **size / quality** (SSIMULACRA2,
-0–100, higher is better). ImageMagick and GD output WebP; so does Thumbro.
+A WebP *source* keeps its format through the pipeline, so MediaWiki's own scalers apply: with
+`$wgUseImageMagick = true` ImageMagick re-encodes the WebP (binding baseline, no explicit
+`-quality`), and the out-of-the-box GD default decodes/re-encodes a *static* WebP (floor, written
+at Q80). Each cell is **size / quality** (SSIMULACRA2, 0–100, higher is better).
 
 | Image · width | ImageMagick | GD | Thumbro | Result |
 | --- | --- | --- | --- | --- |
-| photo.webp · 180px | 20.5 KB / 71.8 | 8.7 KB / 74.1 | 26.9 KB / 79.3 | ~ trade-off |
-| photo.webp · 250px | 25.9 KB / 73.9 | 15.1 KB / 79.3 | 38.4 KB / 87.8 | ~ trade-off |
-| photo.webp · 400px | 42.9 KB / 72.8 | 35.0 KB / 78.6 | 68.5 KB / 86.8 | ~ trade-off |
+| photo.webp · 180px | 20.5 KB / 71.8 | 8.7 KB / 74.1 | **8.3 KB / 73.8** | ✅ win |
+| photo.webp · 250px | 25.9 KB / 73.9 | 15.1 KB / 79.3 | **14.4 KB / 78.7** | ✅ win |
+| photo.webp · 400px | 42.9 KB / 72.8 | 35.0 KB / 78.6 | **33.1 KB / 78.1** | ✅ win |
 | anim.webp · 250px (44f) | 125.2 KB / 64.3 | — (animated) | 223.8 KB / 84.8 | ~ trade-off |
 
-✅ **win** — smaller at no-worse quality · ~ **trade-off** — *here, larger but higher quality* (the
-opposite direction from the jpeg/gif docs' smaller-but-lower-quality trade-offs); see note ·
-✗ **loss** — bigger and no better
+✅ **win** — smaller at no-worse quality · ~ **trade-off** — see note · ✗ **loss** — bigger and no better
 
-**Tally: 0 win · 4 trade-off · 0 loss.** Every cell is the *same* trade-off: Thumbro is larger
-but markedly higher quality (+7.5 to +20.5 SSIMULACRA2). The current profile re-encodes at a high
-Q (90), so for an already-compressed WebP source it buys quality at the cost of size rather
-than the smaller-at-equal-quality win Thumbro targets elsewhere. This is the honest baseline
-state and the motivation for the planned WebP encoding tuning — see *Accepted trade-offs* and
-*History*. GD never dominates a static cell (it is smaller but enough lower in quality to clear
-the noise tolerance), so the floor holds; GD has no animated path, so it is `UNAVAILABLE` for
-animated WebP and applies no floor there (a default GD-only MediaWiki would drop the animation
-to a static frame entirely — Thumbro preserves it). Numbers from `tests/bench/benchmark.php`.
+**Tally (static): 3 win · 0 loss.** With cwebp at q80, every static cell is **smaller than
+ImageMagick at no-worse quality** and **smaller than the GD floor** (so the floor holds, decisively
+— Thumbro now beats it outright). This is the win the Q90 libvips profile could not reach: libvips
+`webpsave` produced a *larger-but-higher-quality* trade-off, and dropping its Q to win on size
+breached the GD floor (GD's soft downscale compresses unusually small). cwebp threads that needle.
 
-## Accepted trade-offs
+**Animation stays a trade-off.** `anim.webp` goes through libvips (cwebp can't animate): larger
+than ImageMagick (223.8 vs 125.2 KB) but markedly higher quality (84.8 vs 64.3 — *high* vs
+*medium* band). A legitimate quality-for-size exchange under the trade-off principle; improving it
+would need an animation-capable libwebp encoder (`img2webp`), out of scope. Numbers from
+`tests/bench/benchmark.php`.
 
-- **All four representative cells are INCOMPARABLE (larger but higher quality), pending the
-  WebP tuning follow-up.** At Q90 Thumbro re-encodes a WebP source 31–79% larger than
-  ImageMagick while scoring 7–20 SSIMULACRA2 higher (the animation, +20.5, is the widest gap —
-  IM's coalesced WebP bands to *medium* at 64.3 where Thumbro holds *high* at 84.8). Under the
-  trade-off principle this is a legitimate quality-for-size exchange, but inflating an
-  already-compressed source is not the size win Thumbro aims for. **Decision:** record the
-  trade-offs as the current state and carry the profile unchanged into the dedicated WebP
-  tuning (the JPEG precedent — Q90 → Q80 turned 2 win / 4 trade-off / 3 loss into 6 win — is
-  the template; the WebP knee is expected to convert several of these to wins).
+## Decisions
 
-**Performance:** Thumbro is well within the hard caps — static cells peak ~35 MB / < 0.15 s;
-the 44-frame animation ~94 MB / ~0.74 s (animated time ceiling 10 s, RSS 512 MB).
+- **Static WebP → cwebp q80 (2026-06-07).** Swept cwebp q at `-m 6` and compared cwebp@knee vs the
+  vips-webp Q90 profile against the gate. cwebp q80 wins all three static widths (smaller than IM
+  *and* GD); q84+ breaches the GD floor at 250/400px. Chosen.
+- **JPEG and PNG stay vips-webp (cwebp evaluated, not adopted).** See `image-jpeg.md` /
+  `image-png.md`: cwebp ties vips-webp on JPEG (no win) and loses badly on PNG (catastrophic on
+  screenshots/line-art; cannot reach IM quality on the transparent logo even at q90). vips
+  `webpsave` (with `near_lossless` for PNG) stays.
+- **Animation stays vips-webp** — cwebp is single-image only.
+
+**Performance:** within the hard caps. Static cwebp adds a vips-resize→PNG→cwebp two-step (a
+temp PNG + a second process) — generation-time cost, paid once and cached, for a per-view size
+win. The 44-frame animation (libvips) peaks ~94 MB / ~0.74 s (caps: 10 s, 512 MB).
 
 ## History
 
-- **2026-06-06 — gated.** WebP gained a real baseline: ImageMagick (binding) and GD
-  (static-only floor) now apply to `image/webp`, so it gets a dominance verdict like the other
-  MIMEs (ADR-0001 §2). Result on the current Q90 profile: **0 win · 4 trade-off · 0 loss** —
-  larger but higher quality across the board. Profile unchanged this round; the trade-offs set
-  up the dedicated WebP tuning follow-up.
-- **2026-06-06 — measured** (superseded by the row above). Recorded on the redesigned gate
-  with no baseline yet, as the shared WebP/fallback block — tracked, not tuned.
+- **2026-06-07 — static→cwebp q80** (this profile). Added the cwebp encoder and routed static
+  WebP to it: **0 win · 4 trade-off → 3 static win** (+ the animation trade-off unchanged). cwebp
+  is ~2× more byte-efficient than libvips `webpsave`, converting the Q90 trade-offs into wins
+  while clearing the GD floor.
+- **2026-06-06 — gated, Q90 libvips** (superseded). WebP gained a baseline (IM binding, GD
+  static-only floor; ADR-0001 §2); the Q90 libvips profile scored 0 win / 4 trade-off (larger but
+  higher quality). That trade-off motivated the cwebp work above.
+- **2026-06-06 — measured** (superseded). Recorded on the redesigned gate with no baseline yet.
 
 ## Reproduce
 
-`php tests/bench/benchmark.php --mime=image/webp` (see `tests/bench/README.md`).
+`php tests/bench/benchmark.php --mime=image/webp` (see `tests/bench/README.md`). cwebp parameter
+exploration: `php tests/bench/bin/sweep-cwebp.php`.

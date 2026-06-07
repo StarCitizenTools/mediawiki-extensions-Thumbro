@@ -70,6 +70,9 @@ JPEG is very efficient at small high-quality sizes — but they are still wins, 
 
 ## History
 
+- **2026-06-07 — cwebp evaluated, vips-webp kept.** Phase 2 swept libwebp `cwebp` for static
+  raster; on JPEG cwebp ties vips-webp at matched quality (no win), so JPEG stays vips-webp.
+  (cwebp was adopted for WebP input only — see `image-webp.md`.)
 - **2026-06-06 — Q80** (this profile). Re-tuned on the redesigned gate + 4K corpus
   (ADR-0001). JPEG went from 2 win / 4 trade-off / 3 loss (Q90 on the new corpus) to
   6 win / 3 trade-off / 0 loss.

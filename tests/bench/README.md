@@ -20,6 +20,8 @@ bash tests/bench/bin/install-ssimulacra2.sh   # SSIMULACRA2 metric (needs root +
 - `convert` (imagemagick), `vips`/`vipsthumbnail` (libvips-tools): thumbnailing,
   reference downscale, and animated-frame extraction (`anim_dump` is NOT packaged, so
   animated-WebP frames are extracted with `convert -coalesce`).
+- `cwebp` (the `webp` package, libwebp): the static-WebP production encoder (`sweep-cwebp.php`
+  and the gate's Thumbro contender shell out to it). `gif2webp` ships in the same package.
 - `time` (GNU time): peak-RSS capture.
 
 ## Run
