@@ -9,11 +9,13 @@ use MediaWiki\Config\Config;
 use MediaWiki\Config\ConfigFactory;
 use MediaWiki\Extension\Thumbro\Backend\BackendRequest;
 use MediaWiki\Extension\Thumbro\Backend\EncodePipeline;
+use MediaWiki\Extension\Thumbro\Linker\CrawlerAnchorStripper;
 use MediaWiki\Extension\Thumbro\MediaHandlers;
 use MediaWiki\Extension\Thumbro\Options\TransformOptionsResolver;
 use MediaWiki\Extension\Thumbro\Version\SoftwareVersionProvider;
 use MediaWiki\Hook\BitmapHandlerCheckImageAreaHook;
 use MediaWiki\Hook\BitmapHandlerTransformHook;
+use MediaWiki\Hook\LinkerMakeExternalLinkHook;
 use MediaWiki\Hook\SoftwareInfoHook;
 use MediaWiki\MainConfigNames;
 use MediaWiki\Shell\Shell;
@@ -22,6 +24,7 @@ use TransformationalImageHandler;
 class MediaWikiHooks implements
 	BitmapHandlerTransformHook,
 	BitmapHandlerCheckImageAreaHook,
+	LinkerMakeExternalLinkHook,
 	SoftwareInfoHook
 {
 	private readonly Config $config;
@@ -102,6 +105,29 @@ class MediaWikiHooks implements
 			wfDebug( "[Extension:Thumbro] Overriding wgMaxImageArea: $maxImageArea" );
 			$result = true;
 			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Strip Thumbro's hidden crawler anchor when a thumbnail is wrapped in an external
+	 * link. A nested <a> inside the external link's <a> is invalid HTML and breaks the
+	 * wrap (trailing text falls outside the link). The crawler anchor is preserved
+	 * everywhere else by ThumbroThumbnailImage::toHtml(); it is removed only here, where
+	 * it cannot legally live. By parser ordering (handleInternalLinks before
+	 * handleExternalLinks, both before Remex tidy) the image HTML is already materialized
+	 * in $text at this point, so the wrap comes out well-formed.
+	 *
+	 * @param string &$url
+	 * @param string &$text Link inner HTML; may contain a wrapped thumbnail
+	 * @param string &$link
+	 * @param array &$attribs
+	 * @param string $linktype
+	 * @return bool
+	 */
+	public function onLinkerMakeExternalLink( &$url, &$text, &$link, &$attribs, $linktype ) {
+		if ( is_string( $text ) ) {
+			$text = CrawlerAnchorStripper::strip( $text );
 		}
 		return true;
 	}
