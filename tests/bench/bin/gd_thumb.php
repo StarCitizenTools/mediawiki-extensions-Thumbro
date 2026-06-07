@@ -19,6 +19,8 @@ $img = match ( $info[2] ) {
 	IMAGETYPE_PNG  => @imagecreatefrompng( $src ),
 	// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 	IMAGETYPE_GIF  => @imagecreatefromgif( $src ),
+	// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+	IMAGETYPE_WEBP => @imagecreatefromwebp( $src ),
 	default        => false,
 };
 if ( !$img ) {
@@ -41,7 +43,7 @@ if ( $thumb === false ) {
 	fwrite( STDERR, "imagecreatetruecolor failed\n" );
 	exit( 1 );
 }
-if ( $info[2] === IMAGETYPE_PNG ) {
+if ( $info[2] === IMAGETYPE_PNG || $info[2] === IMAGETYPE_WEBP ) {
 	// Preserve alpha: turn off blending and pre-fill the canvas fully transparent so the
 	// resample carries the source alpha through instead of compositing onto black.
 	imagealphablending( $thumb, false );
@@ -54,6 +56,7 @@ $ok = match ( $info[2] ) {
 	IMAGETYPE_JPEG => imagejpeg( $thumb, $dst, 80 ),
 	IMAGETYPE_PNG  => imagepng( $thumb, $dst ),
 	IMAGETYPE_GIF  => imagegif( $thumb, $dst ),
+	IMAGETYPE_WEBP => imagewebp( $thumb, $dst, 80 ),
 	default        => false,
 };
 exit( $ok ? 0 : 1 );
