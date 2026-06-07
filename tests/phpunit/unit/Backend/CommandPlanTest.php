@@ -22,7 +22,7 @@ class CommandPlanTest extends MediaWikiUnitTestCase {
 	public function testOfKeepsCommandsInOrder(): void {
 		$factory = $this->createMock( TempFSFileFactory::class );
 		$a = new ShellCommand( $factory, 'libvips', '/bin/a', [] );
-		$b = new ShellCommand( $factory, 'libwebp', '/bin/b', [], 'gif2webp' );
+		$b = new ShellCommand( $factory, 'libwebp', '/bin/b', [], 'libwebp' );
 		$plan = CommandPlan::of( $a, $b );
 
 		$this->assertFalse( $plan->isEmpty() );

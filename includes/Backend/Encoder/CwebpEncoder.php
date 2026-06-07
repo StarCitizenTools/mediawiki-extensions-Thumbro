@@ -7,12 +7,11 @@ use MediaWiki\Extension\Thumbro\Shell\ShellCommand;
 use MediaWiki\Extension\Thumbro\Shell\ShellCommandFactory;
 
 /**
- * gif2webp (libwebp) encoder. Two-step: consumes the output of a prior vips resize (a GIF
- * intermediate) and encodes WebP — used for animation by the routing (`when: animated`), though
- * the tool itself handles static GIFs too. Mirrors the former LibwebpBackend::planLibwebpEncode
- * encode half byte-for-byte.
+ * cwebp (libwebp) encoder. Two-step, static only: consumes a vips-resized PNG intermediate and
+ * encodes a single WebP. libwebp's cwebp is markedly more byte-efficient than vips webpsave on
+ * some content; per-MIME routing (vips-webp vs cwebp) is decided by the benchmark gate.
  */
-class Gif2webpEncoder implements Encoder {
+class CwebpEncoder implements Encoder {
 
 	public function __construct(
 		private readonly string $command,
@@ -20,16 +19,15 @@ class Gif2webpEncoder implements Encoder {
 	}
 
 	public function name(): string {
-		return 'gif2webp';
+		return 'cwebp';
 	}
 
-	/** Available only when the gif2webp binary is configured and executable (old libwebpAvailable). */
 	public function isAvailable(): bool {
 		return $this->command !== '' && is_executable( $this->command );
 	}
 
 	public function supportsAnimation(): bool {
-		return true;
+		return false;
 	}
 
 	public function supportsAlpha(): bool {
@@ -41,7 +39,7 @@ class Gif2webpEncoder implements Encoder {
 	}
 
 	public function intermediateFormat(): ?string {
-		return 'gif';
+		return 'png';
 	}
 
 	public function planEncode(
