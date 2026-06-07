@@ -142,7 +142,7 @@ class ThumbroGif implements Contender {
 	}
 
 	/**
-	 * Render gif2webp flags as argv tokens, matching ShellCommand's 'gif2webp' style: each flag
+	 * Render gif2webp flags as argv tokens, matching ShellCommand's 'libwebp' style: each flag
 	 * is "-key", with a following value token only when the flag carries one ("" means bare).
 	 *
 	 * @param array<string,string> $flags

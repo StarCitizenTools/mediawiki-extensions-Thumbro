@@ -7,7 +7,7 @@ use MediaWiki\Extension\Thumbro\Shell\ShellCommand;
 
 /**
  * Input to an {@see Encoder}. A fused encoder (vips) encodes from the source at a target size with
- * load options; a two-step encoder (gif2webp, later cwebp) encodes from the output of a prior
+ * load options; a two-step encoder (gif2webp, cwebp) encodes from the output of a prior
  * resize command.
  */
 class EncodeInput {

@@ -11,7 +11,7 @@ use MediaWiki\Extension\Thumbro\Shell\ShellCommandFactory;
  * routing and the resize/encode wiring are explicit, not hidden in the coordinator.
  *
  * `requiresResizedInput()` is the explicit fused-vs-two-step flag: vips-webp resizes and encodes
- * in one command (false); external tools (gif2webp, later cwebp) consume a vips-produced
+ * in one command (false); external tools (gif2webp, cwebp) consume a vips-produced
  * intermediate (true), whose format `intermediateFormat()` names.
  */
 interface Encoder {

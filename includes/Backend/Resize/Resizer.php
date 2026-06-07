@@ -8,7 +8,7 @@ use MediaWiki\Extension\Thumbro\Shell\ShellCommandFactory;
 
 /**
  * Resizes a source image to an intermediate file at the target physical size, for two-step
- * encoders (gif2webp, later cwebp) that cannot resize themselves. One implementation today
+ * encoders (gif2webp, cwebp) that cannot resize themselves. One implementation today
  * ({@see VipsResizer}); this seam lets a second resize engine slot in later without touching
  * the encoders.
  */

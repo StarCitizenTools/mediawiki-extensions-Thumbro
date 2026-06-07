@@ -20,7 +20,7 @@ class ShellCommandFactory {
 	 * @param string $name Human-readable backend label for debug logging.
 	 * @param string $command Binary to run.
 	 * @param array<string,string> $args Flags for the command.
-	 * @param string $style Argument flattening style: 'vips' or 'gif2webp'.
+	 * @param string $style Argument flattening style: 'vips' or 'libwebp'.
 	 */
 	public function create( string $name, string $command, array $args, string $style = 'vips' ): ShellCommand {
 		return new ShellCommand( $this->tempFactory, $name, $command, $args, $style );

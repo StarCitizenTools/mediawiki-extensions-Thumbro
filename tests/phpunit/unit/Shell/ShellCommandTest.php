@@ -24,9 +24,9 @@ class ShellCommandTest extends MediaWikiUnitTestCase {
 		);
 	}
 
-	public function testGif2webpStyleFlagsAndPositionalInput(): void {
+	public function testLibwebpStyleFlagsAndPositionalInput(): void {
 		$cmd = $this->command(
-			'libwebp', '/usr/bin/gif2webp', [ 'mixed' => '', 'q' => '80', 'm' => '4' ], 'gif2webp'
+			'libwebp', '/usr/bin/gif2webp', [ 'mixed' => '', 'q' => '80', 'm' => '4' ], 'libwebp'
 		);
 		$cmd->setIO( '/tmp.gif', '/out.webp' );
 		$this->assertSame(

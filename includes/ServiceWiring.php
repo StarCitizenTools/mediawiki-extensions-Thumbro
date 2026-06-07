@@ -5,6 +5,7 @@ namespace MediaWiki\Extension\Thumbro;
 
 use MediaWiki\Extension\Thumbro\Backend\CommandPlanRunner;
 use MediaWiki\Extension\Thumbro\Backend\EncodePipeline;
+use MediaWiki\Extension\Thumbro\Backend\Encoder\CwebpEncoder;
 use MediaWiki\Extension\Thumbro\Backend\Encoder\EncoderRouter;
 use MediaWiki\Extension\Thumbro\Backend\Encoder\Gif2webpEncoder;
 use MediaWiki\Extension\Thumbro\Backend\Encoder\VipsWebpEncoder;
@@ -46,13 +47,14 @@ return [
 
 	/**
 	 * The available encoders, keyed by the name used in a MIME's `encode` list. Each carries its
-	 * own binary; the resizer + vips-webp share the libvips binary, gif2webp the libwebp one.
+	 * own binary: vips-webp uses libvips; gif2webp and cwebp are the two libwebp tools.
 	 */
 	'Thumbro.Encoders' => static function ( MediaWikiServices $services ): array {
 		$libraries = $services->getConfigFactory()->makeConfig( 'thumbro' )->get( 'ThumbroLibraries' );
 		return [
 			'vips-webp' => new VipsWebpEncoder( $libraries['libvips']['command'] ?? '' ),
 			'gif2webp' => new Gif2webpEncoder( $libraries['libwebp']['command'] ?? '' ),
+			'cwebp' => new CwebpEncoder( $libraries['cwebp']['command'] ?? '' ),
 		];
 	},
 

@@ -31,7 +31,7 @@ class ShellCommand {
 	 * @param string $name Human-readable backend label for debug logging.
 	 * @param string $command Binary to run.
 	 * @param array<string,string> $args Flags for the command.
-	 * @param string $style Argument flattening style: 'vips' or 'gif2webp'.
+	 * @param string $style Argument flattening style: 'vips' or 'libwebp'.
 	 */
 	public function __construct(
 		private readonly TempFSFileFactory $tempFactory,
@@ -84,7 +84,7 @@ class ShellCommand {
 	/** Flatten arguments according to the command's argument style. */
 	private function makeArguments( array $args ): array {
 		$cmdArgs = [];
-		if ( $this->style === 'gif2webp' ) {
+		if ( $this->style === 'libwebp' ) {
 			// Single-dash flags; valued flags render as two tokens "-flag value".
 			foreach ( $args as $key => $value ) {
 				$cmdArgs[] = "-$key";
@@ -107,8 +107,8 @@ class ShellCommand {
 
 	/** Constructs the command line array for executing the command. */
 	private function buildCommand(): array {
-		if ( $this->style === 'gif2webp' ) {
-			// gif2webp: <command> <flags...> <input> -o <output>
+		if ( $this->style === 'libwebp' ) {
+			// libwebp style (gif2webp, cwebp): <command> <flags...> <input> -o <output>
 			$cmd = array_merge( [ $this->command ], $this->makeArguments( $this->args ) );
 			$cmd[] = $this->input;
 			$cmd[] = '-o';
