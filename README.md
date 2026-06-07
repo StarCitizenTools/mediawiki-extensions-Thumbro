@@ -34,18 +34,18 @@ wfLoadExtension( 'Thumbro' );
 > ℹ️ **Thumbro works out of the box — no configuration required.**
 
 ### `$wgThumbroLibraries`
-The image tools Thumbro can run, and the path to each binary.
-
-Key | Description
-:--- | :---
-`command` | Path to the tool's executable
+The image libraries Thumbro can run, keyed by library. Each library maps its binaries
+(by binary name) to their executable paths. `libwebp` ships two tools — `gif2webp` and
+`cwebp` — so it owns both.
 
 Default:
 ```php
 $wgThumbroLibraries = [
-	'libvips' => [ 'command' => '/usr/bin/vipsthumbnail' ], // resize (+ vips-webp encode)
-	'libwebp' => [ 'command' => '/usr/bin/gif2webp' ],      // animated-GIF encode
-	'cwebp'   => [ 'command' => '/usr/bin/cwebp' ],         // static-WebP encode
+	'libvips' => [ 'vipsthumbnail' => '/usr/bin/vipsthumbnail' ], // resize (+ vips-webp encode)
+	'libwebp' => [
+		'gif2webp' => '/usr/bin/gif2webp', // animated-GIF encode
+		'cwebp'    => '/usr/bin/cwebp',     // static-WebP encode
+	],
 ];
 ```
 
