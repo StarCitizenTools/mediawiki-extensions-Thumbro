@@ -34,69 +34,75 @@ wfLoadExtension( 'Thumbro' );
 > ℹ️ **Thumbro works out of the box — no configuration required.**
 
 ### `$wgThumbroLibraries`
-The image libraries Thumbro can use, and how to run each.
+The image tools Thumbro can run, and the path to each binary.
 
 Key | Description
 :--- | :---
-`command` | Path to the library's executable
-`flags` | Optional encoder flags for the library, passed straight through (libwebp → [`gif2webp`](https://developers.google.com/speed/webp/docs/gif2webp), e.g. `mixed`, `q`, `m`)
+`command` | Path to the tool's executable
 
 Default:
 ```php
 $wgThumbroLibraries = [
-	'libvips' => [ 'command' => '/usr/bin/vipsthumbnail' ],
-	'libwebp' => [
-		'command' => '/usr/bin/gif2webp',
-		'flags' => [ 'mixed' => '', 'q' => '80', 'm' => '4' ]
-	],
+	'libvips' => [ 'command' => '/usr/bin/vipsthumbnail' ], // resize (+ vips-webp encode)
+	'libwebp' => [ 'command' => '/usr/bin/gif2webp' ],      // animated-GIF encode
+	'cwebp'   => [ 'command' => '/usr/bin/cwebp' ],         // static-WebP encode
 ];
 ```
 
 ### `$wgThumbroOptions`
-Controls how each file type is thumbnailed: which library handles it, and the options passed to that library. The defaults are tuned per format, so most wikis never need to change this.
+Controls how each file type is thumbnailed as a **resize → encode** pipeline. The defaults are tuned per format, so most wikis never need to change this.
+
+Each MIME block has:
 
 Key | Description
 :--- | :---
 `enabled` | Turn Thumbro on or off for this file type
-`library` | Which library handles this type (a key from `$wgThumbroLibraries`)
-`inputOptions` | Options for loading and resizing the source image
-`outputOptions` | WebP save options ([`VipsForeignSave`](https://www.libvips.org/API/current/VipsForeignSave.html)), e.g. `Q`, `strip`, `smart_subsample`. Set per file type; if omitted, the `image/webp` block's options apply. (gif2webp's encoder flags live on the `libwebp` library, not here.)
+`minArea` / `maxArea` | Optional: only handle sources whose area (px²) is within range
+`resize` | The resize stage: `{ "options": { … } }` — libvips load/resize options
+`encode` | An ordered list of encoder choices. Each entry is `{ "encoder", "when"?, "options" }`. The first entry whose `when` capability guard the file satisfies is used; an entry with no `when` is the catch-all (put it last). Each encoder owns its own `options`.
 
-Default:
+Encoders: `vips-webp` (libvips webpsave — also handles animation), `cwebp` (libwebp, static only — more byte-efficient), `gif2webp` (libwebp, animated). `when` guards match the file's capabilities: `animated`, `alpha` (transparency), `underThreshold` (area ≤ `$wgThumbroMaxAnimatedArea`).
+
+Default (abridged):
 ```php
 $wgThumbroOptions = [
-	'image/gif' => [
+	// Static WebP → cwebp (smaller); animated WebP → vips; vips catch-all if cwebp is absent.
+	'image/webp' => [
 		'enabled' => true,
-		'library' => 'libwebp',
-		'inputOptions' => [
-			'n' => '-1'
-		]
+		'resize'  => [ 'options' => [] ],
+		'encode'  => [
+			[ 'encoder' => 'vips-webp', 'when' => [ 'animated' => true ],
+			  'options' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
+			[ 'encoder' => 'cwebp', 'options' => [ 'q' => '80', 'm' => '6' ] ],
+			[ 'encoder' => 'vips-webp',
+			  'options' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
+		],
 	],
 	'image/jpeg' => [
 		'enabled' => true,
-		'library' => 'libvips',
-		'inputOptions' => []
+		'resize'  => [ 'options' => [] ],
+		'encode'  => [ [ 'encoder' => 'vips-webp',
+			'options' => [ 'strip' => 'true', 'Q' => '80', 'smart_subsample' => 'false', 'effort' => '6' ] ] ],
 	],
 	'image/png' => [
 		'enabled' => true,
-		'library' => 'libvips',
-		'inputOptions' => [],
-		'outputOptions' => [
-			'near_lossless' => 'true',
-			'Q' => '60',
-			'strip' => 'true'
-		]
+		'resize'  => [ 'options' => [] ],
+		'encode'  => [ [ 'encoder' => 'vips-webp',
+			'options' => [ 'near_lossless' => 'true', 'Q' => '60', 'strip' => 'true' ] ] ],
 	],
-	'image/webp' => [
+	// GIF: transparent animation → gif2webp; opaque animation → vips animated; else vips first-frame.
+	'image/gif' => [
 		'enabled' => true,
-		'library' => 'libvips',
-		'inputOptions' => [],
-		'outputOptions' => [
-			'strip' => 'true',
-			'Q' => '90',
-			'smart_subsample' => 'true'
-		]
-	]
+		'resize'  => [ 'options' => [] ],
+		'encode'  => [
+			[ 'encoder' => 'gif2webp', 'when' => [ 'animated' => true, 'alpha' => true, 'underThreshold' => true ],
+			  'options' => [ 'mixed' => '', 'q' => '80', 'm' => '4' ] ],
+			[ 'encoder' => 'vips-webp', 'when' => [ 'animated' => true, 'underThreshold' => true ],
+			  'options' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
+			[ 'encoder' => 'vips-webp',
+			  'options' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
+		],
+	],
 ];
 ```
 
@@ -126,5 +132,5 @@ $wgThumbroEnabled = false;
 ## Requirements
 * [MediaWiki](https://www.mediawiki.org) 1.43.0 or later
 * **[libvips](https://www.libvips.org)** (8.14 or later; older versions may work but are untested) — required. Drives core thumbnail generation via the `vipsthumbnail` command.
-* **[libwebp](https://developers.google.com/speed/webp/docs/gif2webp)** (the `gif2webp` tool; Debian/Ubuntu `webp` package) — recommended. Encodes animated GIFs to compact animated WebP, far smaller than libvips for transparent animations. Without it, animated GIFs fall back to libvips automatically.
+* **[libwebp](https://developers.google.com/speed/webp/docs/using)** (the `cwebp` and `gif2webp` tools; Debian/Ubuntu `webp` package) — recommended. `cwebp` encodes static WebP thumbnails more compactly than libvips; `gif2webp` encodes animated GIFs to compact animated WebP, far smaller than libvips for transparent animations. Without it, both fall back to libvips automatically.
 * [Imagick](https://github.com/Imagick/imagick) — optional. Powers the detailed comparison statistics on Special:ThumbroTest.

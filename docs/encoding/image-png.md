@@ -71,6 +71,10 @@ outright (40–50% smaller). The trade-offs are content outside its strength —
 
 ## History
 
+- **2026-06-07 — cwebp evaluated, vips-webp kept.** Phase 2 swept libwebp `cwebp` for static
+  raster; on PNG cwebp loses badly (catastrophic on screenshots/line-art, and cannot reach IM
+  quality on the transparent logo even at q90), so PNG keeps vips-webp (`near_lossless`). (cwebp
+  was adopted for WebP input only — see `image-webp.md`.)
 - **2026-06-06 — re-validated, kept** on the redesigned gate + 4K corpus (ADR-0001). No
   change to the profile; numbers regenerated against the corrected gate.
 - **2026-06-06 — near_lossless, Q60** (PR #64). First dedicated PNG profile.
