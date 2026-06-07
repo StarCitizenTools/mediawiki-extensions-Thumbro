@@ -79,6 +79,14 @@ dependency and encode cost for no win.
   means the candidate failed to beat even the literal default — e.g. a profile whose WebP runs
   larger than GD's JPEG at small, high-quality sizes — which is exactly what a floor should
   catch.
+- **MIME coverage.** Both baselines apply to `image/jpeg` and `image/png`. ImageMagick is also
+  the binding baseline for `image/gif` (animated GIF out) and `image/webp` — a WebP source
+  keeps its format through the pipeline, so IM re-encodes it (plain resize for a static source,
+  `-coalesce … -layers optimize` for an animation, no explicit `-quality`). GD is a
+  **static-only** floor: it has no animated path, so it does not baseline animated GIF and
+  reports `UNAVAILABLE` for an animated WebP (decoding only the first frame would make a static
+  thumbnail an unfair floor for an animation). It still floors *static* WebP. See
+  `docs/encoding/image-webp.md`.
 
 ### 3. Corpus — realistically-large, content-diverse, freely-licensed
 
