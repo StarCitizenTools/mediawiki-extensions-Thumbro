@@ -12,17 +12,18 @@ use MediaWiki\Extension\Thumbro\Bench\ToolLocator;
 /**
  * Reproduces Thumbro's GIF path faithfully — the part the libvips-only contender could not.
  *
- * Production routes GIFs through LibwebpBackend, which makes a runtime decision (see
- * {@see self::chooseStrategy()}, mirrored from LibwebpBackend::chooseStrategy and locked by a
- * truth-table test): transparent animated GIFs under the area threshold are encoded with
- * gif2webp (the two-step vipsthumbnail -> temp .gif -> gif2webp pipeline); opaque or
- * over-threshold animations delegate to libvips as animated WebP (n=-1); static GIFs take the
- * first frame (n=1). The routing inputs — animation, frame count, transparency, area — are
- * probed at runtime with vipsheader, exactly as production does (its AlphaDetector reads
+ * Production routes GIFs through the resize→encode pipeline, which makes a runtime decision (see
+ * {@see self::chooseStrategy()}, mirrored from the production routing and locked by a truth-table
+ * test): transparent animated GIFs under the area threshold are encoded with gif2webp (the
+ * two-step vipsthumbnail -> temp .gif -> gif2webp pipeline); opaque or over-threshold animations
+ * encode to animated WebP via vips-webp (n=-1); static GIFs take the first frame (no n key — vips
+ * defaults to the first frame). The routing inputs — animation, frame count, transparency, area —
+ * are probed at runtime with vipsheader, exactly as production does (its AlphaDetector reads
  * `vipsheader -f bands`), so the contender never goes stale against a hand-kept manifest.
  *
- * Encoder settings come from extension.json: the webpsave options (image/webp block) for the
- * libvips delegation, and the gif2webp flags (ThumbroLibraries.libwebp.flags) for the encoder.
+ * Encoder settings come from extension.json's per-MIME encode lists: the webpsave options (the
+ * image/webp block's vips-webp entry) for the vips delegation, and the gif2webp flags (the gif
+ * block's gif2webp encode entry) for the encoder.
  */
 class ThumbroGif implements Contender {
 
@@ -41,9 +42,10 @@ class ThumbroGif implements Contender {
 	}
 
 	/**
-	 * The runtime routing decision, copied verbatim from LibwebpBackend::chooseStrategy. A unit
-	 * test asserts the two stay identical across the whole truth table (the standalone harness
-	 * can't load the production class, so the rule is mirrored, not shared).
+	 * The runtime routing decision, mirroring the production encode-list routing (EncoderRouter
+	 * over the gif encode list). A unit test asserts the bench rule and the production router agree
+	 * across the whole truth table (the standalone harness can't load the production classes, so
+	 * the rule is mirrored, not shared).
 	 *
 	 * @return string 'libwebp' | 'vips-animated' | 'vips-static'
 	 */
@@ -87,13 +89,15 @@ class ThumbroGif implements Contender {
 		return $this->runVips( $vips, $strategy, $srcPath, $targetWidth, $dst, $cfg );
 	}
 
-	/** vips-static (first frame, n=1) or vips-animated (all frames, n=-1) -> WebP with webpsave opts. */
+	/** vips-static (first frame, no n key) or vips-animated (all frames, n=-1) -> WebP with webpsave opts. */
 	private function runVips(
 		string $vips, string $strategy, string $srcPath, int $targetWidth, string $dst, array $cfg
 	): Result {
-		$n = $strategy === 'vips-static' ? '1' : '-1';
+		// vips-animated forces n=-1 to keep every frame; vips-static loads no n key (vips defaults
+		// to the first frame), matching the production pipeline's frame-loading derivation.
+		$in = $srcPath . ( $strategy === 'vips-animated' ? '[n=-1]' : '' );
 		$out = $dst . self::makeOptions( $cfg['webpOutput'] );
-		$cmd = [ $vips, $srcPath . "[n=$n]", '--size', $targetWidth . 'x100000', '-o', $out ];
+		$cmd = [ $vips, $in, '--size', $targetWidth . 'x100000', '-o', $out ];
 
 		$proc = Subprocess::run( $cmd );
 		if ( !$proc->ok() || !is_file( $dst ) ) {
@@ -108,15 +112,16 @@ class ThumbroGif implements Contender {
 	/**
 	 * The two-step gif2webp pipeline: resize to a temp animated GIF, then encode to animated
 	 * WebP with gif2webp. Wall time is the sum of both steps; peak RSS the max (they run in
-	 * sequence). Mirrors LibwebpBackend::planLibwebpEncode.
+	 * sequence). Mirrors the production gif2webp two-step path (VipsResizer + Gif2webpEncoder).
 	 */
 	private function runLibwebp(
 		string $vips, string $gif2webp, string $srcPath, int $targetWidth, string $dst, array $cfg
 	): Result {
 		$tmpGif = dirname( $dst ) . '/thumbro_resize_' . $targetWidth . '.gif';
-		// Load options are the configured gif block's (production's planLibwebpEncode uses
-		// inputOptions() verbatim here, unlike the delegation paths which force n at runtime).
-		$in = $srcPath . self::makeOptions( $cfg['gifInput'] );
+		// Resize load options: the gif block's resize.options with n=-1 prepended (gif2webp is an
+		// animation-capable encoder chosen only for animated, under-threshold sources, so the
+		// pipeline always keeps every frame for this path).
+		$in = $srcPath . self::makeOptions( [ 'n' => '-1' ] + $cfg['gifResize'] );
 		$resize = [ $vips, $in, '--size', $targetWidth . 'x100000', '-o', $tmpGif ];
 		$p1 = Subprocess::run( $resize );
 		if ( !$p1->ok() || !is_file( $tmpGif ) ) {
@@ -156,7 +161,7 @@ class ThumbroGif implements Contender {
 
 	/**
 	 * Format an options array as a "[key=value,...]" suffix, empty array -> "". Matches
-	 * LibvipsBackend::makeOptions.
+	 * VipsOptionSuffix::make.
 	 *
 	 * @param array<string,mixed> $args
 	 */
@@ -186,10 +191,12 @@ class ThumbroGif implements Contender {
 	}
 
 	/**
-	 * Encoder settings from extension.json: webpsave options for the libvips delegation, gif2webp
-	 * flags for the encoder, and the animated-area threshold.
+	 * Encoder settings from extension.json's per-MIME encode lists: webpsave options (the
+	 * image/webp block's vips-webp entry) for the vips delegation, gif2webp flags (the gif block's
+	 * gif2webp encode entry) for the encoder, the gif block's resize options, and the
+	 * animated-area threshold.
 	 *
-	 * @return array{webpOutput:array<string,string>,gifInput:array<string,string>,gif2webpFlags:array<string,string>,maxAnimatedArea:int}
+	 * @return array{webpOutput:array<string,string>,gifResize:array<string,string>,gif2webpFlags:array<string,string>,maxAnimatedArea:int}
 	 */
 	private static function config(): array {
 		static $cache = null;
@@ -199,14 +206,29 @@ class ThumbroGif implements Contender {
 			);
 			$config = $json['config'] ?? [];
 			$opts = $config['ThumbroOptions']['value'] ?? [];
-			$libs = $config['ThumbroLibraries']['value'] ?? [];
 			$cache = [
-				'webpOutput' => $opts['image/webp']['outputOptions'] ?? [],
-				'gifInput' => $opts['image/gif']['inputOptions'] ?? [],
-				'gif2webpFlags' => $libs['libwebp']['flags'] ?? [],
+				'webpOutput' => self::encodeOptions( $opts['image/webp'] ?? [], 'vips-webp' ),
+				'gifResize' => $opts['image/gif']['resize']['options'] ?? [],
+				'gif2webpFlags' => self::encodeOptions( $opts['image/gif'] ?? [], 'gif2webp' ),
 				'maxAnimatedArea' => (int)( $config['ThumbroMaxAnimatedArea']['value'] ?? 0 ),
 			];
 		}
 		return $cache;
+	}
+
+	/**
+	 * The `options` of the first encode-list entry using $encoder in a MIME block, or [] if absent.
+	 *
+	 * @param array<string,mixed> $block a single ThumbroOptions MIME block
+	 * @param string $encoder encoder name to match
+	 * @return array<string,string>
+	 */
+	private static function encodeOptions( array $block, string $encoder ): array {
+		foreach ( $block['encode'] ?? [] as $entry ) {
+			if ( ( $entry['encoder'] ?? '' ) === $encoder ) {
+				return $entry['options'] ?? [];
+			}
+		}
+		return [];
 	}
 }

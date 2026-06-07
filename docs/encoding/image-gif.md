@@ -1,21 +1,23 @@
 # image/gif — encoding profile
 
-**Backend:** `libwebp` (`gif2webp`), with `inputOptions: { "n": "-1" }` (read all frames).
-gif2webp flags (`ThumbroLibraries.libwebp.flags`): `{ "mixed": "", "q": "80", "m": "4" }`.
-Output format: **WebP** (animated, or a static first frame). **Status:** active (2026-06-06).
+**Encoders:** the `gif2webp` and `vips-webp` entries in `ThumbroOptions["image/gif"].encode`.
+gif2webp flags: `{ "mixed": "", "q": "80", "m": "4" }`. Output format: **WebP** (animated, or a
+static first frame). **Status:** active (2026-06-06).
 
 ## Routing
 
-Unlike the other MIMEs, GIF has no single `outputOptions` block — the `Libwebp` backend owns
-the runtime policy (see `AGENTS.md` → "Media handlers"):
+GIF is the multi-branch example of the `encode` list: the `EncoderRouter` picks the first entry
+whose `when` capability guard the file satisfies (see `AGENTS.md` → "Media handlers"):
 
-- **Transparent animated GIF** under `$wgThumbroMaxAnimatedArea` (with `gif2webp` present) →
-  encoded by **gif2webp** (`mixed` lossy/lossless, `q=80`, `m=4`). gif2webp handles per-frame
-  alpha efficiently — this is the path that avoids the libvips animated-WebP alpha blow-up.
-- **Opaque animated GIF**, and the **gif2webp-unavailable fallback** → delegated to **libvips**
-  as animated WebP (all frames preserved; uses the shared `image/webp` save options).
-- **Static GIF**, and **animation over the threshold** → delegated to **libvips** as a static
-  first frame.
+- **Transparent animated GIF** under `$wgThumbroMaxAnimatedArea` (`when: {animated, alpha,
+  underThreshold}`, with `gif2webp` present) → encoded by **gif2webp** (`mixed` lossy/lossless,
+  `q=80`, `m=4`). gif2webp handles per-frame alpha efficiently — the path that avoids the libvips
+  animated-WebP alpha blow-up. (A missing gif2webp binary drops this entry; the case falls through
+  to the vips-webp animated entry below.)
+- **Opaque animated GIF** under the threshold (`when: {animated, underThreshold}`) → **vips-webp**
+  as animated WebP (all frames preserved; uses the same webpsave options as the `image/webp` block).
+- **Static GIF**, and **animation over the threshold** (the catch-all entry) → **vips-webp** as a
+  static first frame.
 
 ## How it compares to MediaWiki
 

@@ -2,7 +2,7 @@
 
 Living records of **how Thumbro encodes each source MIME type to a thumbnail, and why**.
 One file per MIME (`image-jpeg.md`, `image-png.md`, …). Each holds the *current* profile
-(the `extension.json` → `ThumbroOptions["<mime>"].outputOptions` block), the rationale,
+(the `extension.json` → `ThumbroOptions["<mime>"].encode` list), the rationale,
 accepted trade-offs, and a history section — updated in place when the profile changes
 (append to History; don't start a new file).
 

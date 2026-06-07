@@ -7,8 +7,8 @@ use File;
 use MediaTransformOutput;
 use MediaWiki\Config\Config;
 use MediaWiki\Config\ConfigFactory;
-use MediaWiki\Extension\Thumbro\Backend\BackendDispatcher;
 use MediaWiki\Extension\Thumbro\Backend\BackendRequest;
+use MediaWiki\Extension\Thumbro\Backend\EncodePipeline;
 use MediaWiki\Extension\Thumbro\MediaHandlers;
 use MediaWiki\Extension\Thumbro\Options\TransformOptionsResolver;
 use MediaWiki\Extension\Thumbro\Version\SoftwareVersionProvider;
@@ -29,13 +29,13 @@ class MediaWikiHooks implements
 	/**
 	 * @param ConfigFactory $configFactory
 	 * @param TransformOptionsResolver $optionsResolver
-	 * @param BackendDispatcher $backendDispatcher
+	 * @param EncodePipeline $encodePipeline
 	 * @param SoftwareVersionProvider[] $versionProviders
 	 */
 	public function __construct(
 		ConfigFactory $configFactory,
 		private readonly TransformOptionsResolver $optionsResolver,
-		private readonly BackendDispatcher $backendDispatcher,
+		private readonly EncodePipeline $encodePipeline,
 		private readonly array $versionProviders,
 	) {
 		$this->config = $configFactory->makeConfig( 'thumbro' );
@@ -79,7 +79,7 @@ class MediaWikiHooks implements
 			return true;
 		}
 
-		return $this->backendDispatcher->dispatch(
+		return $this->encodePipeline->dispatch(
 			new BackendRequest( $handler, $file, $params, $options ),
 			$mto
 		);

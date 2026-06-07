@@ -5,8 +5,8 @@ namespace MediaWiki\Extension\Thumbro;
 
 use Imagick;
 use MediaTransformOutput;
-use MediaWiki\Extension\Thumbro\Backend\BackendDispatcher;
 use MediaWiki\Extension\Thumbro\Backend\BackendRequest;
+use MediaWiki\Extension\Thumbro\Backend\EncodePipeline;
 use MediaWiki\Extension\Thumbro\Options\TransformOptionsResolver;
 use MediaWiki\FileBackend\FSFile\TempFSFileFactory;
 use MediaWiki\Html\Html;
@@ -38,7 +38,7 @@ class SpecialThumbroTest extends SpecialPage {
 
 	public function __construct(
 		private readonly TransformOptionsResolver $optionsResolver,
-		private readonly BackendDispatcher $backendDispatcher,
+		private readonly EncodePipeline $encodePipeline,
 		private readonly RepoGroup $repoGroup,
 		private readonly HttpRequestFactory $httpRequestFactory,
 		private readonly TempFSFileFactory $tempFactory,
@@ -534,7 +534,7 @@ class SpecialThumbroTest extends SpecialPage {
 		// comparison reflects the backend production actually serves (e.g. libwebp for
 		// animated GIFs) rather than always libvips.
 		/** @var MediaTransformOutput $mto */
-		$this->backendDispatcher->dispatch(
+		$this->encodePipeline->dispatch(
 			new BackendRequest( $handler, $file, $scalerParams, $options ),
 			$mto
 		);

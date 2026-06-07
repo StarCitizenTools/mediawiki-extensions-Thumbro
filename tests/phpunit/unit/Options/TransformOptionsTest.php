@@ -12,28 +12,22 @@ use MediaWikiUnitTestCase;
 class TransformOptionsTest extends MediaWikiUnitTestCase {
 
 	public function testExposesAccessors(): void {
-		$options = new TransformOptions(
-			'libvips', '/usr/bin/vipsthumbnail', [ 'n' => '-1' ], [ 'Q' => '90' ], true
-		);
-		$this->assertSame( 'libvips', $options->library() );
-		$this->assertSame( '/usr/bin/vipsthumbnail', $options->command() );
-		$this->assertSame( [ 'n' => '-1' ], $options->inputOptions() );
-		$this->assertSame( [ 'Q' => '90' ], $options->outputOptions() );
+		$encodeList = [
+			[ 'encoder' => 'gif2webp', 'when' => [ 'animated' => true ], 'options' => [ 'q' => '80' ] ],
+			[ 'encoder' => 'vips-webp', 'options' => [ 'Q' => '90' ] ],
+		];
+		$options = new TransformOptions( [ 'n' => '-1' ], $encodeList, true );
+
+		$this->assertSame( [ 'n' => '-1' ], $options->resizeOptions() );
+		$this->assertSame( $encodeList, $options->encodeList() );
 		$this->assertTrue( $options->setComment() );
 	}
 
-	public function testWithDelegatedOverridesButKeepsSetComment(): void {
-		$options = new TransformOptions( 'libwebp', '/usr/bin/gif2webp', [], [ 'Q' => '90' ], true );
-		$delegated = $options->withDelegated(
-			'libvips', '/usr/bin/vipsthumbnail', [ 'n' => '1' ], [ 'strip' => 'true' ]
-		);
+	public function testEmptyDefaults(): void {
+		$options = new TransformOptions( [], [], false );
 
-		$this->assertSame( 'libvips', $delegated->library() );
-		$this->assertSame( '/usr/bin/vipsthumbnail', $delegated->command() );
-		$this->assertSame( [ 'n' => '1' ], $delegated->inputOptions() );
-		$this->assertSame( [ 'strip' => 'true' ], $delegated->outputOptions() );
-		$this->assertTrue( $delegated->setComment() );
-		// Original is unchanged (immutability).
-		$this->assertSame( 'libwebp', $options->library() );
+		$this->assertSame( [], $options->resizeOptions() );
+		$this->assertSame( [], $options->encodeList() );
+		$this->assertFalse( $options->setComment() );
 	}
 }

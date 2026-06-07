@@ -53,7 +53,7 @@ class SpecialThumbroTestRenderTest extends MediaWikiIntegrationTestCase {
 
 		$special = new SpecialThumbroTest(
 			$services->get( 'Thumbro.OptionsResolver' ),
-			$services->get( 'Thumbro.BackendDispatcher' ),
+			$services->get( 'Thumbro.EncodePipeline' ),
 			$repoGroup,
 			$services->getHttpRequestFactory(),
 			$services->getTempFSFileFactory(),

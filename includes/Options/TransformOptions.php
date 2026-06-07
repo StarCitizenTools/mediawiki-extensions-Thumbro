@@ -6,67 +6,37 @@ namespace MediaWiki\Extension\Thumbro\Options;
 /**
  * Immutable, resolved option set for a single Thumbro transform.
  *
- * Produced by {@see TransformOptionsResolver} from the configured ThumbroOptions /
- * ThumbroLibraries blocks. Replaces the loose associative array that the static
- * pipeline used to pass around. inputOptions/outputOptions are the vipsthumbnail
- * load/save options rendered as the "[k=v,…]" suffix.
+ * Produced by {@see TransformOptionsResolver} from the per-input-MIME ThumbroOptions block.
+ * `resizeOptions` are the vips load/resize options for the resize stage; `encodeList` is the
+ * ordered list of encode-list entries (each `{encoder, when?, options}`) the
+ * {@see \MediaWiki\Extension\Thumbro\Backend\EncodePipeline} routes over. The pipeline (not this
+ * VO) interprets the entries, so option semantics live with each encoder, not here.
  */
 class TransformOptions {
 
 	/**
-	 * @param string $library
-	 * @param string $command
-	 * @param array<string,string> $inputOptions
-	 * @param array<string,string> $outputOptions
+	 * @param array<string,string> $resizeOptions vips load/resize options
+	 * @param array<int,array{encoder:string,when?:array<string,bool>,options?:array<string,string>}> $encodeList
 	 * @param bool $setComment
 	 */
 	public function __construct(
-		private readonly string $library,
-		private readonly string $command,
-		private readonly array $inputOptions,
-		private readonly array $outputOptions,
+		private readonly array $resizeOptions,
+		private readonly array $encodeList,
 		private readonly bool $setComment,
 	) {
 	}
 
-	public function library(): string {
-		return $this->library;
-	}
-
-	/** Resolved backend binary for this option set's library. */
-	public function command(): string {
-		return $this->command;
-	}
-
 	/** @return array<string,string> */
-	public function inputOptions(): array {
-		return $this->inputOptions;
+	public function resizeOptions(): array {
+		return $this->resizeOptions;
 	}
 
-	/** @return array<string,string> */
-	public function outputOptions(): array {
-		return $this->outputOptions;
+	/** @return array<int,array{encoder:string,when?:array<string,bool>,options?:array<string,string>}> */
+	public function encodeList(): array {
+		return $this->encodeList;
 	}
 
 	public function setComment(): bool {
 		return $this->setComment;
-	}
-
-	/**
-	 * Return a copy with the library/command/input/output overridden, used when one backend
-	 * delegates to another (e.g. Libwebp delegating a frame to the libvips backend).
-	 *
-	 * @param string $library
-	 * @param string $command
-	 * @param array<string,string> $inputOptions
-	 * @param array<string,string> $outputOptions
-	 */
-	public function withDelegated(
-		string $library,
-		string $command,
-		array $inputOptions,
-		array $outputOptions
-	): self {
-		return new self( $library, $command, $inputOptions, $outputOptions, $this->setComment );
 	}
 }

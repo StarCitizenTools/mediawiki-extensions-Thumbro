@@ -8,10 +8,9 @@ use MediaWiki\Extension\Thumbro\Image\ExifCommentWriter;
 use MediaWiki\Extension\Thumbro\ThumbroThumbnailImage;
 
 /**
- * Executes the {@see CommandPlan} produced by a {@see ThumbnailBackend}: runs each command,
+ * Executes the {@see CommandPlan} produced by the {@see EncodePipeline}: runs each command,
  * surfaces failures as a transform error, optionally writes an EXIF comment, and constructs
- * the resulting thumbnail. This is the single home for the execute-and-finalise tail that
- * was previously duplicated inside every backend.
+ * the resulting thumbnail. This is the single home for the execute-and-finalise tail.
  */
 class CommandPlanRunner {
 

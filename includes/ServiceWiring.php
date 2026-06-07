@@ -3,11 +3,12 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\Thumbro;
 
-use MediaWiki\Extension\Thumbro\Backend\BackendDispatcher;
 use MediaWiki\Extension\Thumbro\Backend\CommandPlanRunner;
-use MediaWiki\Extension\Thumbro\Backend\LibvipsBackend;
-use MediaWiki\Extension\Thumbro\Backend\LibwebpBackend;
-use MediaWiki\Extension\Thumbro\Backend\LibwebpSettings;
+use MediaWiki\Extension\Thumbro\Backend\EncodePipeline;
+use MediaWiki\Extension\Thumbro\Backend\Encoder\EncoderRouter;
+use MediaWiki\Extension\Thumbro\Backend\Encoder\Gif2webpEncoder;
+use MediaWiki\Extension\Thumbro\Backend\Encoder\VipsWebpEncoder;
+use MediaWiki\Extension\Thumbro\Backend\Resize\VipsResizer;
 use MediaWiki\Extension\Thumbro\Image\ExifCommentWriter;
 use MediaWiki\Extension\Thumbro\Image\VipsHeaderAlphaDetector;
 use MediaWiki\Extension\Thumbro\Options\TransformOptionsResolver;
@@ -33,16 +34,6 @@ return [
 		return new VipsHeaderAlphaDetector( $libraries['libvips']['command'] ?? '' );
 	},
 
-	'Thumbro.BackendDispatcher' => static function ( MediaWikiServices $services ): BackendDispatcher {
-		return new BackendDispatcher(
-			[
-				'libvips' => $services->get( 'Thumbro.LibvipsBackend' ),
-				'libwebp' => $services->get( 'Thumbro.LibwebpBackend' ),
-			],
-			$services->get( 'Thumbro.CommandPlanRunner' )
-		);
-	},
-
 	'Thumbro.CommandPlanRunner' => static function ( MediaWikiServices $services ): CommandPlanRunner {
 		return new CommandPlanRunner( $services->get( 'Thumbro.ExifCommentWriter' ) );
 	},
@@ -53,32 +44,37 @@ return [
 		);
 	},
 
-	'Thumbro.LibvipsBackend' => static function ( MediaWikiServices $services ): LibvipsBackend {
-		return new LibvipsBackend( $services->get( 'Thumbro.ShellCommandFactory' ) );
+	/**
+	 * The available encoders, keyed by the name used in a MIME's `encode` list. Each carries its
+	 * own binary; the resizer + vips-webp share the libvips binary, gif2webp the libwebp one.
+	 */
+	'Thumbro.Encoders' => static function ( MediaWikiServices $services ): array {
+		$libraries = $services->getConfigFactory()->makeConfig( 'thumbro' )->get( 'ThumbroLibraries' );
+		return [
+			'vips-webp' => new VipsWebpEncoder( $libraries['libvips']['command'] ?? '' ),
+			'gif2webp' => new Gif2webpEncoder( $libraries['libwebp']['command'] ?? '' ),
+		];
 	},
 
-	'Thumbro.LibwebpBackend' => static function ( MediaWikiServices $services ): LibwebpBackend {
-		return new LibwebpBackend(
-			$services->get( 'Thumbro.LibvipsBackend' ),
+	'Thumbro.VipsResizer' => static function ( MediaWikiServices $services ): VipsResizer {
+		$libraries = $services->getConfigFactory()->makeConfig( 'thumbro' )->get( 'ThumbroLibraries' );
+		return new VipsResizer( $libraries['libvips']['command'] ?? '' );
+	},
+
+	'Thumbro.EncoderRouter' => static function ( MediaWikiServices $services ): EncoderRouter {
+		return new EncoderRouter();
+	},
+
+	'Thumbro.EncodePipeline' => static function ( MediaWikiServices $services ): EncodePipeline {
+		$config = $services->getConfigFactory()->makeConfig( 'thumbro' );
+		return new EncodePipeline(
+			$services->get( 'Thumbro.Encoders' ),
+			$services->get( 'Thumbro.VipsResizer' ),
+			$services->get( 'Thumbro.EncoderRouter' ),
 			$services->get( 'Thumbro.AlphaDetector' ),
 			$services->get( 'Thumbro.ShellCommandFactory' ),
-			$services->get( 'Thumbro.LibwebpSettings' )
-		);
-	},
-
-	'Thumbro.LibwebpSettings' => static function ( MediaWikiServices $services ): LibwebpSettings {
-		$config = $services->getConfigFactory()->makeConfig( 'thumbro' );
-		$libraries = $config->get( 'ThumbroLibraries' );
-		$gifOptions = $config->get( 'ThumbroOptions' )['image/gif'] ?? [];
-		return new LibwebpSettings(
-			$libraries['libwebp']['command'] ?? '',
-			// gif2webp encoder flags live on the libwebp library; fall back to the pre-1.3.x
-			// location (image/gif.outputOptions) so existing configs keep working.
-			$libraries['libwebp']['flags'] ?? $gifOptions['outputOptions'] ?? [],
-			// libvips is the primary backend and is always configured; '' would only surface
-			// in a libwebp-without-libvips misconfiguration, which produces no thumbnail either way.
-			$libraries['libvips']['command'] ?? '',
-			(int)$config->get( 'ThumbroMaxAnimatedArea' )
+			(int)$config->get( 'ThumbroMaxAnimatedArea' ),
+			$services->get( 'Thumbro.CommandPlanRunner' )
 		);
 	},
 

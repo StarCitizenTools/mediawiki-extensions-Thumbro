@@ -10,42 +10,61 @@ use MediaWikiUnitTestCase;
 use TransformationalImageHandler;
 
 /**
- * Characterization tests for TransformOptionsResolver::resolve — they pin CURRENT behaviour
- * (including its quirks) so this DI refactor is verifiably behaviour-preserving. Ported from
- * the former UtilsTest.
+ * Tests for TransformOptionsResolver::resolve against the per-input-MIME schema.
  *
- * Key quirk under test: getThumbType() always reports image/webp, so resolve() always matches
- * the image/webp block; only `library` and `inputOptions` come from the input-MIME block. That
- * makes the image/webp block's `enabled`/`minArea`/`maxArea` the effective gate for ALL inputs.
+ * The resolver keys directly on the INPUT MIME block: it gates on that block's
+ * enabled/minArea/maxArea/multipage and returns its resize options + encode list verbatim. There
+ * is no longer a getThumbType/image-webp indirection, so gating is per-input-MIME (disabling
+ * image/webp does NOT disable image/gif), and an unconfigured input MIME resolves to null.
  *
  * @covers \MediaWiki\Extension\Thumbro\Options\TransformOptionsResolver
  */
 class TransformOptionsResolverTest extends MediaWikiUnitTestCase {
 
+	/** The migrated production encode lists (values identical to extension.json). */
+	private const GIF_ENCODE = [
+		[
+			'encoder' => 'gif2webp',
+			'when' => [ 'animated' => true, 'alpha' => true, 'underThreshold' => true ],
+			'options' => [ 'mixed' => '', 'q' => '80', 'm' => '4' ],
+		],
+		[
+			'encoder' => 'vips-webp',
+			'when' => [ 'animated' => true, 'underThreshold' => true ],
+			'options' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ],
+		],
+		[
+			'encoder' => 'vips-webp',
+			'options' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ],
+		],
+	];
+	private const JPEG_ENCODE = [
+		[
+			'encoder' => 'vips-webp',
+			'options' => [ 'strip' => 'true', 'Q' => '80', 'smart_subsample' => 'false', 'effort' => '6' ],
+		],
+	];
+	private const PNG_ENCODE = [
+		[ 'encoder' => 'vips-webp', 'options' => [ 'near_lossless' => 'true', 'Q' => '60', 'strip' => 'true' ] ],
+	];
+	private const WEBP_ENCODE = [
+		[ 'encoder' => 'vips-webp', 'options' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
+	];
+
 	/** @param array $optionsOverride Replaces the ThumbroOptions map when given. */
 	private function resolver( array $optionsOverride = [] ): TransformOptionsResolver {
 		return new TransformOptionsResolver( new HashConfig( [
-			'ThumbroLibraries' => [
-				'libvips' => [ 'command' => '/usr/bin/vipsthumbnail' ],
-				'libwebp' => [ 'command' => '/usr/bin/gif2webp' ],
-			],
 			'ThumbroOptions' => $optionsOverride ?: [
-				// gif2webp encoder flags now live on the libwebp library, not here; the gif block
-				// carries no outputOptions and its delegation webpsave falls back to the webp block.
-				'image/gif' => [ 'enabled' => true, 'library' => 'libwebp', 'inputOptions' => [ 'n' => '-1' ] ],
-				'image/jpeg' => [ 'enabled' => true, 'library' => 'libvips', 'inputOptions' => [] ],
-				'image/png' => [ 'enabled' => true, 'library' => 'libvips', 'inputOptions' => [] ],
-				'image/webp' => [ 'enabled' => true, 'library' => 'libvips',
-					'inputOptions' => [],
-					'outputOptions' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
+				'image/gif' => [ 'enabled' => true, 'resize' => [ 'options' => [] ], 'encode' => self::GIF_ENCODE ],
+				'image/jpeg' => [ 'enabled' => true, 'resize' => [ 'options' => [] ], 'encode' => self::JPEG_ENCODE ],
+				'image/png' => [ 'enabled' => true, 'resize' => [ 'options' => [] ], 'encode' => self::PNG_ENCODE ],
+				'image/webp' => [ 'enabled' => true, 'resize' => [ 'options' => [] ], 'encode' => self::WEBP_ENCODE ],
 			],
 		] ) );
 	}
 
 	private function handler( int $area = 1000 ): TransformationalImageHandler {
 		$h = $this->createMock( TransformationalImageHandler::class );
-		// getThumbType always reports image/webp regardless of source — the central quirk.
-		$h->method( 'getThumbType' )->willReturn( [ 'webp', 'image/webp' ] );
 		$h->method( 'getImageArea' )->willReturn( $area );
 		return $h;
 	}
@@ -58,123 +77,98 @@ class TransformOptionsResolverTest extends MediaWikiUnitTestCase {
 		return $f;
 	}
 
-	public function testGifResolvesLibwebpLibrary(): void {
+	public function testGifResolvesToTheThreeEntryEncodeList(): void {
 		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/gif', 'gif' ) );
 		$this->assertNotNull( $opts );
-		$this->assertSame( 'libwebp', $opts->library() );
-		$this->assertSame( [ 'n' => '-1' ], $opts->inputOptions() );
-		// webp-block output options still resolved (the matched block is always image/webp).
-		$this->assertSame( '90', $opts->outputOptions()['Q'] );
-		// command resolves to the selected library's binary.
-		$this->assertSame( '/usr/bin/gif2webp', $opts->command() );
+		$this->assertSame( self::GIF_ENCODE, $opts->encodeList() );
+		$this->assertSame( [], $opts->resizeOptions() );
 	}
 
-	public function testJpegResolvesLibvipsLibrary(): void {
+	public function testJpegResolvesToOneEntryEncodeList(): void {
 		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/jpeg', 'jpg' ) );
 		$this->assertNotNull( $opts );
-		$this->assertSame( 'libvips', $opts->library() );
-		$this->assertSame( '/usr/bin/vipsthumbnail', $opts->command() );
-		$this->assertSame( [], $opts->inputOptions() );
+		$this->assertSame( self::JPEG_ENCODE, $opts->encodeList() );
+		$this->assertSame( [], $opts->resizeOptions() );
 	}
 
-	public function testPngResolvesLibvipsLibrary(): void {
+	public function testPngResolvesToOneEntryEncodeList(): void {
 		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/png', 'png' ) );
 		$this->assertNotNull( $opts );
-		$this->assertSame( 'libvips', $opts->library() );
+		$this->assertSame( self::PNG_ENCODE, $opts->encodeList() );
 	}
 
-	public function testWebpResolvesLibvipsLibrary(): void {
+	public function testWebpResolvesToOneEntryEncodeList(): void {
 		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/webp', 'webp' ) );
 		$this->assertNotNull( $opts );
-		$this->assertSame( 'libvips', $opts->library() );
-		$this->assertSame( 'true', $opts->outputOptions()['strip'] );
+		$this->assertSame( self::WEBP_ENCODE, $opts->encodeList() );
 	}
 
-	public function testReturnsNullWhenWebpBlockDisabled(): void {
-		// The matched (image/webp) block gates everything; disabling it disables Thumbro
-		// for ALL inputs, even a gif. This is a current quirk, pinned here.
+	public function testResizeOptionsAreReturned(): void {
 		$resolver = $this->resolver( [
-			'image/gif' => [ 'enabled' => true, 'library' => 'libwebp', 'inputOptions' => [] ],
-			'image/webp' => [ 'enabled' => false, 'library' => 'libvips', 'inputOptions' => [], 'outputOptions' => [] ],
+			'image/gif' => [
+				'enabled' => true,
+				'resize' => [ 'options' => [ 'n' => '-1' ] ],
+				'encode' => self::GIF_ENCODE,
+			],
 		] );
-		$this->assertNull( $resolver->resolve( $this->handler(), $this->file( 'image/gif', 'gif' ) ) );
+		$opts = $resolver->resolve( $this->handler(), $this->file( 'image/gif', 'gif' ) );
+		$this->assertNotNull( $opts );
+		$this->assertSame( [ 'n' => '-1' ], $opts->resizeOptions() );
 	}
 
-	public function testReturnsNullForMultipageFile(): void {
-		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/webp', 'webp', true ) );
-		$this->assertNull( $opts );
-	}
-
-	public function testReturnsNullWhenAreaAtOrAboveMaxArea(): void {
-		// maxArea is read from the matched (image/webp) block; area >= maxArea => null.
+	public function testReturnsNullWhenBlockDisabled(): void {
 		$resolver = $this->resolver( [
-			'image/webp' => [ 'enabled' => true, 'library' => 'libvips', 'maxArea' => 500,
-				'inputOptions' => [], 'outputOptions' => [] ],
-		] );
-		$this->assertNull( $resolver->resolve( $this->handler( 1000 ), $this->file( 'image/webp', 'webp' ) ) );
-		// Below the cap it is handled.
-		$this->assertNotNull( $resolver->resolve( $this->handler( 100 ), $this->file( 'image/webp', 'webp' ) ) );
-	}
-
-	public function testReturnsNullWhenAreaBelowMinArea(): void {
-		$resolver = $this->resolver( [
-			'image/webp' => [ 'enabled' => true, 'library' => 'libvips', 'minArea' => 2000,
-				'inputOptions' => [], 'outputOptions' => [] ],
-		] );
-		$this->assertNull( $resolver->resolve( $this->handler( 1000 ), $this->file( 'image/webp', 'webp' ) ) );
-	}
-
-	public function testReturnsNullWhenSelectedLibraryUnknown(): void {
-		// library resolves from the input-MIME block; an unregistered library => null.
-		$resolver = $this->resolver( [
-			'image/jpeg' => [ 'enabled' => true, 'library' => 'libdoesnotexist', 'inputOptions' => [] ],
-			'image/webp' => [ 'enabled' => true, 'library' => 'libvips', 'inputOptions' => [], 'outputOptions' => [] ],
+			'image/jpeg' => [ 'enabled' => false, 'resize' => [ 'options' => [] ], 'encode' => self::JPEG_ENCODE ],
 		] );
 		$this->assertNull( $resolver->resolve( $this->handler(), $this->file( 'image/jpeg', 'jpg' ) ) );
 	}
 
-	public function testUnconfiguredInputMimeFallsThroughToWebpBlockLibrary(): void {
-		// An input MIME with no own block still gets handled via the image/webp block:
-		// library falls back to the webp block's, inputOptions to []. Pinned quirk.
-		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/tiff', 'tiff' ) );
-		$this->assertNotNull( $opts );
-		$this->assertSame( 'libvips', $opts->library() );
-		$this->assertSame( [], $opts->inputOptions() );
+	public function testGatingIsPerInputMime(): void {
+		// New behaviour: disabling image/webp does NOT disable image/gif (no webp indirection).
+		$resolver = $this->resolver( [
+			'image/gif' => [ 'enabled' => true, 'resize' => [ 'options' => [] ], 'encode' => self::GIF_ENCODE ],
+			'image/webp' => [ 'enabled' => false, 'resize' => [ 'options' => [] ], 'encode' => self::WEBP_ENCODE ],
+		] );
+		$this->assertNotNull( $resolver->resolve( $this->handler(), $this->file( 'image/gif', 'gif' ) ) );
+		$this->assertNull( $resolver->resolve( $this->handler(), $this->file( 'image/webp', 'webp' ) ) );
 	}
 
-	public function testLibvipsBlockUsesItsOwnOutputOptionsWhenSet(): void {
-		// The new capability: a libvips MIME block carries its own webpsave flags, taken in
-		// preference to the webp-block fallback.
-		$resolver = $this->resolver( [
-			'image/jpeg' => [ 'enabled' => true, 'library' => 'libvips',
-				'inputOptions' => [], 'outputOptions' => [ 'Q' => '82', 'strip' => 'true' ] ],
-			'image/webp' => [ 'enabled' => true, 'library' => 'libvips',
-				'inputOptions' => [],
-				'outputOptions' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
-		] );
-		$opts = $resolver->resolve( $this->handler(), $this->file( 'image/jpeg', 'jpg' ) );
-		$this->assertNotNull( $opts );
-		$this->assertSame( '82', $opts->outputOptions()['Q'], 'jpeg uses its own webpsave Q' );
+	public function testReturnsNullForUnconfiguredInputMime(): void {
+		// New behaviour: an input MIME with no block resolves to null (no webp fallback).
+		$this->assertNull( $this->resolver()->resolve( $this->handler(), $this->file( 'image/tiff', 'tiff' ) ) );
 	}
 
-	public function testLibwebpBlockOutputOptionsAreNotLeakedAsWebpsave(): void {
-		// Back-compat guard: an old-style config still carries gif2webp flags under
-		// image/gif.outputOptions. Those must NOT surface as the resolved (webpsave) outputOptions;
-		// the libwebp delegation uses the webp block's webpsave flags instead.
+	public function testReturnsNullForMultipageFile(): void {
+		$opts = $this->resolver()->resolve( $this->handler(), $this->file( 'image/jpeg', 'jpg', true ) );
+		$this->assertNull( $opts );
+	}
+
+	public function testReturnsNullWhenAreaAtOrAboveMaxArea(): void {
 		$resolver = $this->resolver( [
-			'image/gif' => [ 'enabled' => true, 'library' => 'libwebp',
-				'inputOptions' => [ 'n' => '-1' ], 'outputOptions' => [ 'mixed' => '', 'q' => '80', 'm' => '4' ] ],
-			'image/webp' => [ 'enabled' => true, 'library' => 'libvips',
-				'inputOptions' => [],
-				'outputOptions' => [ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ] ],
+			'image/jpeg' => [
+				'enabled' => true, 'maxArea' => 500,
+				'resize' => [ 'options' => [] ], 'encode' => self::JPEG_ENCODE,
+			],
 		] );
-		$opts = $resolver->resolve( $this->handler(), $this->file( 'image/gif', 'gif' ) );
-		$this->assertNotNull( $opts );
-		$this->assertSame(
-			[ 'strip' => 'true', 'Q' => '90', 'smart_subsample' => 'true' ],
-			$opts->outputOptions(),
-			'libwebp delegation uses webp-block webpsave flags, not the gif2webp flags'
-		);
-		$this->assertArrayNotHasKey( 'mixed', $opts->outputOptions() );
+		$this->assertNull( $resolver->resolve( $this->handler( 1000 ), $this->file( 'image/jpeg', 'jpg' ) ) );
+		// Below the cap it is handled.
+		$this->assertNotNull( $resolver->resolve( $this->handler( 100 ), $this->file( 'image/jpeg', 'jpg' ) ) );
+	}
+
+	public function testReturnsNullWhenAreaBelowMinArea(): void {
+		$resolver = $this->resolver( [
+			'image/jpeg' => [
+				'enabled' => true, 'minArea' => 2000,
+				'resize' => [ 'options' => [] ], 'encode' => self::JPEG_ENCODE,
+			],
+		] );
+		$this->assertNull( $resolver->resolve( $this->handler( 1000 ), $this->file( 'image/jpeg', 'jpg' ) ) );
+	}
+
+	public function testReturnsNullWhenEncodeListEmpty(): void {
+		$resolver = $this->resolver( [
+			'image/jpeg' => [ 'enabled' => true, 'resize' => [ 'options' => [] ], 'encode' => [] ],
+		] );
+		$this->assertNull( $resolver->resolve( $this->handler(), $this->file( 'image/jpeg', 'jpg' ) ) );
 	}
 }

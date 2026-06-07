@@ -29,7 +29,7 @@ class BackendRequestTest extends MediaWikiUnitTestCase {
 			$this->createMock( TransformationalImageHandler::class ),
 			$this->createMock( File::class ),
 			$params,
-			new TransformOptions( 'libvips', '/usr/bin/vipsthumbnail', [], [], false )
+			new TransformOptions( [], [ [ 'encoder' => 'vips-webp' ] ], false )
 		);
 	}
 
@@ -47,16 +47,5 @@ class BackendRequestTest extends MediaWikiUnitTestCase {
 	public function testMissingCommentDefaultsToEmptyString(): void {
 		$request = $this->request( [ 'comment' => null ] );
 		$this->assertSame( '', $request->comment() );
-	}
-
-	public function testWithOptionsSwapsOptionsKeepsParams(): void {
-		$request = $this->request();
-		$newOptions = new TransformOptions( 'libwebp', '/usr/bin/gif2webp', [], [], false );
-		$swapped = $request->withOptions( $newOptions );
-
-		$this->assertSame( 'libwebp', $swapped->getOptions()->library() );
-		$this->assertSame( '/src.gif', $swapped->srcPath() );
-		// Original request keeps its options.
-		$this->assertSame( 'libvips', $request->getOptions()->library() );
 	}
 }
