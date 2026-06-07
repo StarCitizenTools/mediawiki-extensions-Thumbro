@@ -94,8 +94,8 @@ pluggable **`Encoder`** writes the WebP. The `EncodePipeline` coordinator wires 
   (`animated`/`alpha`/`underThreshold`). `EncoderRouter` picks the first entry whose `when` the
   file satisfies; a `when`-less entry is the catch-all. There are no per-library special-cases in
   the resolver — it hands each encoder its options verbatim.
-- Binaries are configured under `wgThumbroLibraries` (`libvips` → `vipsthumbnail`, `libwebp` →
-  `gif2webp`).
+- Binaries are configured under `wgThumbroLibraries`, keyed by library, each mapping its binaries
+  by name to their paths (`libvips` → `vipsthumbnail`; `libwebp` → `gif2webp`, `cwebp`).
 - **Routing/policy is visible in config, not buried in code.** The coordinator builds the file's
   traits (animated; alpha — probed only when it can matter; area vs `$wgThumbroMaxAnimatedArea`
   → `underThreshold`), drops encoders whose tool is absent, routes via the `when` list, and

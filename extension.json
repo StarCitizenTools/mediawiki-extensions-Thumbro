@@ -96,13 +96,11 @@
 		"ThumbroLibraries": {
 			"value": {
 				"libvips": {
-					"command": "/usr/bin/vipsthumbnail"
+					"vipsthumbnail": "/usr/bin/vipsthumbnail"
 				},
 				"libwebp": {
-					"command": "/usr/bin/gif2webp"
-				},
-				"cwebp": {
-					"command": "/usr/bin/cwebp"
+					"gif2webp": "/usr/bin/gif2webp",
+					"cwebp": "/usr/bin/cwebp"
 				}
 			}
 		},

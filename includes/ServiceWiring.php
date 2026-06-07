@@ -32,7 +32,7 @@ return [
 
 	'Thumbro.AlphaDetector' => static function ( MediaWikiServices $services ): VipsHeaderAlphaDetector {
 		$libraries = $services->getConfigFactory()->makeConfig( 'thumbro' )->get( 'ThumbroLibraries' );
-		return new VipsHeaderAlphaDetector( $libraries['libvips']['command'] ?? '' );
+		return new VipsHeaderAlphaDetector( $libraries['libvips']['vipsthumbnail'] ?? '' );
 	},
 
 	'Thumbro.CommandPlanRunner' => static function ( MediaWikiServices $services ): CommandPlanRunner {
@@ -52,15 +52,15 @@ return [
 	'Thumbro.Encoders' => static function ( MediaWikiServices $services ): array {
 		$libraries = $services->getConfigFactory()->makeConfig( 'thumbro' )->get( 'ThumbroLibraries' );
 		return [
-			'vips-webp' => new VipsWebpEncoder( $libraries['libvips']['command'] ?? '' ),
-			'gif2webp' => new Gif2webpEncoder( $libraries['libwebp']['command'] ?? '' ),
-			'cwebp' => new CwebpEncoder( $libraries['cwebp']['command'] ?? '' ),
+			'vips-webp' => new VipsWebpEncoder( $libraries['libvips']['vipsthumbnail'] ?? '' ),
+			'gif2webp' => new Gif2webpEncoder( $libraries['libwebp']['gif2webp'] ?? '' ),
+			'cwebp' => new CwebpEncoder( $libraries['libwebp']['cwebp'] ?? '' ),
 		];
 	},
 
 	'Thumbro.VipsResizer' => static function ( MediaWikiServices $services ): VipsResizer {
 		$libraries = $services->getConfigFactory()->makeConfig( 'thumbro' )->get( 'ThumbroLibraries' );
-		return new VipsResizer( $libraries['libvips']['command'] ?? '' );
+		return new VipsResizer( $libraries['libvips']['vipsthumbnail'] ?? '' );
 	},
 
 	'Thumbro.EncoderRouter' => static function ( MediaWikiServices $services ): EncoderRouter {
@@ -88,7 +88,7 @@ return [
 		$libraries = $services->getConfigFactory()->makeConfig( 'thumbro' )->get( 'ThumbroLibraries' );
 		return [
 			new LibvipsVersionProvider(),
-			new LibwebpVersionProvider( $libraries['libwebp']['command'] ?? '' ),
+			new LibwebpVersionProvider( $libraries['libwebp']['gif2webp'] ?? '' ),
 			new ImageMagickVersionProvider(),
 			new GdVersionProvider(),
 		];
