@@ -55,6 +55,7 @@
 	"Hooks": {
 		"BitmapHandlerTransform": "main",
 		"BitmapHandlerCheckImageArea": "main",
+		"LinkerMakeExternalLink": "main",
 		"SoftwareInfo": "main"
 	},
 	"HookHandlers": {
