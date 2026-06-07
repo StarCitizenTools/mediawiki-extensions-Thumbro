@@ -1,6 +1,6 @@
 {
 	"name": "Thumbro",
-	"version": "1.2.1",
+	"version": "2.0.0",
 	"author": [
 		"[https://www.mediawiki.org/wiki/User:Alistair3149 Alistair3149]",
 		"Bryan Tong Minh"
@@ -112,60 +112,109 @@
 			"value": {
 				"image/gif": {
 					"enabled": true,
-					"resize": { "options": {} },
+					"resize": {
+						"options": {}
+					},
 					"encode": [
 						{
 							"encoder": "gif2webp",
-							"when": { "animated": true, "alpha": true, "underThreshold": true },
-							"options": { "mixed": "", "q": "80", "m": "4" }
+							"when": {
+								"animated": true,
+								"alpha": true,
+								"underThreshold": true
+							},
+							"options": {
+								"mixed": "",
+								"q": "80",
+								"m": "4"
+							}
 						},
 						{
 							"encoder": "vips-webp",
-							"when": { "animated": true, "underThreshold": true },
-							"options": { "strip": "true", "Q": "90", "smart_subsample": "true" }
+							"when": {
+								"animated": true,
+								"underThreshold": true
+							},
+							"options": {
+								"strip": "true",
+								"Q": "90",
+								"smart_subsample": "true"
+							}
 						},
 						{
 							"encoder": "vips-webp",
-							"options": { "strip": "true", "Q": "90", "smart_subsample": "true" }
+							"options": {
+								"strip": "true",
+								"Q": "90",
+								"smart_subsample": "true"
+							}
 						}
 					]
 				},
 				"image/jpeg": {
 					"enabled": true,
-					"resize": { "options": {} },
+					"resize": {
+						"options": {}
+					},
 					"encode": [
 						{
 							"encoder": "vips-webp",
-							"options": { "strip": "true", "Q": "80", "smart_subsample": "false", "effort": "6" }
+							"options": {
+								"strip": "true",
+								"Q": "80",
+								"smart_subsample": "false",
+								"effort": "6"
+							}
 						}
 					]
 				},
 				"image/png": {
 					"enabled": true,
-					"resize": { "options": {} },
+					"resize": {
+						"options": {}
+					},
 					"encode": [
 						{
 							"encoder": "vips-webp",
-							"options": { "near_lossless": "true", "Q": "60", "strip": "true" }
+							"options": {
+								"near_lossless": "true",
+								"Q": "60",
+								"strip": "true"
+							}
 						}
 					]
 				},
 				"image/webp": {
 					"enabled": true,
-					"resize": { "options": {} },
+					"resize": {
+						"options": {}
+					},
 					"encode": [
 						{
 							"encoder": "vips-webp",
-							"when": { "animated": true },
-							"options": { "strip": "true", "Q": "90", "smart_subsample": "true" }
+							"when": {
+								"animated": true
+							},
+							"options": {
+								"strip": "true",
+								"Q": "90",
+								"smart_subsample": "true"
+							}
 						},
 						{
 							"encoder": "cwebp",
-							"options": { "q": "80", "m": "6" }
+							"options": {
+								"q": "80",
+								"m": "6"
+							}
 						},
 						{
 							"encoder": "vips-webp",
-							"options": { "strip": "true", "Q": "90", "smart_subsample": "true" }
+							"options": {
+								"strip": "true",
+								"Q": "90",
+								"smart_subsample": "true"
+							}
 						}
 					]
 				}
