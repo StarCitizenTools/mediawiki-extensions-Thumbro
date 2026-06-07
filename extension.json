@@ -100,6 +100,9 @@
 				},
 				"libwebp": {
 					"command": "/usr/bin/gif2webp"
+				},
+				"cwebp": {
+					"command": "/usr/bin/cwebp"
 				}
 			}
 		},
@@ -152,6 +155,15 @@
 					"enabled": true,
 					"resize": { "options": {} },
 					"encode": [
+						{
+							"encoder": "vips-webp",
+							"when": { "animated": true },
+							"options": { "strip": "true", "Q": "90", "smart_subsample": "true" }
+						},
+						{
+							"encoder": "cwebp",
+							"options": { "q": "80", "m": "6" }
+						},
 						{
 							"encoder": "vips-webp",
 							"options": { "strip": "true", "Q": "90", "smart_subsample": "true" }
