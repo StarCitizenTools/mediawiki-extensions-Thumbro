@@ -79,6 +79,9 @@ trait ThumbroHandlerTrait {
 				'clientWidth' => $params['width'],
 				'clientHeight' => $params['height'],
 				'isFilePageThumb' => $params['isFilePageThumb'] ?? false,
+				// Forwarded so MW 1.46's modifyClientThumbUrl() can still append the
+				// request-provenance query param on this shortcut path, as core does.
+				'requestProvenance' => $params['requestProvenance'] ?? null,
 			] );
 		}
 
@@ -101,19 +104,31 @@ trait ThumbroHandlerTrait {
 	 * We need to override this method to return a ThumbroThumbnailImage instance.
 	 * Since this can happen before the onBitmapHandlerTransform hook
 	 *
+	 * Absorbs two core API changes made in MW 1.46 while still supporting 1.43–1.45:
+	 *   - The array core passes here changed from the scaler params (clientWidth/clientHeight)
+	 *     to the media-handler params (width/height). We read whichever is present so the
+	 *     thumbnail keeps its on-page dimensions instead of collapsing to 0×0.
+	 *   - File::getFilePageThumbUrl() was removed in favour of File::modifyClientThumbUrl(),
+	 *     which performs the file-page cache-busting (and request-provenance) handling itself.
+	 *
 	 * @see TransformationalImageHandler::getClientScalingThumbnailImage
+	 * @see https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/85
 	 *
 	 * @inheritDoc
 	 */
 	protected function getClientScalingThumbnailImage( $image, $scalerParams ) {
 		$params = [
-			'width' => $scalerParams['clientWidth'],
-			'height' => $scalerParams['clientHeight']
+			'width' => $scalerParams['clientWidth'] ?? $scalerParams['width'] ?? null,
+			'height' => $scalerParams['clientHeight'] ?? $scalerParams['height'] ?? null,
 		];
 
 		$url = $image->getUrl();
-		if ( isset( $scalerParams['isFilePageThumb'] ) && $scalerParams['isFilePageThumb'] ) {
-			// Use a versioned URL on file description pages
+		if ( method_exists( $image, 'modifyClientThumbUrl' ) ) {
+			// MW 1.46+: mirror core by delegating the file-page/versioned URL logic to the file.
+			// @phan-suppress-next-line PhanUndeclaredMethod modifyClientThumbUrl() added in MW 1.46
+			$url = $image->modifyClientThumbUrl( $url, $scalerParams );
+		} elseif ( !empty( $scalerParams['isFilePageThumb'] ) ) {
+			// MW 1.43–1.45: append a cache-busting version parameter on file description pages.
 			$url = $image->getFilePageThumbUrl( $url );
 		}
 

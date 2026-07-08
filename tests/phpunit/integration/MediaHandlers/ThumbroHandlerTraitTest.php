@@ -26,6 +26,11 @@ class ThumbroHandlerTraitTest extends MediaWikiIntegrationTestCase {
 		$file->method( 'getMimeType' )->willReturn( 'image/webp' );
 		$file->method( 'mustRender' )->willReturn( false );
 		$file->method( 'getUrl' )->willReturn( $url );
+		if ( method_exists( File::class, 'modifyClientThumbUrl' ) ) {
+			// MW 1.46+ routes client-scaled URLs through modifyClientThumbUrl(); for a
+			// non file-page thumbnail it returns the URL unchanged, so model that identity.
+			$file->method( 'modifyClientThumbUrl' )->willReturnArgument( 0 );
+		}
 		return $file;
 	}
 
@@ -176,5 +181,109 @@ class ThumbroHandlerTraitTest extends MediaWikiIntegrationTestCase {
 			'orientation 3 (rotate 180)' => [ 3, 180 ],
 			'orientation 6 (rotate 270)' => [ 6, 270 ],
 		];
+	}
+
+	/**
+	 * Invoke the trait's protected getClientScalingThumbnailImage() via a real handler.
+	 */
+	private function invokeClientScaling( File $image, array $scalerParams ): ThumbroThumbnailImage {
+		$handler = new class extends ThumbroWebPHandler {
+			public function exposeClientScaling( File $image, array $scalerParams ): ThumbroThumbnailImage {
+				return $this->getClientScalingThumbnailImage( $image, $scalerParams );
+			}
+		};
+		return $handler->exposeClientScaling( $image, $scalerParams );
+	}
+
+	/**
+	 * A File exposing MW 1.46's modifyClientThumbUrl(). On 1.46+ the method exists natively;
+	 * on 1.43–1.45 we synthesise it so the newer code path can be exercised on every matrix row.
+	 */
+	private function makeFileWithModifyClientThumbUrl( string $url, string $modifiedUrl ): File {
+		if ( method_exists( File::class, 'modifyClientThumbUrl' ) ) {
+			$file = $this->createMock( File::class );
+		} else {
+			$file = $this->getMockBuilder( File::class )
+				->disableOriginalConstructor()
+				->onlyMethods( [ 'getUrl' ] )
+				->addMethods( [ 'modifyClientThumbUrl' ] )
+				->getMock();
+		}
+		$file->method( 'getUrl' )->willReturn( $url );
+		$file->method( 'modifyClientThumbUrl' )->willReturn( $modifiedUrl );
+		return $file;
+	}
+
+	/**
+	 * MW 1.46 changed the array passed to getClientScalingThumbnailImage() from the scaler
+	 * params (clientWidth/clientHeight) to the media-handler params (width/height). The output
+	 * must still carry the on-page dimensions rather than collapsing to a 0×0 image.
+	 *
+	 * Regression test for https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/85
+	 */
+	public function testClientScalingReadsMediaHandlerDimensions(): void {
+		$file = $this->createMock( File::class );
+		$file->method( 'getUrl' )->willReturn( '/w/images/f/f5/Anvil_Carrack.webp' );
+
+		$result = $this->invokeClientScaling( $file, [
+			'width' => 300,
+			'height' => 200,
+			'isFilePageThumb' => false,
+		] );
+
+		$this->assertSame( 300, $result->getWidth(), 'width must fall back to the media-handler width' );
+		$this->assertSame( 200, $result->getHeight(), 'height must fall back to the media-handler height' );
+	}
+
+	/**
+	 * MW 1.46 removed File::getFilePageThumbUrl() in favour of modifyClientThumbUrl(). When the
+	 * newer method is available it must build the file-page URL; calling the removed method would
+	 * fatal, which is the crash reported in the issue.
+	 *
+	 * Regression test for https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/85
+	 */
+	public function testClientScalingUsesModifyClientThumbUrlWhenAvailable(): void {
+		$modifiedUrl = '/w/images/f/f5/Anvil_Carrack.webp?_=20200101000000';
+		$file = $this->makeFileWithModifyClientThumbUrl( '/w/images/f/f5/Anvil_Carrack.webp', $modifiedUrl );
+
+		$result = $this->invokeClientScaling( $file, [
+			'width' => 300,
+			'height' => 200,
+			'isFilePageThumb' => true,
+		] );
+
+		$this->assertSame(
+			$modifiedUrl,
+			$result->getUrl(),
+			'MW 1.46 must version the file-page URL through modifyClientThumbUrl()'
+		);
+	}
+
+	/**
+	 * On MW 1.43–1.45 (before modifyClientThumbUrl() existed) the file-page thumbnail URL must
+	 * still be versioned through getFilePageThumbUrl(), reading dimensions from the scaler params.
+	 */
+	public function testClientScalingUsesFilePageThumbUrlOnLegacyCore(): void {
+		if ( method_exists( File::class, 'modifyClientThumbUrl' ) ) {
+			$this->markTestSkipped( 'File::getFilePageThumbUrl() was removed in MW 1.46' );
+		}
+
+		$legacyUrl = '/w/images/f/f5/Anvil_Carrack.webp?20200101000000';
+		$file = $this->createMock( File::class );
+		$file->method( 'getUrl' )->willReturn( '/w/images/f/f5/Anvil_Carrack.webp' );
+		$file->method( 'getFilePageThumbUrl' )->willReturn( $legacyUrl );
+
+		$result = $this->invokeClientScaling( $file, [
+			'clientWidth' => 300,
+			'clientHeight' => 200,
+			'isFilePageThumb' => true,
+		] );
+
+		$this->assertSame(
+			$legacyUrl,
+			$result->getUrl(),
+			'Legacy core must version the file-page URL through getFilePageThumbUrl()'
+		);
+		$this->assertSame( 300, $result->getWidth() );
 	}
 }
