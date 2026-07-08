@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.1](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v2.0.0...v2.0.1) (2026-07-08)
+
+
+### Bug Fixes
+
+* honour EXIF orientation on JPEG thumbnails ([a87cf8b](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/a87cf8b09ebb0d1f2ab99717f2dd649afddbf4de)), closes [#86](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/86)
+* honour EXIF orientation on WebP and PNG thumbnails ([3d7fe07](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/3d7fe07e077d43db74b86e3bebfac1a25c5b0143)), closes [#86](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/86)
+* support MediaWiki 1.46 client-scaling thumbnail API ([#85](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/85)) ([469a59b](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/469a59b523e18722d4d5fcefeea4022f2db72025))
+
 ## [2.0.0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v1.2.1...v2.0.0) (2026-06-07)
 
 
