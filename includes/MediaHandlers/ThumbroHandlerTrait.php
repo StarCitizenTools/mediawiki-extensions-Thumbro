@@ -18,6 +18,24 @@ trait ThumbroHandlerTrait {
 	}
 
 	/**
+	 * Advertise rotation support so MediaWiki auto-rotates EXIF-oriented images.
+	 *
+	 * getScalerType() above returns 'libvips', which core's BitmapHandler::canRotate()
+	 * does not recognise (it only knows im/imext/gd) and so reports as false. That leaves
+	 * autoRotateEnabled() false and getRotation() 0, so ExifBitmapHandler never swaps
+	 * width/height for the EXIF Orientation tag: a portrait photo stored with landscape
+	 * sensor dimensions then reports its raw (swapped) dimensions and renders at the wrong
+	 * aspect ratio. vipsthumbnail auto-rotates from EXIF orientation itself, so rotation is
+	 * genuinely supported here — we just have to tell core so.
+	 *
+	 * @see https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/86
+	 * @return bool
+	 */
+	public function canRotate() {
+		return true;
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public function getThumbType( $ext, $mime, $params = null ) {
