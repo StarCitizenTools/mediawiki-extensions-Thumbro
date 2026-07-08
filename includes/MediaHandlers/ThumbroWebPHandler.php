@@ -8,6 +8,7 @@ use WebPHandler;
 
 class ThumbroWebPHandler extends WebPHandler {
 	use ThumbroHandlerTrait;
+	use ThumbroExifOrientationTrait;
 
 	/**
 	 * Cap animated-WebP thumbnails at $wgThumbroMaxAnimatedArea (width × height × frames) — the
@@ -27,6 +28,17 @@ class ThumbroWebPHandler extends WebPHandler {
 	}
 
 	/**
+	 * WebPHandler parses the EXIF chunk into 'media-metadata' while reading the file, so the
+	 * orientation is already available — no extra probe needed. A WebP with no EXIF simply lacks
+	 * the key, which correctly reads as upright (1).
+	 *
+	 * @inheritDoc
+	 */
+	protected function thumbroSourceOrientation( array $info, string $filename ): int {
+		return (int)( $info['metadata']['media-metadata']['Orientation'] ?? 1 );
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public function canRender( $file ) {
@@ -34,9 +46,14 @@ class ThumbroWebPHandler extends WebPHandler {
 	}
 
 	/**
+	 * WebP is browser-renderable, so a non-oriented file can be served as-is. An EXIF-oriented one
+	 * must be rendered, though: vipsthumbnail bakes the rotation into the thumbnail (correct in
+	 * every browser), whereas serving the original would rely on the browser honouring WebP EXIF
+	 * orientation, which is inconsistent. getRotation() reads the cached angle, so this stays cheap.
+	 *
 	 * @inheritDoc
 	 */
 	public function mustRender( $file ) {
-		return false;
+		return $this->getRotation( $file ) != 0;
 	}
 }
