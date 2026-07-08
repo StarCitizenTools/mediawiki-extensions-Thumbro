@@ -12,6 +12,7 @@ use MediaWiki\Extension\Thumbro\Backend\Encoder\VipsWebpEncoder;
 use MediaWiki\Extension\Thumbro\Backend\Resize\VipsResizer;
 use MediaWiki\Extension\Thumbro\Image\ExifCommentWriter;
 use MediaWiki\Extension\Thumbro\Image\VipsHeaderAlphaDetector;
+use MediaWiki\Extension\Thumbro\Image\VipsHeaderOrientationDetector;
 use MediaWiki\Extension\Thumbro\Options\TransformOptionsResolver;
 use MediaWiki\Extension\Thumbro\Shell\ShellCommandFactory;
 use MediaWiki\Extension\Thumbro\Version\GdVersionProvider;
@@ -33,6 +34,11 @@ return [
 	'Thumbro.AlphaDetector' => static function ( MediaWikiServices $services ): VipsHeaderAlphaDetector {
 		$libraries = $services->getConfigFactory()->makeConfig( 'thumbro' )->get( 'ThumbroLibraries' );
 		return new VipsHeaderAlphaDetector( $libraries['libvips']['vipsthumbnail'] ?? '' );
+	},
+
+	'Thumbro.OrientationDetector' => static function ( MediaWikiServices $services ): VipsHeaderOrientationDetector {
+		$libraries = $services->getConfigFactory()->makeConfig( 'thumbro' )->get( 'ThumbroLibraries' );
+		return new VipsHeaderOrientationDetector( $libraries['libvips']['vipsthumbnail'] ?? '' );
 	},
 
 	'Thumbro.CommandPlanRunner' => static function ( MediaWikiServices $services ): CommandPlanRunner {
