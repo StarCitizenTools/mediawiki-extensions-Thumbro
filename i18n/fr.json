@@ -1,0 +1,16 @@
+{
+	"@metadata": {
+		"authors": [
+			"Jérémy-Günther-Heinz Jähnick",
+			"SleaY",
+			"Wladek92"
+		]
+	},
+	"thumbro-form-legend": "Paramètres",
+	"thumbro-form-width": "Largeur de la vignette :",
+	"thumbro-form-file": "Fichier de ce wiki :",
+	"thumbro-form-submit": "Générer les vignettes",
+	"thumbro-thumbs-legend": "Vignettes générées",
+	"thumbro-original-image": "Original",
+	"thumbro-normal-image": "Actuel"
+}
