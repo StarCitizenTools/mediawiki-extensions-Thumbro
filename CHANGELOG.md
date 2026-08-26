@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v2.0.1...v2.1.0) (2026-08-26)
+
+
+### Features
+
+* emit the crawler anchor under Parsoid read views ([#100](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/100)) ([baf9a18](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/baf9a188164bf26bdd22cf48b9feee52abf27dd1))
+
+
+### Bug Fixes
+
+* keep the crawler anchor out of the tab order and a11y tree ([b3891be](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/b3891beab3399082afe5aa1275d29f50a6a4ba5c)), closes [#97](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/97)
+
 ## [2.0.1](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v2.0.0...v2.0.1) (2026-07-08)
 
 
