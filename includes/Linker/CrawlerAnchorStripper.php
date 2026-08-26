@@ -9,6 +9,9 @@ namespace MediaWiki\Extension\Thumbro\Linker;
  * where a nested <a> would be invalid HTML and break the wrap. The class appears nowhere
  * in MediaWiki core, so matching on it cannot remove a core anchor.
  *
+ * The anchor also carries tabindex="-1" and aria-hidden="true"; the regex matches on the
+ * class token alone and so is agnostic to those (or any future) attributes.
+ *
  * @see \MediaWiki\Extension\Thumbro\ThumbroThumbnailImage::toHtml()
  */
 class CrawlerAnchorStripper {

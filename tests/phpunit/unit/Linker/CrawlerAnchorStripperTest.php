@@ -13,9 +13,20 @@ class CrawlerAnchorStripperTest extends MediaWikiUnitTestCase {
 
 	public function testStripsSingleCrawlerAnchor(): void {
 		$picture = '<picture><img src="/t.webp" width="84" height="60"></picture>';
-		$anchor = '<a href="/images/orig.png" class="mw-file-source" title="View source image">'
-			. '<!-- Image link for Crawlers --></a>';
+		$anchor = '<a href="/images/orig.png" class="mw-file-source" tabindex="-1"'
+			. ' aria-hidden="true"><!-- Image link for Crawlers --></a>';
 		$this->assertSame( $picture, CrawlerAnchorStripper::strip( $picture . $anchor ) );
+	}
+
+	/**
+	 * The regex keys on the class token alone, so it must survive any reordering of the
+	 * attribute array in ThumbroThumbnailImage::toHtml() — including attributes emitted
+	 * before class.
+	 */
+	public function testStripsAnchorRegardlessOfAttributeOrder(): void {
+		$anchor = '<a tabindex="-1" aria-hidden="true" class="mw-file-source" href="/orig.png">'
+			. '<!-- Image link for Crawlers --></a>';
+		$this->assertSame( 'X', CrawlerAnchorStripper::strip( 'X' . $anchor ) );
 	}
 
 	public function testStripsMultipleCrawlerAnchors(): void {

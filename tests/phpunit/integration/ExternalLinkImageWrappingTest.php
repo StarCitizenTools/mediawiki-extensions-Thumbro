@@ -22,8 +22,8 @@ class ExternalLinkImageWrappingTest extends MediaWikiIntegrationTestCase {
 		$linkRenderer = $this->getServiceContainer()->getLinkRenderer();
 
 		$inner = '<picture><img src="/t.webp"></picture>'
-			. '<a href="/images/orig.png" class="mw-file-source" title="View source image">'
-			. '<!-- Image link for Crawlers --></a>Undertale';
+			. '<a href="/images/orig.png" class="mw-file-source" tabindex="-1"'
+			. ' aria-hidden="true"><!-- Image link for Crawlers --></a>Undertale';
 
 		$html = $linkRenderer->makeExternalLink(
 			'https://undertale.wiki/',
