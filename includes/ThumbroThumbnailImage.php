@@ -181,13 +181,15 @@ class ThumbroThumbnailImage extends ThumbnailImage {
 
 		$p .= Html::closeElement( 'picture' );
 
+		// Hidden crawler-discoverable link to the original-resolution file (T54647); the <img>
+		// only ever carries a thumbnail, so this is the sole place the source URL appears.
 		$sourceLink = Html::rawElement(
 			'a',
 			[
 				'href' => $this->file->getUrl(),
 				'class' => 'mw-file-source',
-				// FIXME: Need i18n
-				'title' => 'View source image'
+				'tabindex' => '-1',
+				'aria-hidden' => 'true',
 			],
 			'<!-- Image link for Crawlers -->'
 		);

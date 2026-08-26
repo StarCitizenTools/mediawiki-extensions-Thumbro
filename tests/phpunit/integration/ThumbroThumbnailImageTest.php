@@ -34,12 +34,20 @@ class ThumbroThumbnailImageTest extends MediaWikiIntegrationTestCase {
 		$this->assertStringContainsString( 'decoding="async"', $html );
 	}
 
+	/**
+	 * The hidden anchor lets crawlers reach the original-resolution image (T54647). It renders
+	 * at zero size but is a real <a href>, so tabindex and aria-hidden keep it out of the tab
+	 * order and the accessibility tree (#97) — neither has any visible effect, so only an
+	 * exact-markup pin would catch their removal.
+	 */
 	public function testRendersHiddenCrawlerAnchorToOriginal(): void {
 		$html = $this->image( '/w/thumb/84px-t.webp', '/w/images/original.gif', 84, 84 )->toHtml( [] );
 
-		// The hidden anchor lets crawlers reach the original-resolution image (T54647).
-		$this->assertStringContainsString( 'mw-file-source', $html );
-		$this->assertStringContainsString( 'href="/w/images/original.gif"', $html );
+		$this->assertStringContainsString(
+			'<a href="/w/images/original.gif" class="mw-file-source" tabindex="-1"'
+				. ' aria-hidden="true"><!-- Image link for Crawlers --></a>',
+			$html
+		);
 	}
 
 	public function testNoDimensionsOptionOmitsWidthHeight(): void {
