@@ -230,5 +230,18 @@
 	"ConfigRegistry": {
 		"thumbro": "MediaWiki\\Config\\GlobalVarConfig::newInstance"
 	},
-	"manifest_version": 2
+	"manifest_version": 2,
+	"ParsoidModules": [
+		{
+			"name": "Thumbro",
+			"domProcessors": [
+				{
+					"class": "MediaWiki\\Extension\\Thumbro\\Parsoid\\CrawlerAnchorProcessor",
+					"services": [
+						"RepoGroup"
+					]
+				}
+			]
+		}
+	]
 }
