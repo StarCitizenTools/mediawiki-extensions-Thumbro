@@ -5,6 +5,7 @@ namespace MediaWiki\Extension\Thumbro;
 
 use InvalidArgumentException;
 use MediaWiki\Extension\Thumbro\Hooks\HookRunner as ThumbroHookRunner;
+use MediaWiki\Extension\Thumbro\Linker\CrawlerAnchor;
 use MediaWiki\HookContainer\HookRunner;
 use MediaWiki\Html\Html;
 use MediaWiki\MainConfigNames;
@@ -183,16 +184,9 @@ class ThumbroThumbnailImage extends ThumbnailImage {
 
 		// Hidden crawler-discoverable link to the original-resolution file (T54647); the <img>
 		// only ever carries a thumbnail, so this is the sole place the source URL appears.
-		$sourceLink = Html::rawElement(
-			'a',
-			[
-				'href' => $this->file->getUrl(),
-				'class' => 'mw-file-source',
-				'tabindex' => '-1',
-				'aria-hidden' => 'true',
-			],
-			'<!-- Image link for Crawlers -->'
-		);
+		// Parsoid never calls toHtml(), so its output gets the same anchor added
+		// post-parse by ParsoidCrawlerAnchorInjector.
+		$sourceLink = CrawlerAnchor::build( $this->file->getUrl() );
 
 		return $this->linkWrap( $linkAttribs, $p ) . $sourceLink;
 	}
