@@ -37,7 +37,22 @@ class VipsHeaderOrientationDetector implements OrientationDetector {
 				. 'treating the image as unoriented.' );
 			return 1;
 		}
-		$result = Shell::command( [ $vipsheader, '-f', 'orientation', $srcPath ] )->execute();
+		// Any image that was never rotated — every PNG, most of everything else — has no
+		// orientation field, so vipsheader writes to stderr and exits non-zero. That is this
+		// probe's normal path, but MediaWiki turns stderr logging on for every shell command
+		// globally, which would report each of those as an ERROR on the exec channel. Opt out
+		// and keep the detail on the debug channel instead (#104).
+		$result = Shell::command( [ $vipsheader, '-f', 'orientation', $srcPath ] )
+			->logStderr( false )
+			->execute();
+		// Logged whenever stderr is non-empty rather than only on a non-zero exit, because
+		// that is exactly the condition the suppressed ERROR was keyed on: a warning printed
+		// by a probe that still succeeded would otherwise now go unrecorded entirely.
+		$stderr = trim( $result->getStderr() );
+		if ( $stderr !== '' ) {
+			wfDebug( "[Extension:Thumbro] vipsheader -f orientation exited {$result->getExitCode()}"
+				. " for $srcPath: $stderr" );
+		}
 		// A file with no orientation field exits non-zero; that simply means "no rotation".
 		if ( $result->getExitCode() !== 0 ) {
 			return 1;
