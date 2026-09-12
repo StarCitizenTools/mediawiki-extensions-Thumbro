@@ -34,7 +34,19 @@ class VipsHeaderAlphaDetector implements AlphaDetector {
 				. 'treating the image as opaque.' );
 			return false;
 		}
-		$result = Shell::command( [ $vipsheader, '-f', 'bands', $srcPath ] )->execute();
+		// Every image reports a band count, so unlike the orientation probe this should not
+		// fail in practice — but when it does, it is handled here rather than by MediaWiki's
+		// global stderr logging, which would raise it to an ERROR on the exec channel (#104).
+		$result = Shell::command( [ $vipsheader, '-f', 'bands', $srcPath ] )
+			->logStderr( false )
+			->execute();
+		// Logged whenever stderr is non-empty rather than only on a non-zero exit, matching the
+		// condition the suppressed ERROR was keyed on. {@see VipsHeaderOrientationDetector}.
+		$stderr = trim( $result->getStderr() );
+		if ( $stderr !== '' ) {
+			wfDebug( "[Extension:Thumbro] vipsheader -f bands exited {$result->getExitCode()}"
+				. " for $srcPath: $stderr" );
+		}
 		if ( $result->getExitCode() !== 0 ) {
 			return false;
 		}

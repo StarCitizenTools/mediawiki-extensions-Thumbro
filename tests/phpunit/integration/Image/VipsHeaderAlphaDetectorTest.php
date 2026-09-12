@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\Thumbro\Tests\Integration\Image;
 
 use MediaWiki\Extension\Thumbro\Image\VipsHeaderAlphaDetector;
+use MediaWiki\Extension\Thumbro\Tests\VipsHeaderProbeTestTrait;
 use MediaWikiIntegrationTestCase;
 
 /**
@@ -14,6 +15,7 @@ use MediaWikiIntegrationTestCase;
  * @group Thumbro
  */
 class VipsHeaderAlphaDetectorTest extends MediaWikiIntegrationTestCase {
+	use VipsHeaderProbeTestTrait;
 
 	/** @var string[] Temp files to remove in tearDown (survives assertion failures). */
 	private array $tmpFiles = [];
@@ -25,15 +27,6 @@ class VipsHeaderAlphaDetectorTest extends MediaWikiIntegrationTestCase {
 		}
 		$this->tmpFiles = [];
 		parent::tearDown();
-	}
-
-	private function bin( string $name ): string {
-		// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.shell_exec,MediaWiki.Usage.ForbiddenFunctions.escapeshellarg
-		$path = trim( (string)shell_exec( 'command -v ' . escapeshellarg( $name ) . ' 2>/dev/null' ) );
-		if ( $path === '' ) {
-			$this->markTestSkipped( "$name not available" );
-		}
-		return $path;
 	}
 
 	private function makeGif( string $suffix, bool $transparent ): string {
@@ -62,12 +55,20 @@ class VipsHeaderAlphaDetectorTest extends MediaWikiIntegrationTestCase {
 		$this->assertFalse( ( new VipsHeaderAlphaDetector( $vipsthumbnail ) )->hasAlpha( $src ) );
 	}
 
-	public function testMissingSourceReturnsFalse(): void {
+	/**
+	 * A probe the detector already handles must not also surface as an ERROR on the exec
+	 * channel via MediaWiki's global stderr logging (#104).
+	 */
+	public function testMissingSourceReturnsFalseAndLogsNoError(): void {
 		$vipsthumbnail = $this->bin( 'vipsthumbnail' );
 		$this->bin( 'vipsheader' );
+		$logger = $this->captureExecLog();
+
 		$this->assertFalse(
 			( new VipsHeaderAlphaDetector( $vipsthumbnail ) )->hasAlpha( '/nonexistent/thumbro-does-not-exist.gif' )
 		);
+		$this->assertExecLogHasNoErrors( $logger,
+			'a probe failure the detector already handles is not an exec-channel error' );
 	}
 
 	public function testVipsheaderMissingFromCommandDirReturnsFalse(): void {
