@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v2.1.0...v2.1.1) (2026-09-14)
+
+
+### Bug Fixes
+
+* stop the vipsheader probes logging a spurious ERROR per file ([89be43c](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/89be43c39de09d0b67218e8387cd9b889fe1424a)), closes [#104](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/issues/104)
+
 ## [2.1.0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v2.0.1...v2.1.0) (2026-08-26)
 
 
