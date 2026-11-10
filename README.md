@@ -130,7 +130,7 @@ $wgThumbroEnabled = false;
 …or disable the specific file format you want to test under `$wgThumbroOptions`.
 
 ## Requirements
-* [MediaWiki](https://www.mediawiki.org) 1.43.0 or later
+* [MediaWiki](https://www.mediawiki.org) 1.46.0 or later
 * **[libvips](https://www.libvips.org)** (8.14 or later; older versions may work but are untested) — required. Drives core thumbnail generation via the `vipsthumbnail` command.
 * **[libwebp](https://developers.google.com/speed/webp/docs/using)** (the `cwebp` and `gif2webp` tools; Debian/Ubuntu `webp` package) — recommended. `cwebp` encodes static WebP thumbnails more compactly than libvips; `gif2webp` encodes animated GIFs to compact animated WebP, far smaller than libvips for transparent animations. Without it, both fall back to libvips automatically.
 * [Imagick](https://github.com/Imagick/imagick) — optional. Powers the detailed comparison statistics on Special:ThumbroTest.

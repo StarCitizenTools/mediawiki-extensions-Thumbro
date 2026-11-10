@@ -2,7 +2,7 @@
 
 ## Overview
 
-Thumbro is a MediaWiki extension (requires MW 1.43+) that improves and expands thumbnail generation. It registers media handlers (currently libvips via `vipsthumbnail`) that hook into MediaWiki's `BitmapHandlerTransform` pipeline to produce higher-quality thumbnails per MIME type. PHP drives transform shell-out and hook integration; a `Special:ThumbroTest` page (with a small jQuery + CSS comparison module) lets sysops compare default vs Thumbro output.
+Thumbro is a MediaWiki extension (requires MW 1.46+) that improves and expands thumbnail generation. It registers media handlers (currently libvips via `vipsthumbnail`) that hook into MediaWiki's `BitmapHandlerTransform` pipeline to produce higher-quality thumbnails per MIME type. PHP drives transform shell-out and hook integration; a `Special:ThumbroTest` page (with a small jQuery + CSS comparison module) lets sysops compare default vs Thumbro output.
 
 ## Verification
 
