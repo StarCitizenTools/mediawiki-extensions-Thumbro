@@ -44,7 +44,12 @@ class SpecialThumbroTest extends SpecialPage {
 		private readonly TempFSFileFactory $tempFactory,
 		private readonly UrlUtils $urlUtils,
 	) {
-		parent::__construct( 'ThumbroTest', 'thumbro-test' );
+		parent::__construct( 'ThumbroTest' );
+	}
+
+	/** @inheritDoc */
+	public function getRestriction(): string {
+		return 'thumbro-test';
 	}
 
 	/**
