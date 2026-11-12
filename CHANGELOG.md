@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v2.1.1...v2.1.2) (2026-11-12)
+
+
+### Bug Fixes
+
+* declare Special:ThumbroTest restriction via getRestriction() ([6f658a7](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/6f658a7bb34db3fb79c449b300b59d95028ea7c6))
+
 ## [2.1.1](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v2.1.0...v2.1.1) (2026-09-14)
 
 
