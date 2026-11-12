@@ -31,7 +31,9 @@
 				"RepoGroup",
 				"HttpRequestFactory",
 				"TempFSFileFactory",
-				"UrlUtils"
+				"UrlUtils",
+				"PermissionManager",
+				"GroupPermissionsLookup"
 			]
 		}
 	},
