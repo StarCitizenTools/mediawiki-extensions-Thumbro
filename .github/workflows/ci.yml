@@ -42,8 +42,7 @@ jobs:
               - modules/**/*.js
               - package.json
               - package-lock.json
-              - .eslintrc.json
-              - .eslintignore
+              - eslint.config.js
               - .github/workflows/ci.yml
             stylesheet:
               - modules/**/*.css
