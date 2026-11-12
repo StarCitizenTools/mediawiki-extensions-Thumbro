@@ -129,6 +129,7 @@ trait ThumbroHandlerTrait {
 			$url = $image->modifyClientThumbUrl( $url, $scalerParams );
 		} elseif ( !empty( $scalerParams['isFilePageThumb'] ) ) {
 			// MW 1.43–1.45: append a cache-busting version parameter on file description pages.
+			// @phan-suppress-next-line PhanUndeclaredMethod getFilePageThumbUrl() removed in MW 1.46
 			$url = $image->getFilePageThumbUrl( $url );
 		}
 
