@@ -17,6 +17,8 @@ use MediaWiki\Http\HttpRequestFactory;
 use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Output\StreamFile;
+use MediaWiki\Permissions\GroupPermissionsLookup;
+use MediaWiki\Permissions\PermissionManager;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Status\Status;
 use MediaWiki\Title\Title;
@@ -43,8 +45,30 @@ class SpecialThumbroTest extends SpecialPage {
 		private readonly HttpRequestFactory $httpRequestFactory,
 		private readonly TempFSFileFactory $tempFactory,
 		private readonly UrlUtils $urlUtils,
+		private readonly PermissionManager $permissionManager,
+		private readonly GroupPermissionsLookup $groupPermissionsLookup,
 	) {
-		parent::__construct( 'ThumbroTest', 'thumbro-test' );
+		// MW 1.47+ throws if a restriction is passed here; the restriction comes from getRestriction().
+		parent::__construct( 'ThumbroTest' );
+	}
+
+	/**
+	 * Before MW 1.46, core's isRestricted(), userCanExecute() and displayRestrictionError()
+	 * read the restriction set by the constructor instead of calling this method, so those
+	 * three are overridden below to use it. Their parent versions can be used again once
+	 * the minimum MediaWiki version is 1.46.
+	 *
+	 * @inheritDoc
+	 */
+	public function getRestriction(): string {
+		return 'thumbro-test';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function isRestricted(): bool {
+		return !$this->groupPermissionsLookup->groupHasPermission( '*', $this->getRestriction() );
 	}
 
 	/**
@@ -58,7 +82,8 @@ class SpecialThumbroTest extends SpecialPage {
 	 * @inheritDoc
 	 */
 	public function userCanExecute( User $user ): bool {
-		return $this->getConfig()->get( 'ThumbroExposeTestPage' ) && parent::userCanExecute( $user );
+		return $this->getConfig()->get( 'ThumbroExposeTestPage' )
+			&& $this->permissionManager->userHasRight( $user, $this->getRestriction() );
 	}
 
 	/**
@@ -72,7 +97,7 @@ class SpecialThumbroTest extends SpecialPage {
 			);
 		}
 
-		parent::displayRestrictionError();
+		throw new PermissionsError( $this->getRestriction() );
 	}
 
 	/**

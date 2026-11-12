@@ -57,7 +57,9 @@ class SpecialThumbroTestRenderTest extends MediaWikiIntegrationTestCase {
 			$repoGroup,
 			$services->getHttpRequestFactory(),
 			$services->getTempFSFileFactory(),
-			$services->getUrlUtils()
+			$services->getUrlUtils(),
+			$services->getPermissionManager(),
+			$services->getGroupPermissionsLookup()
 		);
 
 		$context = new DerivativeContext( RequestContext::getMain() );
