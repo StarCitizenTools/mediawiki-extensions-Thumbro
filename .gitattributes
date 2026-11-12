@@ -19,8 +19,7 @@
 # Static analysis, lint and style configs
 /.phan                          export-ignore
 /.phpcs.xml                     export-ignore
-/.eslintrc.json                 export-ignore
-/.eslintignore                  export-ignore
+/eslint.config.js               export-ignore
 /.stylelintrc.json              export-ignore
 /.stylelintignore               export-ignore
 
