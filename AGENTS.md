@@ -17,39 +17,33 @@ Run only what's relevant to the files you changed.
 
 Auto-fix commands: `composer fix` (PHP), `npm run lint:fix:js` (JS), `npm run lint:fix:styles` (styles).
 
-**Preflight**: Run `npm run preflight` to execute all Node-based lints in one command. Run `composer preflight` from within a MediaWiki installation to execute all PHP lints, style checks, Phan static analysis, and PHPUnit tests.
+**Preflight**: Run `npm run preflight` to execute all Node-based lints in one command. Run `composer preflight` in the [dev environment](#dev-environment) to execute all PHP lints, style checks, Phan static analysis, and PHPUnit tests.
 
 **Always run the relevant checks before committing.** Read the full output — PHPCS warnings must be fixed, not just errors. The command exits 0 even with warnings, so do not treat exit code alone as a pass.
 
 ### Dev environment
 
-This project's standard dev environment is the MediaWiki Docker setup defined in the parent `mediawiki/` directory. The user may be using a different environment. Ask the user for their dev environment URL and how to run commands if not already known.
+PHP checks, PHPUnit and browser tests need a running MediaWiki that serves this checkout. Use the first that applies:
 
-To run composer commands in the standard Docker environment:
+1. An environment the user has named.
+2. A disposable one you start yourself with [mwenv](https://github.com/ProfessionalWiki/mwenv), which needs no MediaWiki installation.
+3. A MediaWiki installation that contains this checkout, such as MediaWiki-Docker, when the task needs its content or extensions.
 
-```sh
-docker compose exec mediawiki bash -c "cd /var/www/html/w/extensions/Thumbro && composer preflight"
-```
+Ask the user only if none of these can run, or the task needs something a fresh wiki lacks. Don't destroy an environment you didn't create: its database may hold the user's test content.
+
+Whichever you use, it needs what CI's PHP jobs get (`.github/workflows/ci.yml`): load each extension in `extra-extensions`, and require each package in `extra-composer-packages` into MediaWiki with Composer, without loading it.
 
 Note: the `vipsthumbnail` binary (libvips) must be available in the environment for runtime thumbnail generation, but is not required for lint/test/Phan.
 
 ### PHPUnit
 
-PHPUnit tests live under `tests/phpunit/` (auto-discovered via `TestAutoloadNamespaces` in `extension.json`) and require a full MediaWiki installation to run. From the MediaWiki core root:
+PHPUnit tests live under `tests/phpunit/` (auto-discovered via `TestAutoloadNamespaces` in `extension.json`). Run them in the [dev environment](#dev-environment), from MediaWiki's root directory (`../..` from this checkout):
 
 ```sh
-docker compose exec mediawiki bash -c "cd /var/www/html/w && composer phpunit -- extensions/Thumbro/tests/phpunit"
+composer phpunit -- extensions/Thumbro/tests/phpunit
 ```
 
 Integration tests (those needing MediaWiki services, e.g. media-handler tests that exercise `normaliseParams`) go under `tests/phpunit/integration/`; pure unit tests go under `tests/phpunit/unit/`.
-
-### Phan
-
-Phan requires a full MediaWiki installation at `../../` for type resolution.
-
-```sh
-docker compose exec mediawiki bash -c "cd /var/www/html/w/extensions/Thumbro && composer phan"
-```
 
 ## Coding conventions
 
