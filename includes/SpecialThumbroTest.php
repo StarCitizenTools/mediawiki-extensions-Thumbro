@@ -502,9 +502,10 @@ class SpecialThumbroTest extends SpecialPage {
 		$thumbroTestExpiry = $this->getConfig()->get( 'ThumbroTestExpiry' );
 		wfDebug( __METHOD__ . ": streaming thumbnail..." );
 		$this->getOutput()->disable();
+		// Only users allowed to use this page may see the thumbnail, so it must never be
+		// stored in a shared cache (CDN, reverse proxy), which would serve it to anyone.
 		StreamFile::stream( $thumb->getPath(), [
-			"Cache-Control: public, max-age=$thumbroTestExpiry, s-maxage=$thumbroTestExpiry",
-			'Expires: ' . gmdate( 'r ', time() + $thumbroTestExpiry )
+			"Cache-Control: private, max-age=$thumbroTestExpiry",
 		] );
 		$thumb->purge();
 	}

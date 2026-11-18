@@ -112,7 +112,7 @@ Name | Description | Values | Default
 `$wgThumbroMaxAnimatedArea` | Largest animation Thumbro will fully re-encode, measured as width × height × frames. Bigger animations are rendered as a single static frame to keep thumbnailing fast. | integer | `25000000`
 `$wgThumbroEnabled` | Disable Thumbro across the wiki (the Special:ThumbroTest page still works) | `true` / `false` | `true`
 `$wgThumbroExposeTestPage` | Enable the Special:ThumbroTest comparison page | `true` / `false` | `false`
-`$wgThumbroTestExpiry` | Cache lifetime, in seconds, for images streamed to Special:ThumbroTest | integer | `3600`
+`$wgThumbroTestExpiry` | Browser cache lifetime, in seconds, for images streamed to Special:ThumbroTest (never stored in shared caches) | integer | `3600`
 
 ## Comparing thumbnails
 Thumbro ships a special page for comparing thumbnails before and after Thumbro. Enable it with:
