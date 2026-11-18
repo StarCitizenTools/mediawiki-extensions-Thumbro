@@ -121,13 +121,13 @@ Thumbro ships a special page for comparing thumbnails before and after Thumbro. 
 $wgThumbroExposeTestPage = true;
 ```
 
-To keep the "before" thumbnail untouched by Thumbro, either disable Thumbro site-wide:
+To keep the "before" thumbnail untouched by Thumbro, disable Thumbro site-wide. The page still renders Thumbro's thumbnails while Thumbro is disabled:
 ```php
 // Disable Thumbro site-wide
 $wgThumbroEnabled = false;
 ```
 
-…or disable the specific file format you want to test under `$wgThumbroOptions`.
+Disabling a file format under `$wgThumbroOptions` does not work for this: the page then cannot render Thumbro's thumbnail of that format either. When Thumbro is enabled, the page warns that both thumbnails are made by Thumbro.
 
 ## Requirements
 * [MediaWiki](https://www.mediawiki.org) 1.43.0 or later
