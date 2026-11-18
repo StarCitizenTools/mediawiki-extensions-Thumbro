@@ -21,8 +21,8 @@ use RepoGroup;
  * showThumbnails() had no coverage and a DI refactor left an undefined $services variable
  * on the line that expands the "normal" thumbnail URL — a guaranteed fatal the moment a
  * sysop ran a comparison. This drives showThumbnails() with a mock file and the REAL injected
- * UrlUtils to prove that line executes. Targets the non-imagick path (the imagick branch makes
- * outbound HTTP requests, out of scope for a unit-level render check).
+ * UrlUtils to prove that line executes. Targets the non-imagick path (the imagick branch reads
+ * and renders real image files, out of scope for a render check with a mock file).
  *
  * @covers \MediaWiki\Extension\Thumbro\SpecialThumbroTest
  * @group Thumbro
@@ -55,7 +55,6 @@ class SpecialThumbroTestRenderTest extends MediaWikiIntegrationTestCase {
 			$services->get( 'Thumbro.OptionsResolver' ),
 			$services->get( 'Thumbro.EncodePipeline' ),
 			$repoGroup,
-			$services->getHttpRequestFactory(),
 			$services->getTempFSFileFactory(),
 			$services->getUrlUtils(),
 			$services->getPermissionManager(),
