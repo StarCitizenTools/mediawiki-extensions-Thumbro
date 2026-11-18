@@ -9,6 +9,7 @@
 	"thumbro-invalid-sharpen": "Sharpening amount should be a number larger than zero and smaller than five.",
 	"thumbro-thumb-error": "libvips could not generate a thumbnail with given parameters.",
 	"thumbro-thumb-notscaled": "libvips did not scale the thumbnail.",
+	"thumbro-thumb-current-is-thumbro": "The current thumbnail of this file is also made by Thumbro, so both thumbnails are the same. To compare with MediaWiki's default thumbnail, disable Thumbro with <code>$wgThumbroEnabled = false</code>. This page keeps working while Thumbro is disabled.",
 	"thumbro-form-legend": "Parameters",
 	"thumbro-form-width": "Thumbnail width:",
 	"thumbro-form-file": "File on this wiki:",

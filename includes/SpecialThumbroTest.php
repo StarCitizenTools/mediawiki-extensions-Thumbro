@@ -18,6 +18,7 @@ use MediaWiki\MediaWikiServices;
 use MediaWiki\Output\StreamFile;
 use MediaWiki\Permissions\GroupPermissionsLookup;
 use MediaWiki\Permissions\PermissionManager;
+use MediaWiki\Shell\Shell;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Status\Status;
 use MediaWiki\Title\Title;
@@ -29,6 +30,7 @@ use OOUI\LabelWidget;
 use OOUI\PanelLayout;
 use PermissionsError;
 use RepoGroup;
+use TransformationalImageHandler;
 use Wikimedia\FileBackend\FSFile\TempFSFile;
 
 /**
@@ -171,6 +173,13 @@ class SpecialThumbroTest extends SpecialPage {
 			$this->getOutput()->addWikiMsg( 'thumbro-thumb-notscaled' );
 		}
 
+		if ( $this->isCurrentThumbnailFromThumbro( $file ) ) {
+			$this->getOutput()->addModuleStyles( 'mediawiki.codex.messagebox.styles' );
+			$this->getOutput()->addHTML( Html::warningBox(
+				$this->msg( 'thumbro-thumb-current-is-thumbro' )->parse()
+			) );
+		}
+
 		$thumbWidth = $thumb->getWidth();
 		$thumbHeight = $thumb->getHeight();
 
@@ -238,6 +247,18 @@ class SpecialThumbroTest extends SpecialPage {
 		] ) ) );
 
 		$this->getOutput()->addModules( [ 'ext.thumbro' ] );
+	}
+
+	/**
+	 * Whether Thumbro also makes the wiki's current thumbnail of the file, so that both
+	 * thumbnails are the same. Mirrors the checks in MediaWikiHooks::onBitmapHandlerTransform().
+	 */
+	private function isCurrentThumbnailFromThumbro( File $file ): bool {
+		$handler = $file->getHandler();
+		return $this->getConfig()->get( 'ThumbroEnabled' ) === true
+			&& !Shell::isDisabled()
+			&& $handler instanceof TransformationalImageHandler
+			&& $this->optionsResolver->resolve( $handler, $file ) !== null;
 	}
 
 	/**

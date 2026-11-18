@@ -13,6 +13,7 @@
 	"thumbro-invalid-sharpen": "Error message when SpecialVipsTest did not get a valid sharpen parameter\n\nSee also {{msg-mw|Vipsscaler-invalid-width}}",
 	"thumbro-thumb-error": "Error message when libvips did not manage to generate a thumbnail",
 	"thumbro-thumb-notscaled": "Error message when libvips did not scale the thumbnail.",
+	"thumbro-thumb-current-is-thumbro": "Warning on Special:ThumbroTest when Thumbro also makes the wiki's current thumbnail of the file, so the {{msg-mw|thumbro-normal-image}} and {{msg-mw|thumbro-thumbro-image}} thumbnails are the same.\n\n<code>$wgThumbroEnabled</code> is a configuration setting and should not be translated.",
 	"thumbro-form-legend": "Special:ThumbroTest form: legend at top of the form",
 	"thumbro-form-width": "Special:ThumbroTest form: label for the width input box",
 	"thumbro-form-file": "Special:ThumbroTest form: label for the file input box",
