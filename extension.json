@@ -29,7 +29,6 @@
 				"Thumbro.OptionsResolver",
 				"Thumbro.EncodePipeline",
 				"RepoGroup",
-				"HttpRequestFactory",
 				"TempFSFileFactory",
 				"UrlUtils",
 				"PermissionManager",

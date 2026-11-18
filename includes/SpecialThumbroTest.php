@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\Thumbro;
 
+use File;
 use Imagick;
 use MediaTransformOutput;
 use MediaWiki\Extension\Thumbro\Backend\BackendRequest;
@@ -13,8 +14,6 @@ use MediaWiki\Html\Html;
 use MediaWiki\HTMLForm\Field\HTMLIntField;
 use MediaWiki\HTMLForm\Field\HTMLTextField;
 use MediaWiki\HTMLForm\HTMLForm;
-use MediaWiki\Http\HttpRequestFactory;
-use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Output\StreamFile;
 use MediaWiki\Permissions\GroupPermissionsLookup;
@@ -24,13 +23,13 @@ use MediaWiki\Status\Status;
 use MediaWiki\Title\Title;
 use MediaWiki\User\User;
 use MediaWiki\Utils\UrlUtils;
-use MWHttpRequest;
 use OOUI\FieldsetLayout;
 use OOUI\HtmlSnippet;
 use OOUI\LabelWidget;
 use OOUI\PanelLayout;
 use PermissionsError;
 use RepoGroup;
+use Wikimedia\FileBackend\FSFile\TempFSFile;
 
 /**
  * A Special page intended to test Thumbro.
@@ -42,7 +41,6 @@ class SpecialThumbroTest extends SpecialPage {
 		private readonly TransformOptionsResolver $optionsResolver,
 		private readonly EncodePipeline $encodePipeline,
 		private readonly RepoGroup $repoGroup,
-		private readonly HttpRequestFactory $httpRequestFactory,
 		private readonly TempFSFileFactory $tempFactory,
 		private readonly UrlUtils $urlUtils,
 		private readonly PermissionManager $permissionManager,
@@ -104,18 +102,10 @@ class SpecialThumbroTest extends SpecialPage {
 	 * @inheritDoc
 	 */
 	public function execute( $subPage ): void {
-		$request = $this->getRequest();
 		$this->setHeaders();
+		$this->checkPermissions();
 
-		$secretKey = $this->getConfig()->get( MainConfigNames::SecretKey );
-		$isInternalRequest = $request->getHeader( 'X-Thumbro-Secret' ) === $secretKey;
-		$isUserAllowed = $this->userCanExecute( $this->getUser() );
-
-		if ( !$isUserAllowed && !$isInternalRequest ) {
-			$this->displayRestrictionError();
-		}
-
-		if ( $request->getText( 'thumb' ) ) {
+		if ( $this->getRequest()->getText( 'thumb' ) ) {
 			$this->streamThumbnail();
 		} else {
 			$this->showForm();
@@ -163,7 +153,8 @@ class SpecialThumbroTest extends SpecialPage {
 
 		// Generate normal thumbnail
 		$params = [ 'width' => $width ];
-		$thumb = $file->transform( $params );
+		// Render now, so the comparison below can read the thumbnail from storage.
+		$thumb = $file->transform( $params, File::RENDER_NOW );
 		if ( !$thumb || $thumb->isError() ) {
 			$this->getOutput()->addWikiMsg( 'thumbro-thumb-error' );
 			return;
@@ -217,14 +208,8 @@ class SpecialThumbroTest extends SpecialPage {
 		] );
 
 		// Need Imagick to output comparison data
-		if ( extension_loaded( 'imagick' ) ) {
-			// Debug stuff to work around Docker localhost HTTP request issue
-			foreach ( $imageUrls as $type => $url ) {
-				$imageUrls[$type] = str_replace( 'localhost', '172.18.0.4', $url );
-			}
-
-			$imagesInfo = $this->getImagesInfo( $imageUrls );
-
+		$imagesInfo = extension_loaded( 'imagick' ) ? $this->getImagesInfo( $file, $thumb, $width ) : null;
+		if ( $imagesInfo !== null ) {
 			$infoHtml = '';
 			foreach ( $imagesInfo as $type => $info ) {
 				$infoHtml .= "<div><div>$type</div><ul>";
@@ -256,20 +241,32 @@ class SpecialThumbroTest extends SpecialPage {
 	}
 
 	/**
-	 * Return the information for display for both images
+	 * Return the information for display for both thumbnails, or null if any of the
+	 * images is not available locally (e.g. a file from a foreign API repo).
+	 *
+	 * The images are read from storage, never fetched over HTTP: their URLs can point at
+	 * hosts outside the wiki (a foreign repo, a CDN), and the Thumbro thumbnail is only
+	 * served to users who may use this page.
 	 */
-	private function getImagesInfo( array $imageUrls ): array {
-		$images = [];
-		foreach ( $imageUrls as $type => $url ) {
-			$req = $this->getImageRequest( $url );
+	private function getImagesInfo( File $file, MediaTransformOutput $thumb, int $width ): ?array {
+		$images = [
+			'original' => $this->readLocalImage( $file->getLocalRefPath() ),
+			'normal' => $this->readLocalImage( $thumb->getLocalCopyPath() ),
+		];
+		if ( !$images['original'] || !$images['normal'] ) {
+			wfDebug( __METHOD__ . ': no local copy of the original or current thumbnail, skipping comparison' );
+			return null;
+		}
 
-			if ( !$req ) {
-				throw new \RuntimeException( "Failed to fetch image from $url" );
-			}
-
-			$image = new Imagick();
-			$image->readImageBlob( $req->getContent() );
-			$images[$type] = $image;
+		$thumbroThumb = $this->renderThumbroThumbnail( $file, $width );
+		if ( is_string( $thumbroThumb ) ) {
+			wfDebug( __METHOD__ . ": could not render the Thumbro thumbnail, skipping comparison: $thumbroThumb" );
+			return null;
+		}
+		$images['thumbro'] = $this->readLocalImage( $thumbroThumb->getPath() );
+		$thumbroThumb->purge();
+		if ( !$images['thumbro'] ) {
+			return null;
 		}
 
 		// Resize the original image to match the thumbnail's dimensions for more accurate comparison
@@ -323,16 +320,19 @@ class SpecialThumbroTest extends SpecialPage {
 	}
 
 	/**
-	 * Return the MWHttpRequest object if the request is successful
+	 * Load an image from a local file, or return null if there is none
 	 */
-	private function getImageRequest( string $url ): ?MWHttpRequest {
-		$req = $this->httpRequestFactory->create( $url, [], __METHOD__ );
-		$req->setHeader( 'X-Thumbro-Secret', $this->getConfig()->get( MainConfigNames::SecretKey ) );
-		$result = $req->execute();
-		if ( !$result->isGood() ) {
+	private function readLocalImage( string|false $path ): ?Imagick {
+		if ( !is_string( $path ) || !is_file( $path ) ) {
 			return null;
 		}
-		return $req;
+		$blob = file_get_contents( $path );
+		if ( $blob === false ) {
+			return null;
+		}
+		$image = new Imagick();
+		$image->readImageBlob( $blob );
+		return $image;
 	}
 
 	/**
@@ -493,6 +493,29 @@ class SpecialThumbroTest extends SpecialPage {
 			return;
 		}
 
+		$thumb = $this->renderThumbroThumbnail( $file, $request->getInt( 'width' ), $request->getBool( 'interlace' ) );
+		if ( is_string( $thumb ) ) {
+			$this->streamError( 500, $thumb );
+			return;
+		}
+
+		$thumbroTestExpiry = $this->getConfig()->get( 'ThumbroTestExpiry' );
+		wfDebug( __METHOD__ . ": streaming thumbnail..." );
+		$this->getOutput()->disable();
+		StreamFile::stream( $thumb->getPath(), [
+			"Cache-Control: public, max-age=$thumbroTestExpiry, s-maxage=$thumbroTestExpiry",
+			'Expires: ' . gmdate( 'r ', time() + $thumbroTestExpiry )
+		] );
+		$thumb->purge();
+	}
+
+	/**
+	 * Render a thumbnail of the file through Thumbro, the way the BitmapHandlerTransform
+	 * hook would, into a temporary file.
+	 *
+	 * @return TempFSFile|string The thumbnail, or an HTML error message
+	 */
+	private function renderThumbroThumbnail( File $file, int $width, bool $interlace = false ): TempFSFile|string {
 		$inputMimeType = $file->getMimeType();
 		$handlerClass = MediaHandlers::HANDLERS[$inputMimeType] ?? null;
 		$handler = $handlerClass !== null && class_exists( $handlerClass )
@@ -500,14 +523,10 @@ class SpecialThumbroTest extends SpecialPage {
 			: $file->getHandler();
 
 		// Validate param string
-		$params = [ 'width' => $request->getInt( 'width' ) ];
+		$params = [ 'width' => $width ];
 		if ( !$handler->normaliseParams( $file, $params ) ) {
-			$this->streamError( 500, "Thumbro: invalid parameters" );
-			return;
+			return 'Thumbro: invalid parameters';
 		}
-
-		$config = $this->getConfig();
-		$thumbroTestExpiry = $config->get( 'ThumbroTestExpiry' );
 
 		// Respect MediaHandler thumbType
 		[ $extension, $mimeType ] = $handler->getThumbType( $file->getExtension(), $inputMimeType );
@@ -516,6 +535,9 @@ class SpecialThumbroTest extends SpecialPage {
 		// No remote scaler, need to do it ourselves.
 		// Emulate the BitmapHandlerTransform hook
 		$tmpFile = $this->tempFactory->newTempFSFile( 'thumbro_', $extension );
+		if ( !$tmpFile ) {
+			return 'Thumbro: could not create a temporary file';
+		}
 		$tmpFile->bind( $this );
 		$dstPath = $tmpFile->getPath();
 		$dstUrl = '';
@@ -539,7 +561,7 @@ class SpecialThumbroTest extends SpecialPage {
 			'srcPath' => $file->getLocalRefPath(),
 			'dstPath' => $dstPath,
 			'dstUrl' => $dstUrl,
-			'interlace' => $request->getBool( 'interlace' ),
+			'interlace' => $interlace,
 		];
 
 		$options = $this->optionsResolver->resolve( $handler, $file );
@@ -547,12 +569,8 @@ class SpecialThumbroTest extends SpecialPage {
 			// resolve() returns null for any file Thumbro will not transform: the output
 			// type's block is disabled, the file is multipage, or its area is outside the
 			// configured [minArea, maxArea) range.
-			$this->streamError(
-				500,
-				'Thumbro: this file is not handled (its type may be disabled, multipage, '
-					. 'or outside the configured size limits)'
-			);
-			return;
+			return 'Thumbro: this file is not handled (its type may be disabled, multipage, '
+				. 'or outside the configured size limits)';
 		}
 
 		// Dispatch through the same seam the BitmapHandlerTransform hook uses, so the
@@ -563,21 +581,14 @@ class SpecialThumbroTest extends SpecialPage {
 			new BackendRequest( $handler, $file, $scalerParams, $options ),
 			$mto
 		);
-		if ( $mto && !$mto->isError() ) {
-			wfDebug( __METHOD__ . ": streaming thumbnail..." );
-			$this->getOutput()->disable();
-			StreamFile::stream( $dstPath, [
-				"Cache-Control: public, max-age=$thumbroTestExpiry, s-maxage=$thumbroTestExpiry",
-				'Expires: ' . gmdate( 'r ', time() + $thumbroTestExpiry )
-			] );
-		} else {
-			'@phan-var \MediaTransformError $mto';
-			$this->streamError( 500, $mto->getHtmlMsg() );
+		if ( !$mto ) {
+			return 'Thumbro: no thumbnail was produced';
 		}
-
-		// Cleanup the temporary file
-		// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
-		@unlink( $dstPath );
+		if ( $mto->isError() ) {
+			'@phan-var \MediaTransformError $mto';
+			return $mto->getHtmlMsg();
+		}
+		return $tmpFile;
 	}
 
 	/**

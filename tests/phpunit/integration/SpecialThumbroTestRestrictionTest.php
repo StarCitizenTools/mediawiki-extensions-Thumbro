@@ -3,6 +3,12 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\Thumbro\Tests\Integration;
 
+use MediaWiki\Context\DerivativeContext;
+use MediaWiki\Context\RequestContext;
+use MediaWiki\MainConfigNames;
+use MediaWiki\Output\OutputPage;
+use MediaWiki\Request\FauxRequest;
+use MediaWiki\Title\Title;
 use MediaWikiIntegrationTestCase;
 use PermissionsError;
 
@@ -45,5 +51,41 @@ class SpecialThumbroTestRestrictionTest extends MediaWikiIntegrationTestCase {
 			// restriction would have no such groups and produce 'badaccess-group0' instead.
 			$this->assertSame( 'badaccess-groups', $e->getMessageObject()->getKey() );
 		}
+	}
+
+	public static function provideSecretKey(): array {
+		return [
+			'request carrying $wgSecretKey in X-Thumbro-Secret' => [ 'not-so-secret-key' ],
+			'$wgSecretKey unset and no header' => [ false ],
+		];
+	}
+
+	/**
+	 * The page once let in any request whose X-Thumbro-Secret header matched $wgSecretKey, so
+	 * the server could fetch its own thumbnails over HTTP. That sent the key to every host the
+	 * images were fetched from, and let everyone in when $wgSecretKey was unset, because a
+	 * missing header (false) then matched it. Only the thumbro-test right may grant access.
+	 *
+	 * @dataProvider provideSecretKey
+	 */
+	public function testSecretKeyHeaderDoesNotBypassRestriction( string|false $secretKey ): void {
+		$this->overrideConfigValue( MainConfigNames::SecretKey, $secretKey );
+
+		$request = new FauxRequest();
+		if ( $secretKey !== false ) {
+			$request->setHeader( 'X-Thumbro-Secret', $secretKey );
+		}
+		$context = new DerivativeContext( RequestContext::getMain() );
+		$context->setConfig( $this->getServiceContainer()->getMainConfig() );
+		$context->setRequest( $request );
+		$context->setUser( $this->getServiceContainer()->getUserFactory()->newAnonymous() );
+		$context->setTitle( Title::makeTitle( NS_SPECIAL, 'ThumbroTest' ) );
+		$context->setOutput( new OutputPage( $context ) );
+
+		$special = $this->getServiceContainer()->getSpecialPageFactory()->getPage( 'ThumbroTest' );
+		$special->setContext( $context );
+
+		$this->expectException( PermissionsError::class );
+		$special->execute( null );
 	}
 }
