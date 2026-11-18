@@ -269,44 +269,59 @@ class SpecialThumbroTest extends SpecialPage {
 			return null;
 		}
 
+		// Measure and compare what is shown: for an animation, its first frame
+		$frames = array_map( self::getFirstFrame( ... ), $images );
+
 		// Resize the original image to match the thumbnail's dimensions for more accurate comparison
-		$images['original']->resizeImage(
-			$images['normal']->getImageWidth(),
-			$images['normal']->getImageHeight(),
+		$frames['original']->resizeImage(
+			$frames['normal']->getImageWidth(),
+			$frames['normal']->getImageHeight(),
 			Imagick::FILTER_LANCZOS, 1
 		);
 
 		$info = [];
-		foreach ( $images as $type => $image ) {
+		foreach ( $frames as $type => $frame ) {
 			if ( $type === 'original' ) {
 				continue;
 			}
 
 			$info[$type] = [
-				'Width' => $image->getImageWidth(),
-				'Height' => $image->getImageHeight(),
-				'Type' => $image->getImageMimeType(),
-				'Size' => $this->humanFileSize( $image->getImageLength() ),
-				'PSNR' => $image->compareImages( $images['original'], Imagick::METRIC_PEAKSIGNALTONOISERATIO )[1]
+				'Width' => $frame->getImageWidth(),
+				'Height' => $frame->getImageHeight(),
+				'Type' => $images[$type]->getImageMimeType(),
+				'Size' => $this->humanFileSize( $images[$type]->getImageLength() ),
+				'PSNR' => $frame->compareImages( $frames['original'], Imagick::METRIC_PEAKSIGNALTONOISERATIO )[1]
 			];
 
 			// ImageMagick 6.9.0+
 			if ( defined( 'Imagick::METRIC_PERCEPTUALHASH_ERROR' ) ) {
-				$info[$type]['Perceptual Hash'] = $image->compareImages(
-					$images['original'],
+				$info[$type]['Perceptual Hash'] = $frame->compareImages(
+					$frames['original'],
 					Imagick::METRIC_PERCEPTUALHASH_ERROR
 				)[1];
 			}
 
 			// ImageMagick 7.0.7
 			if ( defined( 'Imagick::METRIC_STRUCTURAL_SIMILARITY_ERROR' ) ) {
-				$info[$type]['SSIM'] = $image->compareImages(
-					$images['original'],
+				$info[$type]['SSIM'] = $frame->compareImages(
+					$frames['original'],
 					constant( 'Imagick::METRIC_STRUCTURAL_SIMILARITY_ERROR' )
 				)[1];
 			}
 		}
 		return $info;
+	}
+
+	/**
+	 * Return the first frame of the image, as it is shown.
+	 *
+	 * After reading an animation, Imagick points at its last frame, and frames after the
+	 * first often hold only the part of the canvas that changed. Coalescing the single
+	 * frame also places it on its full canvas, in case it is offset.
+	 */
+	private static function getFirstFrame( Imagick $image ): Imagick {
+		$image->setFirstIterator();
+		return $image->getImage()->coalesceImages();
 	}
 
 	/**
