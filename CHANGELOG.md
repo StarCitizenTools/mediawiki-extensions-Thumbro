@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.0](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v2.1.2...v2.2.0) (2026-11-19)
+
+
+### Features
+
+* warn on Special:ThumbroTest when both thumbnails are made by Thumbro ([6e53c2b](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/6e53c2bc48f12178d42a1b68517794373baeb118))
+
+
+### Bug Fixes
+
+* keep Special:ThumbroTest thumbnails out of shared caches ([467f530](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/467f53003d847d89783b3c003283e3fafbeb38c5))
+* measure animated images by their first frame on Special:ThumbroTest ([941a448](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/941a44840e7460bc49b3b6deaafebf8968e00086))
+* stop Special:ThumbroTest sending $wgSecretKey to image hosts ([84647a8](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/commit/84647a8ceba0b7447a21284bbf7fd4d758ea09ba))
+
 ## [2.1.2](https://github.com/StarCitizenTools/mediawiki-extensions-Thumbro/compare/v2.1.1...v2.1.2) (2026-11-12)
 
 
