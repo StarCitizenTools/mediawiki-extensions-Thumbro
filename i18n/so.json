@@ -1,0 +1,31 @@
+{
+	"@metadata": {
+		"authors": [
+			"AhmedG612"
+		]
+	},
+	"thumbrotest": "Bogga tijaabada Thumbro",
+	"thumbro-desc": "Hagaajinta iyo ballaarinta samaynta sawirrada yar yar ee MediaWiki",
+	"thumbro-invalid-file": "Lama farsamayn karin faylka la codsaday. Hubi inuu ka jiro wiki-gan.",
+	"thumbro-invalid-width": "Ballaca sawirka yar waa inuu ka weynaadaa eber, kana weynaan karin ballaca faylka.",
+	"thumbro-invalid-sharpen": "Qaddarka fiiqista waa inuu ahaadaa tiro ka weyn eber kana yar shan.",
+	"thumbro-thumb-error": "libvips ma awoodin inuu sameeyo sawir yar isagoo adeegsanaya xuduudaha la bixiyay.",
+	"thumbro-thumb-notscaled": "libvips ma uusan cabbir beddelin sawirka yar.",
+	"thumbro-thumb-current-is-thumbro": "Sawirka yar ee hadda ee faylkan sidoo kale waxaa sameeyay Thumbro, sidaas darteed labada sawir ee yaryar waa isku mid. Si aad ula barbar dhigto sawirka yar ee caadiga ah ee MediaWiki, dami Thumbro adigoo adeegsanaya <code>$wgThumbroEnabled = false</code>. Boggan wuu sii shaqaynayaa inta Thumbro uu dansan yahay.",
+	"thumbro-form-legend": "Halbeegga",
+	"thumbro-form-width": "Ballaca sawirka yar:",
+	"thumbro-form-file": "Faylka ku jira wiki-gan:",
+	"thumbro-form-sharpen-radius": "Qaddarka fiiqista:",
+	"thumbro-form-bilinear": "Cabbir beddelidda laba toosan",
+	"thumbro-form-submit": "Samee sawirro yaryar",
+	"thumbro-thumbs-legend": "Sawirrada yaryar ee la sameeyay",
+	"thumbro-thumbs-help": "Wareeji jiirka dulka sawirka yar si aad u barbar dhigto sawirrada yaryar.",
+	"thumbro-original-image": "Asalka",
+	"thumbro-normal-image": "Hadda",
+	"thumbro-thumbro-image": "Thumbro",
+	"thumbro-show-both": "Muuji labada sawir ee yaryar",
+	"thumbro-show-default": "Muuji sawirka yar ee caadiga ah oo keliya",
+	"thumbro-show-vips": "Muuji sawirka yar ee libvips oo keliya",
+	"action-thumbro-test": "Isticmaal is dhexgalka tijaabada cabbir beddelidda libvips [[Special:ThumbroTest]]",
+	"right-thumbro-test": "Isticmaal is dhexgalka tijaabada cabbir beddelidda libvips [[Special:ThumbroTest]]"
+}
