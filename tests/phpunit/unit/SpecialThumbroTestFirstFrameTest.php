@@ -52,8 +52,13 @@ class SpecialThumbroTestFirstFrameTest extends MediaWikiUnitTestCase {
 		$frame = $this->getFirstFrame( $animation );
 
 		$this->assertSame( [ 20, 20 ], [ $frame->getImageWidth(), $frame->getImageHeight() ] );
-		$this->assertSame( 'lime', $this->colorAt( $frame, 4, 4 ) );
-		$this->assertSame( 'white', $this->colorAt( $frame, 0, 0 ), 'the rest of the canvas is background' );
+		// The frame covers 3 to 7 on both axes
+		$this->assertSame( 'lime', $this->colorAt( $frame, 3, 3 ) );
+		$this->assertSame( 'lime', $this->colorAt( $frame, 7, 7 ) );
+		// The rest of the canvas is background: transparent in ImageMagick 6, opaque in 7
+		foreach ( [ [ 0, 0 ], [ 2, 2 ], [ 8, 8 ], [ 19, 19 ] ] as [ $x, $y ] ) {
+			$this->assertContains( $this->colorAt( $frame, $x, $y ), [ 'white', 'transparent' ], "pixel at $x,$y" );
+		}
 	}
 
 	public function testLeavesStillImageUnchanged(): void {
