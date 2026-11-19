@@ -104,7 +104,6 @@ class SpecialThumbroTestFirstFrameTest extends MediaWikiUnitTestCase {
 
 	private function getFirstFrame( Imagick $image ): Imagick {
 		$method = new ReflectionMethod( SpecialThumbroTest::class, 'getFirstFrame' );
-		$method->setAccessible( true );
 		return $method->invoke( null, $image );
 	}
 

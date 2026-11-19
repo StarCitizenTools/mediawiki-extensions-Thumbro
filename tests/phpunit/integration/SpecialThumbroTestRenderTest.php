@@ -68,7 +68,6 @@ class SpecialThumbroTestRenderTest extends MediaWikiIntegrationTestCase {
 		$special->setContext( $context );
 
 		$method = new ReflectionMethod( $special, 'showThumbnails' );
-		$method->setAccessible( true );
 		// Pre-fix this threw "Call to a member function getUrlUtils() on null".
 		$method->invoke( $special );
 
