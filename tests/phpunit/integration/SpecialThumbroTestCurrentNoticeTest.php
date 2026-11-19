@@ -105,7 +105,6 @@ class SpecialThumbroTestCurrentNoticeTest extends MediaWikiIntegrationTestCase {
 		$special->setContext( $context );
 
 		$method = new ReflectionMethod( $special, 'showThumbnails' );
-		$method->setAccessible( true );
 		$method->invoke( $special );
 
 		return $context->getOutput()->getHTML();
