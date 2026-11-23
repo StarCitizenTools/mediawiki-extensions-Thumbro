@@ -11,6 +11,7 @@
 	"thumbro-invalid-sharpen": "Изострувањето треба да е поголемо од нула а помало од пет.",
 	"thumbro-thumb-error": "libvips не можеше да создаде минијатура со зададените параметри.",
 	"thumbro-thumb-notscaled": "libvips не ја размери минијатурата.",
+	"thumbro-thumb-current-is-thumbro": "Тековната минијатура на оваа податотека исто така е направена од Thumbro, така што обете минијатури се исти. За да ги споредите со стандардната минијатура на МедијаВики, оневозможете го Thumbro со <code>$wgThumbroEnabled = false</code>. Оваа страница продолжува да работи додека Thumbro е оневозможен.",
 	"thumbro-form-legend": "Параметри",
 	"thumbro-form-width": "Ширина на минијатурата:",
 	"thumbro-form-file": "Податотека на ова вики:",

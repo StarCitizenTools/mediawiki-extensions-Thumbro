@@ -1,6 +1,7 @@
 {
 	"@metadata": {
 		"authors": [
+			"GuoPC",
 			"Zorua_Fox"
 		]
 	},
@@ -11,6 +12,7 @@
 	"thumbro-invalid-sharpen": "锐化量应为大于零且小于五的数字。",
 	"thumbro-thumb-error": "libvips 无法使用给定参数生成缩略图。",
 	"thumbro-thumb-notscaled": "libvips 未缩放缩略图。",
+	"thumbro-thumb-current-is-thumbro": "此文件当前的缩略图也由Thumbro生成，因此两个缩略图相同。要与MediaWiki的默认缩略图进行比较，请使用<code>$wgThumbroEnabled = false</code>禁用Thumbro。禁用Thumbro后，此页面仍可正常工作。",
 	"thumbro-form-legend": "参数",
 	"thumbro-form-width": "缩略图宽度：",
 	"thumbro-form-file": "此 wiki 上的文件：",

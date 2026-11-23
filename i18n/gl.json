@@ -11,6 +11,7 @@
 	"thumbro-invalid-sharpen": "A cantidade de agudización debe ser un número maior que cero e menor que cinco.",
 	"thumbro-thumb-error": "libvips non pode xerar unha miniatura cos parámetros proporcionados.",
 	"thumbro-thumb-notscaled": "libvips non escalou a miniatura.",
+	"thumbro-thumb-current-is-thumbro": "A miniatura actual deste ficheiro tamén se creou con Thumbro, polo que as dúas miniaturas son iguais. Para comparalas coa miniatura predeterminada de MediaWiki, desactiva Thumbro con <code>$wgThumbroEnabled = false</code>. Esta páxina segue funcionando mentres Thumbro estea desactivado.",
 	"thumbro-form-legend": "Parámetros",
 	"thumbro-form-width": "Largo da miniatura:",
 	"thumbro-form-file": "Ficheiro neste wiki:",
